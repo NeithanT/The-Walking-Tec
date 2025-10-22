@@ -1,7 +1,6 @@
 package MainMenu;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import javax.swing.JFrame;
@@ -10,14 +9,14 @@ import javax.swing.SwingUtilities;
 
 public class MainMenu extends JFrame {
     
-    private GraphicsDevice gd;
+    private final GraphicsDevice gd;
     
     public MainMenu() {
         
         this.setUndecorated(true);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
-        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
         gd.setFullScreenWindow(this);
         
         

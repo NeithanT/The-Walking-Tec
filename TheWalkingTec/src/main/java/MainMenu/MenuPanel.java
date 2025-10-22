@@ -55,15 +55,23 @@ public class MenuPanel extends JPanel {
         updatePosition();
  
         this.addComponentListener(new java.awt.event.ComponentAdapter() {
-        @Override
-        public void componentResized(java.awt.event.ComponentEvent e) {
-            updateButtonSizes();
-            updateFontSizes();
-            updateButtonPanel();
-            updatePosition();
-        }
-    });      
-}  
+            @Override
+            public void componentResized(java.awt.event.ComponentEvent e) {
+                updateButtonSizes();
+                updateFontSizes();
+                updateButtonPanel();
+                updatePosition();
+            }
+        }); 
+        
+        
+        btnSalir.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                System.exit(0);
+            }
+        });
+    }  
     private void updateButtonSizes(){
         
         int width = Math.max(200, (int)(getWidth() * 0.20));
@@ -86,7 +94,6 @@ public class MenuPanel extends JPanel {
     }
     private void updateButtonPanel(){
  
-        
         pnlBotones.removeAll();
         int spacing = Math.max(20, (int)(getHeight() * 0.043));
         
@@ -153,7 +160,7 @@ public class MenuPanel extends JPanel {
             @Override
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 button.setForeground(Color.WHITE);
-            }
-        });
+            }    
+        });    
     }
 }
