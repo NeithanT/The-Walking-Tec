@@ -2,19 +2,25 @@ package MainMenu;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 
 public class MainMenu extends JFrame {
     
+    private GraphicsDevice gd;
+    
     public MainMenu() {
-  
+        
+        this.setUndecorated(true);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         
-        this.setMinimumSize(new Dimension(800, 600));
+        GraphicsDevice gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        gd.setFullScreenWindow(this);
         
-        this.setExtendedState(MAXIMIZED_BOTH);
+        
        
         BackgroundPanel background = new BackgroundPanel();
       
