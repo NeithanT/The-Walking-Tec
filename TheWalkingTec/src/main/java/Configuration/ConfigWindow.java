@@ -1,4 +1,4 @@
-package MainMenu;
+package Configuration;
 
 import java.awt.BorderLayout;
 import java.awt.GraphicsDevice;
@@ -7,11 +7,11 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
 
-public class MainMenu extends JFrame {
+public class ConfigWindow extends JFrame {
     
     private final GraphicsDevice gd;
     
-    public MainMenu() {
+    public ConfigWindow() {
         
         this.setUndecorated(true);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -23,7 +23,7 @@ public class MainMenu extends JFrame {
        
         BackgroundPanel background = new BackgroundPanel();
       
-        MenuPanel menu = new MenuPanel();
+        ConfigPanel menu = new ConfigPanel();
         background.add(menu, BorderLayout.CENTER);
         
         this.setContentPane(background);
@@ -32,8 +32,8 @@ public class MainMenu extends JFrame {
      
     }
     public static void main(String[] args) {
-    SwingUtilities.invokeLater(() -> {
-        new MainMenu();
-    });
-} 
+        SwingUtilities.invokeLater(() -> {
+            new ConfigWindow();
+        });
+    } 
 }

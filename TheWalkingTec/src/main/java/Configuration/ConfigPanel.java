@@ -1,4 +1,4 @@
-package MainMenu;
+package Configuration;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -11,7 +11,7 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
-public class MenuPanel extends JPanel {
+public class ConfigPanel extends JPanel {
     
     private JButton btnNuevaPartida;
     private JButton btnCargarPartida;
@@ -19,7 +19,7 @@ public class MenuPanel extends JPanel {
     private JButton btnSalir;
     private JPanel  pnlBotones;
     
-    public MenuPanel(){
+    public ConfigPanel(){
         
         this.setLayout(new GridBagLayout());       
         this.setOpaque(false);
@@ -28,8 +28,6 @@ public class MenuPanel extends JPanel {
         btnCargarPartida = new JButton("Cargar Partida");
         btnCreditos = new JButton("Configuración");
         btnSalir = new JButton("Salir");
-  
-        updateButtonSizes();
         
         makeButtonTransparent(btnNuevaPartida);
         makeButtonTransparent(btnCargarPartida);
@@ -50,10 +48,13 @@ public class MenuPanel extends JPanel {
         pnlBotones.setLayout(new BoxLayout(pnlBotones, BoxLayout.Y_AXIS));
         pnlBotones.setOpaque(false);
   
-        updateButtonPanel();
         
-        updatePosition();
- 
+        btnSalir.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                System.exit(0);
+            }
+        });
         this.addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
             public void componentResized(java.awt.event.ComponentEvent e) {
@@ -63,16 +64,9 @@ public class MenuPanel extends JPanel {
                 updatePosition();
             }
         }); 
-        
-        
-        btnSalir.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                System.exit(0);
-            }
-        });
-    }  
-    private void updateButtonSizes(){
+    }
+    
+    private void updateButtonSizes() {
         
         int width = Math.max(200, (int)(getWidth() * 0.20));
         int height = Math.max(50, (int)(getHeight() * 0.06));
@@ -92,6 +86,7 @@ public class MenuPanel extends JPanel {
         btnSalir.setMaximumSize(maxButtonSize);
         btnSalir.setPreferredSize(normalButtonSize);      
     }
+    
     private void updateButtonPanel(){
  
         pnlBotones.removeAll();
@@ -111,7 +106,8 @@ public class MenuPanel extends JPanel {
         pnlBotones.revalidate();
         pnlBotones.repaint();
     }
-    private void updatePosition(){
+    
+    private void updatePosition() {
         
         GridBagConstraints gbc = new GridBagConstraints();
         
@@ -129,6 +125,7 @@ public class MenuPanel extends JPanel {
         this.revalidate();
         this.repaint();
     }
+    
     private void updateFontSizes() {
        
         int fontSize = Math.min(32,Math.max(12, getHeight() / 30));
@@ -138,19 +135,22 @@ public class MenuPanel extends JPanel {
         btnCargarPartida.setFont(buttonFont);
         btnCreditos.setFont(buttonFont);
         btnSalir.setFont(buttonFont);        
-    }  
+    }
+    
     private Box createBoxedButton (JButton button) {
        
         Box box = Box.createHorizontalBox();  
         box.add(button);
         return box;     
-    }    
+    }
+    
     private void makeButtonTransparent(JButton button) {
-    button.setOpaque(false);
-    button.setContentAreaFilled(false);
-    button.setBorderPainted(false);
-    button.setFocusPainted(false);
-    }    
+        button.setOpaque(false);
+        button.setContentAreaFilled(false);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
+    }
+    
     private void selection(JButton button) {
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
@@ -163,4 +163,5 @@ public class MenuPanel extends JPanel {
             }    
         });    
     }
+    
 }

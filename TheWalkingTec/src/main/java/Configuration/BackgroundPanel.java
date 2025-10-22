@@ -1,5 +1,4 @@
-
-package MainMenu;
+package Configuration;
 
 import java.awt.BorderLayout;
 import java.awt.Graphics;
@@ -13,7 +12,7 @@ public class BackgroundPanel extends JPanel {
 
     private Image backgroundImage;
     
-    private static final String IMAGE_PATH = "/assets/portada.png"; 
+    private static final String IMAGE_PATH = "/assets/menu.png"; 
 
     public BackgroundPanel() {
       

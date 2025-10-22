@@ -15,6 +15,6 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>24</maven.compiler.release>
-        <exec.mainClass>com.group.thewalkingtec.Interface.GameWindow</exec.mainClass>
+        <exec.mainClass>Configuration.ConfigWindow</exec.mainClass>
     </properties>
 </project>
