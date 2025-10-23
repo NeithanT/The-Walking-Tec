@@ -17,6 +17,9 @@ public class ConfigPanel extends JPanel {
     private JButton btnCargarPartida;
     private JButton btnCreditos;
     private JButton btnSalir;
+    
+    private JButton btnZombies;
+    private JButton btnDefenses;
     private JPanel  pnlBotones;
     
     public ConfigPanel(){
@@ -29,15 +32,15 @@ public class ConfigPanel extends JPanel {
         btnCreditos = new JButton("Configuración");
         btnSalir = new JButton("Salir");
         
-        makeButtonTransparent(btnNuevaPartida);
-        makeButtonTransparent(btnCargarPartida);
-        makeButtonTransparent(btnCreditos);
-        makeButtonTransparent(btnSalir);
+        //makeButtonTransparent(btnNuevaPartida);
+        //makeButtonTransparent(btnCargarPartida);
+        //makeButtonTransparent(btnCreditos);
+        //makeButtonTransparent(btnSalir);
         
-        btnNuevaPartida.setForeground(Color.WHITE);
-        btnCargarPartida.setForeground(Color.WHITE);
-        btnCreditos.setForeground(Color.WHITE);
-        btnSalir.setForeground(Color.WHITE);
+        btnNuevaPartida.setForeground(Color.BLACK);
+        btnCargarPartida.setForeground(Color.BLACK);
+        btnCreditos.setForeground(Color.BLACK);
+        btnSalir.setForeground(Color.BLACK);
          
         selection(btnNuevaPartida);
         selection(btnCargarPartida);
