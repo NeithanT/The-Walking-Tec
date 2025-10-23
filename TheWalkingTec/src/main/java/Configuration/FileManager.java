@@ -35,13 +35,13 @@ import java.util.logging.Logger;
  */
 public class FileManager {
     
-    final URL PATH = getClass().getResource("/Saves");
+    private final URL PATH = getClass().getResource("/Saves");
             //main/resources/Saves
-    final String pathDefenses = PATH + "defenses.data";
+    private final String pathDefenses = PATH + "defenses.data";
     
-    final String pathZombies = PATH + "zombies.data";
+    private final String pathZombies = PATH + "zombies.data";
     
-    final String pathGames = PATH + "games.data";
+    private final String pathGames = PATH + "games.data";
     
     // read txt file, para ller el query
     public static String readFile (String path) throws FileNotFoundException, IOException

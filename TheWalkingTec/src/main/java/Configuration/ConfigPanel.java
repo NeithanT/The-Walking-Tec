@@ -3,9 +3,7 @@ package Configuration;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import java.util.ArrayList;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -22,23 +20,37 @@ public class ConfigPanel extends JPanel {
     private JScrollPane scrollArea;
     private JPanel  pnlConfig;
     private JPanel  pnlChoices;
-    Font font;
+    private JPanel entityContainer;
+    private Font font;
+    
+    ArrayList<EntityPanel> zombies;
+    ArrayList<EntityPanel> defenses;
+    
+    boolean isZombies;
     
     public ConfigPanel() {
         
-        this.setLayout(new GridBagLayout());       
+        //this.setLayout(new GridBagLayout());       
         this.setOpaque(false);
 
-        JTextArea textArea = new JTextArea(20, 50);
-        textArea.setText("This is a long piece of text...\n[insert many lines of text here]");
-
+        zombies = new ArrayList<EntityPanel>();
+        zombies.add(new EntityPanel());
+        
+        
         btnZombies = new JButton("Zombies");
         btnDefenses = new JButton("Defenses");
         btnHome = new JButton();
-        scrollArea = new JScrollPane(textArea);
+        scrollArea = new JScrollPane();
         
         scrollArea.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         scrollArea.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        
+        JPanel entityContainer = new JPanel();
+        entityContainer.setLayout(new BoxLayout(entityContainer, BoxLayout.Y_AXIS));
+        for (EntityPanel entity : zombies) {
+            entityContainer.add(entity);
+        }
+        scrollArea.setViewportView(entityContainer);
         
         btnZombies.setForeground(Color.BLACK);
         btnDefenses.setForeground(Color.BLACK);
@@ -88,7 +100,7 @@ public class ConfigPanel extends JPanel {
  
         pnlConfig.removeAll();
         pnlChoices.removeAll();
-        int spacing = 2;// Math.max(20, (int)(getHeight() * 0.043));
+        int spacing = 2;
         
         pnlChoices.add(createBoxedButton(btnZombies));
         pnlChoices.add(Box.createHorizontalStrut(spacing));

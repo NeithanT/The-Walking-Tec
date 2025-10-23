@@ -17,7 +17,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 public class ConfigWindow extends JFrame {
     
     private final GraphicsDevice gd;
-    JFileChooser fileChooser;
+    private JFileChooser fileChooser;
     
     public ConfigWindow() {
         
@@ -53,8 +53,6 @@ public class ConfigWindow extends JFrame {
                 System.err.println("¡Error! No se pudo cargar la imagen de fondo: " + selectedFile);
             }
         }
-        
-        
     }
     
     public static void main(String[] args) {
