@@ -10,134 +10,133 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.ScrollPaneConstants;
 
 public class ConfigPanel extends JPanel {
     
-    private JButton btnNuevaPartida;
-    private JButton btnCargarPartida;
-    private JButton btnCreditos;
-    private JButton btnSalir;
-    
     private JButton btnZombies;
     private JButton btnDefenses;
-    private JPanel  pnlBotones;
+    private JButton btnHome;
+    private JScrollPane scrollArea;
+    private JPanel  pnlConfig;
+    private JPanel  pnlChoices;
+    Font font;
     
-    public ConfigPanel(){
+    public ConfigPanel() {
         
         this.setLayout(new GridBagLayout());       
         this.setOpaque(false);
 
-        btnNuevaPartida = new JButton("Nueva Partida");        
-        btnCargarPartida = new JButton("Cargar Partida");
-        btnCreditos = new JButton("Configuración");
-        btnSalir = new JButton("Salir");
+        JTextArea textArea = new JTextArea(20, 50);
+        textArea.setText("This is a long piece of text...\n[insert many lines of text here]");
+
+        btnZombies = new JButton("Zombies");
+        btnDefenses = new JButton("Defenses");
+        btnHome = new JButton();
+        scrollArea = new JScrollPane(textArea);
         
-        //makeButtonTransparent(btnNuevaPartida);
-        //makeButtonTransparent(btnCargarPartida);
-        //makeButtonTransparent(btnCreditos);
-        //makeButtonTransparent(btnSalir);
+        scrollArea.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        scrollArea.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         
-        btnNuevaPartida.setForeground(Color.BLACK);
-        btnCargarPartida.setForeground(Color.BLACK);
-        btnCreditos.setForeground(Color.BLACK);
-        btnSalir.setForeground(Color.BLACK);
-         
-        selection(btnNuevaPartida);
-        selection(btnCargarPartida);
-        selection(btnCreditos);
-        selection(btnSalir);
+        btnZombies.setForeground(Color.BLACK);
+        btnDefenses.setForeground(Color.BLACK);
         
-        pnlBotones = new JPanel ();
-        pnlBotones.setLayout(new BoxLayout(pnlBotones, BoxLayout.Y_AXIS));
-        pnlBotones.setOpaque(false);
-  
+        selection(btnZombies);
+        selection(btnDefenses);
+        selection(btnHome);
         
-        btnSalir.addMouseListener(new java.awt.event.MouseAdapter() {
+        pnlChoices = new JPanel();
+        pnlChoices.setLayout(new BoxLayout(pnlChoices, BoxLayout.X_AXIS));
+        pnlChoices.setOpaque(false);
+        
+        pnlConfig = new JPanel();
+        pnlConfig.setLayout(new BoxLayout(pnlConfig, BoxLayout.Y_AXIS));
+        pnlConfig.setOpaque(false);
+        
+        updateButtonSizes();
+        updateFontSizes();
+        updateButtonPanel();
+        this.add(pnlConfig);
+        
+        btnHome.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 System.exit(0);
             }
         });
-        this.addComponentListener(new java.awt.event.ComponentAdapter() {
-            @Override
-            public void componentResized(java.awt.event.ComponentEvent e) {
-                updateButtonSizes();
-                updateFontSizes();
-                updateButtonPanel();
-                updatePosition();
-            }
-        }); 
+        
     }
     
     private void updateButtonSizes() {
         
-        int width = Math.max(200, (int)(getWidth() * 0.20));
+        int width = Math.max(200, (int)(getWidth() * 0.10));
         int height = Math.max(50, (int)(getHeight() * 0.06));
         
         Dimension maxButtonSize = new Dimension(width + 50, height + 10);
         Dimension normalButtonSize = new Dimension(width, height);
   
-        btnNuevaPartida.setMaximumSize(maxButtonSize);
-        btnNuevaPartida.setPreferredSize(normalButtonSize);
+        btnZombies.setMaximumSize(maxButtonSize);
+        btnZombies.setPreferredSize(normalButtonSize);
         
-        btnCargarPartida.setMaximumSize(maxButtonSize);
-        btnCargarPartida.setPreferredSize(normalButtonSize);
-        
-        btnCreditos.setMaximumSize(maxButtonSize);
-        btnCreditos.setPreferredSize(normalButtonSize);
-        
-        btnSalir.setMaximumSize(maxButtonSize);
-        btnSalir.setPreferredSize(normalButtonSize);      
+        btnDefenses.setMaximumSize(maxButtonSize);
+        btnDefenses.setPreferredSize(normalButtonSize);
     }
     
-    private void updateButtonPanel(){
+    private void updateButtonPanel() {
  
-        pnlBotones.removeAll();
-        int spacing = Math.max(20, (int)(getHeight() * 0.043));
+        pnlConfig.removeAll();
+        pnlChoices.removeAll();
+        int spacing = 2;// Math.max(20, (int)(getHeight() * 0.043));
         
-        pnlBotones.add(createBoxedButton(btnNuevaPartida));
-        pnlBotones.add(Box.createVerticalStrut(spacing));
+        pnlChoices.add(createBoxedButton(btnZombies));
+        pnlChoices.add(Box.createHorizontalStrut(spacing));
         
-        pnlBotones.add(createBoxedButton(btnCargarPartida));
-        pnlBotones.add(Box.createVerticalStrut(spacing));
+        pnlChoices.add(createBoxedButton(btnDefenses));
         
-        pnlBotones.add(createBoxedButton(btnCreditos));
-        pnlBotones.add(Box.createVerticalStrut(spacing));
+        pnlChoices.revalidate();
+        pnlChoices.repaint();
         
-        pnlBotones.add(createBoxedButton(btnSalir));
+        pnlConfig.add(pnlChoices);
+        pnlConfig.add(Box.createVerticalStrut(spacing));
         
-        pnlBotones.revalidate();
-        pnlBotones.repaint();
+        pnlConfig.add(scrollArea);
+        pnlConfig.add(Box.createVerticalStrut(spacing));
+        
+        pnlConfig.add(btnHome);
+        
+        pnlConfig.revalidate();
+        pnlConfig.repaint();
     }
     
     private void updatePosition() {
         
-        GridBagConstraints gbc = new GridBagConstraints();
+        int horizontalOffset = (int)(getWidth() * -0.4);
+        int verticalOffset = (int)(getHeight() * -0.3);
         
-        int horizontalOffset = (int)(getWidth() * 0.55);
-        int verticalOffset = (int)(getHeight() * 0.2);
+        //gbc.gridx = 10; 
+        //gbc.gridy = 10;
+        //gbc.gridwidth = 10;
+        //gbc.fill = GridBagConstraints.BASELINE;
+        //gbc.anchor = GridBagConstraints.NORTH;
+        //gbc.insets = new Insets(verticalOffset, horizontalOffset, 0, 0);
         
-        gbc.gridx = 5; 
-        gbc.gridy = 2;
-        gbc.gridwidth = 3;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.anchor = GridBagConstraints.SOUTHEAST;
-        gbc.insets = new Insets(verticalOffset, horizontalOffset, 0, 0);
-        this.remove(pnlBotones);
-        this.add(pnlBotones, gbc);
+        //this.remove(pnlConfig);
+        
+        this.add(pnlConfig);
+        
         this.revalidate();
         this.repaint();
     }
     
     private void updateFontSizes() {
-       
-        int fontSize = Math.min(32,Math.max(12, getHeight() / 30));
-        Font buttonFont = new Font("Arial", Font.PLAIN, fontSize);
         
-        btnNuevaPartida.setFont(buttonFont);
-        btnCargarPartida.setFont(buttonFont);
-        btnCreditos.setFont(buttonFont);
-        btnSalir.setFont(buttonFont);        
+        int fontSize = Math.min(32,Math.max(12, getHeight() / 30));
+        font = new Font("Arial", Font.PLAIN, fontSize);
+        
+        btnZombies.setFont(font);
+        btnDefenses.setFont(font);     
     }
     
     private Box createBoxedButton (JButton button) {
@@ -162,7 +161,7 @@ public class ConfigPanel extends JPanel {
             }
             @Override
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setForeground(Color.WHITE);
+                button.setForeground(Color.GREEN);
             }    
         });    
     }

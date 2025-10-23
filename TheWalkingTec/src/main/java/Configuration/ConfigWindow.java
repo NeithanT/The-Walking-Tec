@@ -26,17 +26,15 @@ public class ConfigWindow extends JFrame {
         gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
         gd.setFullScreenWindow(this);
         
-        BackgroundPanel background = new BackgroundPanel();
+        //BackgroundPanel background = new BackgroundPanel();
       
         ConfigPanel menu = new ConfigPanel();
-        background.add(menu, BorderLayout.CENTER);
+        //background.add(menu);
         
-       this.setContentPane(menu);
+        this.setContentPane(menu);
         
         this.setVisible(true);
-        fileChooser = new JFileChooser();
         
-       
     }
     
     public void chooseFile() throws UnsupportedLookAndFeelException {
