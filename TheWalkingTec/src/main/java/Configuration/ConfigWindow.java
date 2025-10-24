@@ -18,23 +18,39 @@ public class ConfigWindow extends JFrame {
     
     private final GraphicsDevice gd;
     private JFileChooser fileChooser;
+    private JFrame parentMenu;
     
     public ConfigWindow() {
+        this(null);
+    }
+    
+    public ConfigWindow(JFrame parentMenu) {
+        this.parentMenu = parentMenu;
         
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         
         gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-        gd.setFullScreenWindow(this);
         
-        //BackgroundPanel background = new BackgroundPanel();
-      
-        ConfigPanel menu = new ConfigPanel();
-        //background.add(menu);
+        this.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        
+        ConfigPanel menu = new ConfigPanel(this);
         
         this.setContentPane(menu);
         
         this.setVisible(true);
         
+    }
+    
+    public void goHome() {
+        if (parentMenu != null) {
+            if (gd.getFullScreenWindow() == this) {
+                gd.setFullScreenWindow(null);
+            }
+            parentMenu.setVisible(true);
+            parentMenu.toFront();
+            parentMenu.requestFocus();
+        }
+        this.dispose();
     }
     
     public void chooseFile() throws UnsupportedLookAndFeelException {
@@ -57,7 +73,7 @@ public class ConfigWindow extends JFrame {
     
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            new ConfigWindow();
+           new ConfigWindow();
         });
     } 
 }

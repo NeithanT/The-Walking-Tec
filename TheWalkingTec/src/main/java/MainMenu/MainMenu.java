@@ -19,7 +19,7 @@ public class MainMenu extends JFrame {
 
         BackgroundPanel background = new BackgroundPanel();
       
-        MenuPanel menu = new MenuPanel();
+        MenuPanel menu = new MenuPanel(this);
         background.add(menu, BorderLayout.CENTER);
         
         this.setContentPane(background);

@@ -22,6 +22,7 @@ public class ConfigPanel extends JPanel {
     private JPanel  pnlChoices;
     private JPanel entityContainer;
     private Font font;
+    private ConfigWindow configWindow;
     
     ArrayList<EntityPanel> zombies;
     ArrayList<EntityPanel> defenses;
@@ -29,6 +30,11 @@ public class ConfigPanel extends JPanel {
     boolean isZombies;
     
     public ConfigPanel() {
+        this(null);
+    }
+    
+    public ConfigPanel(ConfigWindow configWindow) {
+        this.configWindow = configWindow;
              
         this.setOpaque(false);
 
@@ -77,7 +83,11 @@ public class ConfigPanel extends JPanel {
         btnHome.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
-                System.exit(0);
+                if (configWindow != null) {
+                    configWindow.goHome();
+                }
+                
+                configWindow.dispose();
             }
         });
         

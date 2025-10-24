@@ -1,5 +1,6 @@
 package MainMenu;
 
+import Configuration.ConfigWindow;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -9,39 +10,42 @@ import java.awt.Insets;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 public class MenuPanel extends JPanel {
     
     private JButton btnNuevaPartida;
     private JButton btnCargarPartida;
-    private JButton btnCreditos;
+    private JButton btnConfig;
     private JButton btnSalir;
     private JPanel  pnlBotones;
+    JFrame menuFrame;
     
-    public MenuPanel(){
+    public MenuPanel(JFrame parentFrame) {
         
         this.setLayout(new GridBagLayout());       
         this.setOpaque(false);
 
         btnNuevaPartida = new JButton("Nueva Partida");        
         btnCargarPartida = new JButton("Cargar Partida");
-        btnCreditos = new JButton("Configuración");
+        btnConfig = new JButton("Configuración");
         btnSalir = new JButton("Salir");
-
+        
         makeButtonTransparent(btnNuevaPartida);
         makeButtonTransparent(btnCargarPartida);
-        makeButtonTransparent(btnCreditos);
+        makeButtonTransparent(btnConfig);
         makeButtonTransparent(btnSalir);
         
         btnNuevaPartida.setForeground(Color.WHITE);
         btnCargarPartida.setForeground(Color.WHITE);
-        btnCreditos.setForeground(Color.WHITE);
+        btnConfig.setForeground(Color.WHITE);
         btnSalir.setForeground(Color.WHITE);
          
         selection(btnNuevaPartida);
         selection(btnCargarPartida);
-        selection(btnCreditos);
+        selection(btnConfig);
         selection(btnSalir);
         
         pnlBotones = new JPanel ();
@@ -63,6 +67,16 @@ public class MenuPanel extends JPanel {
                 System.exit(0);
             }
         });
+        
+        btnConfig.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                new ConfigWindow(menuFrame);
+                menuFrame.setVisible(false);
+            }
+        });
+        
+        menuFrame = parentFrame;
     }  
     private void updateButtonSizes(){
         
@@ -78,8 +92,8 @@ public class MenuPanel extends JPanel {
         btnCargarPartida.setMaximumSize(maxButtonSize);
         btnCargarPartida.setPreferredSize(normalButtonSize);
         
-        btnCreditos.setMaximumSize(maxButtonSize);
-        btnCreditos.setPreferredSize(normalButtonSize);
+        btnConfig.setMaximumSize(maxButtonSize);
+        btnConfig.setPreferredSize(normalButtonSize);
         
         btnSalir.setMaximumSize(maxButtonSize);
         btnSalir.setPreferredSize(normalButtonSize);      
@@ -95,7 +109,7 @@ public class MenuPanel extends JPanel {
         pnlBotones.add(createBoxedButton(btnCargarPartida));
         pnlBotones.add(Box.createVerticalStrut(spacing));
         
-        pnlBotones.add(createBoxedButton(btnCreditos));
+        pnlBotones.add(createBoxedButton(btnConfig));
         pnlBotones.add(Box.createVerticalStrut(spacing));
         
         pnlBotones.add(createBoxedButton(btnSalir));
@@ -128,7 +142,7 @@ public class MenuPanel extends JPanel {
         
         btnNuevaPartida.setFont(buttonFont);
         btnCargarPartida.setFont(buttonFont);
-        btnCreditos.setFont(buttonFont);
+        btnConfig.setFont(buttonFont);
         btnSalir.setFont(buttonFont);        
     }  
     private Box createBoxedButton (JButton button) {
