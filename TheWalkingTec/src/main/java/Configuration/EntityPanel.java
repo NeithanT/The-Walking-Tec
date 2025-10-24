@@ -16,7 +16,6 @@ public class EntityPanel extends JPanel {
     
     private static final int IMAGE_SIZE = 50;
     private static final int BUTTON_SIZE = 30;
-    private static final int FIELD_COLUMNS = 15;
     private static final Color BG_COLOR = new Color(245, 245, 245);
     private static final Insets INSETS = new Insets(5, 5, 5, 5);
     
@@ -28,7 +27,6 @@ public class EntityPanel extends JPanel {
         textFields = new ArrayList<>();
         
         createLabels();
-        createTextFields();
         setupLayout();
     }
     
@@ -40,17 +38,6 @@ public class EntityPanel extends JPanel {
         labels.add(new JLabel("Costo:"));
         labels.add(new JLabel("Rango:"));
         labels.add(new JLabel("Tipo:"));
-    }
-    
-    private void createTextFields() {
-        for (int i = 0; i < labels.size(); i++) {
-            JTextField field = new JTextField(FIELD_COLUMNS);
-            field.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.GRAY, 1),
-                BorderFactory.createEmptyBorder(5, 5, 5, 5)
-            ));
-            textFields.add(field);
-        }
     }
     
     private JLabel createImageLabel() {
