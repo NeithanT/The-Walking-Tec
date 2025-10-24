@@ -28,9 +28,7 @@ public class MenuPanel extends JPanel {
         btnCargarPartida = new JButton("Cargar Partida");
         btnCreditos = new JButton("Configuración");
         btnSalir = new JButton("Salir");
-  
-        updateButtonSizes();
-        
+
         makeButtonTransparent(btnNuevaPartida);
         makeButtonTransparent(btnCargarPartida);
         makeButtonTransparent(btnCreditos);
@@ -49,10 +47,6 @@ public class MenuPanel extends JPanel {
         pnlBotones = new JPanel ();
         pnlBotones.setLayout(new BoxLayout(pnlBotones, BoxLayout.Y_AXIS));
         pnlBotones.setOpaque(false);
-  
-        updateButtonPanel();
-        
-        updatePosition();
  
         this.addComponentListener(new java.awt.event.ComponentAdapter() {
             @Override
@@ -63,8 +57,6 @@ public class MenuPanel extends JPanel {
                 updatePosition();
             }
         }); 
-        
-        
         btnSalir.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -146,10 +138,10 @@ public class MenuPanel extends JPanel {
         return box;     
     }    
     private void makeButtonTransparent(JButton button) {
-    button.setOpaque(false);
-    button.setContentAreaFilled(false);
-    button.setBorderPainted(false);
-    button.setFocusPainted(false);
+        button.setOpaque(false);
+        button.setContentAreaFilled(false);
+        button.setBorderPainted(false);
+        button.setFocusPainted(false);
     }    
     private void selection(JButton button) {
         button.addMouseListener(new java.awt.event.MouseAdapter() {
