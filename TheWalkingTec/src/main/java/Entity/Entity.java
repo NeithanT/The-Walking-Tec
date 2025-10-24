@@ -6,6 +6,7 @@ public abstract class Entity extends Thread implements Serializable {
     int healthPoints;
     int cost;
     int showUpLevel;
+    String name;
     String actions;
     
 }

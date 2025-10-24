@@ -29,11 +29,11 @@ public class ConfigPanel extends JPanel {
     boolean isZombies;
     
     public ConfigPanel() {
-        
-        //this.setLayout(new GridBagLayout());       
+             
         this.setOpaque(false);
 
         zombies = new ArrayList<EntityPanel>();
+        zombies.add(new EntityPanel());
         zombies.add(new EntityPanel());
         
         
@@ -47,9 +47,11 @@ public class ConfigPanel extends JPanel {
         
         JPanel entityContainer = new JPanel();
         entityContainer.setLayout(new BoxLayout(entityContainer, BoxLayout.Y_AXIS));
+        
         for (EntityPanel entity : zombies) {
             entityContainer.add(entity);
         }
+        
         scrollArea.setViewportView(entityContainer);
         
         btnZombies.setForeground(Color.BLACK);
