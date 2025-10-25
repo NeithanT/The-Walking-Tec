@@ -1,7 +1,11 @@
 package Configuration;
 
+import Defense.Defense;
+import Zombie.Zombie;
+import Zombie.ZombieType;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -19,9 +23,40 @@ public class EntityPanel extends JPanel {
     private static final Color BG_COLOR = new Color(245, 245, 245);
     private static final Insets INSETS = new Insets(5, 5, 5, 5);
     
-    private ArrayList<JLabel> labels;
-    private ArrayList<JTextField> textFields;
     private ArrayList<EntityRow> rows;
+    
+    
+    public EntityPanel(Zombie zombie) {
+        this();
+        
+        switch (zombie.getType()) {
+            case ZombieType.CONTACT:
+                
+                break;
+            
+            case ZombieType.FLYING:
+                
+                break;
+            case ZombieType.MEDIUMRANGE:
+                
+                break;
+                
+            case ZombieType.EXPLOSIVE:
+                
+                break;
+                
+            case ZombieType.HEALER:
+                
+                break;
+                
+            default:
+                break;
+        }
+    }
+    
+    public EntityPanel(Defense defense) {
+        this();
+    }
     
     public EntityPanel() {
         rows = new ArrayList<>();
@@ -46,13 +81,13 @@ public class EntityPanel extends JPanel {
     private JLabel createImageLabel() {
         JLabel label = new JLabel("Image");
         label.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
-        label.setPreferredSize(new java.awt.Dimension(IMAGE_SIZE, IMAGE_SIZE));
+        label.setPreferredSize(new Dimension(IMAGE_SIZE, IMAGE_SIZE));
         return label;
     }
     
     private JButton createRemoveButton() {
         JButton btn = new JButton("X");
-        btn.setPreferredSize(new java.awt.Dimension(BUTTON_SIZE, BUTTON_SIZE));
+        btn.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
         return btn;
     }
     

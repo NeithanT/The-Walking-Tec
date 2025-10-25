@@ -16,6 +16,7 @@ public class Zombie extends Entity {
         this.showUpLevel = showUpLevel;
         this.cost = cost;
         this.range = range;
+        this.type = ZombieType.CONTACT;
     }
     
     // Getters

@@ -28,6 +28,11 @@ public class EntityRow extends JPanel {
         
     }
     
+    public EntityRow(String aspect, String field) {
+        this(aspect);
+        
+    }
+    
     public void createTextField() {
     
         textField = new JTextField(FIELD_COLUMNS);

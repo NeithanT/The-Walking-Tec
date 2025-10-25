@@ -57,6 +57,10 @@ public class ConfigWindow extends JFrame {
     
     public void chooseFile() throws UnsupportedLookAndFeelException {
 
+        if (fileChooser == null) {
+            fileChooser = new JFileChooser();
+        }
+        
         FileNameExtensionFilter filter = new FileNameExtensionFilter(
             "Image Files (*.jpg, *.png, *.gif)", "jpg", "png", "gif");
         

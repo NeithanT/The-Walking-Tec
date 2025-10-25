@@ -6,6 +6,7 @@ import java.awt.Font;
 import java.awt.event.ActionListener;
 import Configuration.EntityPanel;
 import Configuration.FileManager;
+import Defense.Defense;
 import Zombie.Zombie;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -25,54 +26,130 @@ public class ConfigPanel extends JPanel {
     private JButton btnDefenses;
     private JButton btnHome;
     private JButton btnCheckmark;
+    
     private JScrollPane scrollArea;
-    private JPanel  pnlConfig;
-    private JPanel  pnlChoices;
+    private JPanel pnlConfig;
+    private JPanel pnlChoices;
     private JPanel entityContainer;
     private Font font;
     private ConfigWindow configWindow;
     
-    ArrayList<EntityPanel> zombies;
-    ArrayList<EntityPanel> defenses;
+    private SaveType type;
+    private ArrayList<EntityPanel> zombies;
+    private ArrayList<EntityPanel> defenses;
     
-    boolean isZombies;
+    private ConfigManager manager;
     
-    public ConfigPanel(ConfigWindow configWindow) {
-        this.configWindow = configWindow;
-             
-        this.setOpaque(false);
-
-        zombies = new ArrayList<EntityPanel>();
-        zombies.add(new EntityPanel());
-        zombies.add(new EntityPanel());
+    private static final int SPACING = 2;
+    private static final int MIN_BUTTON_WIDTH = 200;
+    private static final int MIN_BUTTON_HEIGHT = 50;
+    private static final int BUTTON_WIDTH_OFFSET = 50;
+    private static final int BUTTON_HEIGHT_OFFSET = 10;
+    private static final int MIN_FONT_SIZE = 12;
+    private static final int MAX_FONT_SIZE = 32;
+    
+    
+    public ConfigPanel(ConfigWindow confWindow) {
         
+        configWindow = confWindow;
+        manager = new ConfigManager();
+        type = SaveType.ZOMBIE;
+        setOpaque(false);
         
+        initializeComponents();
+        initializeData();
+        setupHomeButtonListener();
+        updateButtonPanel();
+        add(pnlConfig);
+    }
+    
+    private void initializeData() {
+        ArrayList<Zombie> zombies = manager.getZombies();
+        ArrayList<Defense> defenses = manager.getDefenses();
+        
+        if (type == SaveType.ZOMBIE) {
+            createRowsZombies(zombies);
+        } else {
+            createRowsDefenses(defenses);
+        }
+        
+    }
+    
+    private void createRowsZombies(ArrayList<Zombie> zombies) {
+        System.out.println("llego");
+        for (Zombie zombie : zombies) {
+            entityContainer.add(new EntityPanel(zombie));
+        }
+    }
+    
+    private void createRowsDefenses(ArrayList<Defense> defenses) {
+        for (Defense defense : defenses) {
+            entityContainer.add(new EntityPanel(defense));
+        }
+    }
+    
+    private void reloadList() {
+        
+    }
+    
+    private void initializeComponents() {
+        initializeButtons();
+        initializeScrollArea();
+        initializeEntityContainer();
+        initializePanels();
+        updateButtonSizes();
+        updateFontSizes();
+    }
+    
+    private void initializeButtons() {
         btnZombies = new JButton("Zombies");
         btnDefenses = new JButton("Defenses");
-        btnHome = new JButton();
-        scrollArea = new JScrollPane();
+        btnHome = new JButton("Home");
+        btnCheckmark = createCheckmarkButton();
         
+        setButtonColors(btnZombies, btnDefenses, btnHome);
+        addHoverListeners(btnZombies, btnDefenses, btnHome);
+    }
+    
+    private void setButtonColors(JButton... buttons) {
+        for (JButton button : buttons) {
+            button.setForeground(Color.BLACK);
+        }
+    }
+    
+    private void addHoverListeners(JButton... buttons) {
+        for (JButton button : buttons) {
+            addHoverListener(button);
+        }
+    }
+    
+    private void addHoverListener(JButton button) {
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent evt) {
+                button.setForeground(Color.GREEN);   
+            }
+            @Override
+            public void mouseExited(MouseEvent evt) {
+                button.setForeground(Color.BLACK);
+            }    
+        });
+    }
+    
+    private void initializeScrollArea() {
+        scrollArea = new JScrollPane();
         scrollArea.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         scrollArea.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        
+    }
+    
+    private void initializeEntityContainer() {
         entityContainer = new JPanel();
         entityContainer.setLayout(new BoxLayout(entityContainer, BoxLayout.Y_AXIS));
-        
-        for (EntityPanel entity : zombies) {
-            entityContainer.add(entity);
-            
-        }
-        btnCheckmark = createCheckmarkPanel();
         entityContainer.add(btnCheckmark);
         scrollArea.setViewportView(entityContainer);
-        
-        btnZombies.setForeground(Color.BLACK);
-        btnDefenses.setForeground(Color.BLACK);
-        
-        selection(btnZombies);
-        selection(btnDefenses);
-        selection(btnHome);
-        
+    }
+    
+    private void initializePanels() {
         pnlChoices = new JPanel();
         pnlChoices.setLayout(new BoxLayout(pnlChoices, BoxLayout.X_AXIS));
         pnlChoices.setOpaque(false);
@@ -80,12 +157,9 @@ public class ConfigPanel extends JPanel {
         pnlConfig = new JPanel();
         pnlConfig.setLayout(new BoxLayout(pnlConfig, BoxLayout.Y_AXIS));
         pnlConfig.setOpaque(false);
-        
-        updateButtonSizes();
-        updateFontSizes();
-        updateButtonPanel();
-        this.add(pnlConfig);
-        
+    }
+    
+    private void setupHomeButtonListener() {
         btnHome.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent evt) {
@@ -93,136 +167,146 @@ public class ConfigPanel extends JPanel {
                 configWindow.dispose();
             }
         });
-        
+    }
+    
+    private ArrayList<EntityPanel> getEntitiesForCurrentType() {
+        if (type == SaveType.ZOMBIE) {
+            return zombies;
+        } else {
+            return defenses;
+        }
     }
     
     private void updateButtonSizes() {
+        int width = calculateButtonWidth();
+        int height = calculateButtonHeight();
         
-        int width = Math.max(200, (int)(getWidth() * 0.10));
-        int height = Math.max(50, (int)(getHeight() * 0.06));
-        
-        Dimension maxButtonSize = new Dimension(width + 50, height + 10);
+        Dimension maxButtonSize = new Dimension(width + BUTTON_WIDTH_OFFSET, height + BUTTON_HEIGHT_OFFSET);
         Dimension normalButtonSize = new Dimension(width, height);
-  
-        btnZombies.setMaximumSize(maxButtonSize);
-        btnZombies.setPreferredSize(normalButtonSize);
         
-        btnDefenses.setMaximumSize(maxButtonSize);
-        btnDefenses.setPreferredSize(normalButtonSize);
+        setButtonDimensions(btnZombies, maxButtonSize, normalButtonSize);
+        setButtonDimensions(btnDefenses, maxButtonSize, normalButtonSize);
+        setButtonDimensions(btnHome, maxButtonSize, normalButtonSize);
+    }
+    
+    private int calculateButtonWidth() {
+        return Math.max(MIN_BUTTON_WIDTH, (int)(getWidth() * 0.10));
+    }
+    
+    private int calculateButtonHeight() {
+        return Math.max(MIN_BUTTON_HEIGHT, (int)(getHeight() * 0.06));
+    }
+    
+    private void setButtonDimensions(JButton button, Dimension maxSize, Dimension preferredSize) {
+        button.setMaximumSize(maxSize);
+        button.setPreferredSize(preferredSize);
     }
     
     private void updateButtonPanel() {
- 
+        clearPanels();
+        buildChoicesPanel();
+        buildConfigPanel();
+        refreshPanels();
+    }
+    
+    private void clearPanels() {
         pnlConfig.removeAll();
         pnlChoices.removeAll();
-        int spacing = 2;
-        
+    }
+    
+    private void buildChoicesPanel() {
         pnlChoices.add(createBoxedButton(btnZombies));
-        pnlChoices.add(Box.createHorizontalStrut(spacing));
-        
+        pnlChoices.add(Box.createHorizontalStrut(SPACING));
         pnlChoices.add(createBoxedButton(btnDefenses));
-        
+        pnlChoices.add(Box.createHorizontalGlue());
+    }
+    
+    private void buildConfigPanel() {
+        pnlConfig.add(pnlChoices);
+        pnlConfig.add(Box.createVerticalStrut(SPACING));
+        pnlConfig.add(scrollArea);
+        pnlConfig.add(Box.createVerticalStrut(SPACING));
+        pnlConfig.add(createHomeButtonBox());
+    }
+    
+    private Box createHomeButtonBox() {
+        Box homeBox = Box.createHorizontalBox();
+        homeBox.add(btnHome);
+        homeBox.add(Box.createHorizontalGlue());
+        return homeBox;
+    }
+    
+    private void refreshPanels() {
         pnlChoices.revalidate();
         pnlChoices.repaint();
-        
-        pnlConfig.add(pnlChoices);
-        pnlConfig.add(Box.createVerticalStrut(spacing));
-        
-        pnlConfig.add(scrollArea);
-        pnlConfig.add(Box.createVerticalStrut(spacing));
-        
-        pnlConfig.add(btnHome);
-        
         pnlConfig.revalidate();
         pnlConfig.repaint();
     }
     
-    private void updatePosition() {
-        
-        int horizontalOffset = (int)(getWidth() * -0.4);
-        int verticalOffset = (int)(getHeight() * -0.3);
-        
-        //gbc.gridx = 10; 
-        //gbc.gridy = 10;
-        //gbc.gridwidth = 10;
-        //gbc.fill = GridBagConstraints.BASELINE;
-        //gbc.anchor = GridBagConstraints.NORTH;
-        //gbc.insets = new Insets(verticalOffset, horizontalOffset, 0, 0);
-        
-        //this.remove(pnlConfig);
-        
-        this.add(pnlConfig);
-        
-        this.revalidate();
-        this.repaint();
-    }
-    
     private void updateFontSizes() {
-        
-        int fontSize = Math.min(32,Math.max(12, getHeight() / 30));
+        int fontSize = calculateFontSize();
         font = new Font("Arial", Font.PLAIN, fontSize);
         
-        btnZombies.setFont(font);
-        btnDefenses.setFont(font);     
+        applyFontToButtons(btnZombies, btnDefenses);
     }
     
-    private Box createBoxedButton (JButton button) {
-       
+    private int calculateFontSize() {
+        return Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, getHeight() / 30));
+    }
+    
+    private void applyFontToButtons(JButton... buttons) {
+        for (JButton button : buttons) {
+            button.setFont(font);
+        }
+    }
+    
+    private Box createBoxedButton(JButton button) {
         Box box = Box.createHorizontalBox();  
         box.add(button);
         return box;     
     }
     
-    private void makeButtonTransparent(JButton button) {
-        button.setOpaque(false);
-        button.setContentAreaFilled(false);
-        button.setBorderPainted(false);
-        button.setFocusPainted(false);
+    private void saveEntity(EntityPanel panel) {
+        try {
+            String[] values = panel.getFieldValues();
+            Zombie zombie = parseEntityValues(values);
+            manager.addZombie(zombie);
+        } catch (NumberFormatException ex) {
+            System.out.println("No se guardo correctamente");
+        }
     }
     
-    private void selection(JButton button) {
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setForeground(Color.GREEN);   
-            }
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setForeground(Color.BLACK);
-            }    
-        });    
+    private Zombie parseEntityValues(String[] values) throws NumberFormatException {
+        String name = values[0];
+        int health = Integer.parseInt(values[1]);
+        int damage = Integer.parseInt(values[2]);
+        int showUp = Integer.parseInt(values[3]);
+        int cost = Integer.parseInt(values[4]);
+        int range = Integer.parseInt(values[5]);
+        
+        return new Zombie(name, health, damage, showUp, cost, range);
     }
     
-    private JButton createCheckmarkPanel() {
+    private JButton createCheckmarkButton() {
         JButton button = new JButton("+");
         button.setBackground(Color.GREEN);
-        
-        button.addActionListener(e -> {
-            System.out.println("Clickeado");
-            for (int i = 0; i < 2; i++) {
-                EntityPanel panel = zombies.get(i);
-                System.out.println("aca 1");
-                if (panel.allFieldsFilled()) {
-                    String[] values = panel.getFieldValues();
-                    System.out.println("aca 2");
-                    try {
-                        String name = values[0];
-                        int health = Integer.parseInt(values[1]);
-                        int damage = Integer.parseInt(values[2]);
-                        int showUp = Integer.parseInt(values[3]);
-                        int cost = Integer.parseInt(values[4]);
-                        int range = Integer.parseInt(values[5]);
-
-                        Zombie zombie = new Zombie(name, health, damage, showUp, cost, range);
-                        FileManager.saveZombie(zombie);
-                        System.out.println("Se guardo");
-                    } catch (NumberFormatException ex) {
-                        System.out.println("Algo no funco");
-                    }
-                }
+        button.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evt) {
+                saveAllEntities();
             }
         });
         return button;
     }
+    
+    private void saveAllEntities() {
+        ArrayList<EntityPanel> currentEntities = getEntitiesForCurrentType();
+        for (EntityPanel panel : currentEntities) {
+            if (!panel.allFieldsFilled()) {
+                continue;
+            }
+            saveEntity(panel);
+        }
+    }    
     
 }
