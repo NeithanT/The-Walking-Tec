@@ -1,4 +1,3 @@
-
 package Table;
 
 import java.awt.Graphics;
@@ -12,7 +11,7 @@ public class GameBoard extends JPanel {
     
     private Image backgroundImage;
     
-    private static final String IMAGE_PATH = "/assets/tablero1.png";
+    private static final String IMAGE_PATH = "/assets/tablero.png";
     
     public GameBoard(){
         

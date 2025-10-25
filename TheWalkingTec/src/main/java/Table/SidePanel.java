@@ -8,6 +8,10 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Insets;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -32,9 +36,11 @@ public class SidePanel extends JPanel {
     private JPanel pnlDefenses;
     private JPanel infoPanel;
     private JPanel imgPanel;
+    private TableMain table;
     
-    public SidePanel(){
+    public SidePanel(TableMain parentTable) {
     
+        table = parentTable;
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         
         this.add(createDefensesPane());
@@ -54,12 +60,23 @@ public class SidePanel extends JPanel {
         selection(btnMenu);
         selection(btnSell);
 
-        this.addComponentListener(new java.awt.event.ComponentAdapter() {
-        @Override
-        public void componentResized(java.awt.event.ComponentEvent e) {
-            updatePanelSize();          
-        }
-    });
+        this.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                updatePanelSize();          
+            }
+        });
+        
+        btnMenu.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evt) {
+                if (table != null) {
+                    table.goMenu();
+                }
+                table.dispose();
+            }
+            
+        });
     } 
     private JPanel createButtonPanel(){
         
@@ -104,22 +121,24 @@ public class SidePanel extends JPanel {
         pnlDefenses = new JPanel();
         pnlDefenses.setLayout(new BoxLayout(pnlDefenses, BoxLayout.Y_AXIS));
         
-        pnlDefenses.add(createDefenseItem("Perro WhatsApp", 15, 5, "/assets/PerroWhatsApp.jpg"));
-        pnlDefenses.add(createDefenseItem("Waguri", 20, 7, "/assets/Kaoroku.jpg"));
-        
-        pnlDefenses.add(createDefenseItem("Bloque de madera", 25, 0, "/assets/BloqueDeMadera.jpg"));
-        pnlDefenses.add(createDefenseItem("Bloque de hierro", 50, 0, "/assets/BloqueDeHierro.jpg"));
-        pnlDefenses.add(createDefenseItem("AlienLockin", 25, 10,"/assets/AlienLockIn.jpg"));
-
-        pnlDefenses.add(createDefenseItem("Lebron James", 30, 7, "/assets/Lebron James.jpg"));
-        pnlDefenses.add(createDefenseItem("Trampa de redstone", 1, 1000,"/assets/TNT.jpg"));
-        pnlDefenses.add(createDefenseItem("Goku", 35, 10,"/assets/GokuxD.jpg"));
-        
+        try {
+            pnlDefenses.add(createDefenseItem("Perro WhatsApp", 15, 5, "/assets/PerroWhatsApp.jpg"));
+            pnlDefenses.add(createDefenseItem("Waguri", 20, 7, "/assets/Kaoroku.jpg"));
+            pnlDefenses.add(createDefenseItem("Bloque de madera", 25, 0, "/assets/BloqueDeMadera.jpg"));
+            pnlDefenses.add(createDefenseItem("Bloque de hierro", 50, 0, "/assets/BloqueDeHierro.jpg"));
+            pnlDefenses.add(createDefenseItem("AlienLockin", 25, 10,"/assets/AlienLockIn.jpg"));
+            pnlDefenses.add(createDefenseItem("AlienLockin", 25, 10,"/assets/Lebron_James.jpg"));
+            pnlDefenses.add(createDefenseItem("Trampa de redstone", 1, 1000,"/assets/TNT.jpg"));
+            pnlDefenses.add(createDefenseItem("Goku", 35, 10,"/assets/GokuxD.jpg"));
+        } catch(IllegalArgumentException e) {
+            System.out.println("No estan presentes algunas iamgenes");
+        }
         scpScrollText = new JScrollPane(pnlDefenses);
         scpScrollText.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         
         return scpScrollText;   
     }
+    
     private JPanel createDefenseItem(String nombre, int vida, int dano, String imagePath){
         
         JPanel itemPanel = new JPanel();
@@ -191,6 +210,7 @@ public class SidePanel extends JPanel {
         imgPanel.setPreferredSize(new Dimension(defences1Width, defencesHeight));
         infoPanel.setPreferredSize(new Dimension(defences2Width, defencesHeight));    
     }
+    
     private void updatePanelSize() {
 
         if (getParent() != null) {
@@ -204,6 +224,7 @@ public class SidePanel extends JPanel {
             revalidate();
         }
     }
+    
     private void selection(JButton button) {
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
