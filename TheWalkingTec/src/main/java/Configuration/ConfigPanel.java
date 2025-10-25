@@ -184,11 +184,11 @@ public class ConfigPanel extends JPanel {
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setForeground(Color.BLACK);   
+                button.setForeground(Color.GREEN);   
             }
             @Override
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setForeground(Color.GREEN);
+                button.setForeground(Color.BLACK);
             }    
         });    
     }
