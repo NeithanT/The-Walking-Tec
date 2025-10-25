@@ -25,13 +25,15 @@ public class ConfigWindow extends JFrame {
     }
     
     public ConfigWindow(JFrame parentMenu) {
+        
         this.parentMenu = parentMenu;
         
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         
+        
         gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
         
-        this.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        gd.setFullScreenWindow(this);
         
         ConfigPanel menu = new ConfigPanel(this);
         
@@ -49,8 +51,8 @@ public class ConfigWindow extends JFrame {
             parentMenu.setVisible(true);
             parentMenu.toFront();
             parentMenu.requestFocus();
+            gd.setFullScreenWindow(parentMenu);
         }
-        this.dispose();
     }
     
     public void chooseFile() throws UnsupportedLookAndFeelException {

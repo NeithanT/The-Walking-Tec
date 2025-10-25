@@ -1,18 +1,22 @@
 package MainMenu;
 
 import Configuration.ConfigWindow;
+import Table.TableMain;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 
 public class MenuPanel extends JPanel {
     
@@ -25,6 +29,7 @@ public class MenuPanel extends JPanel {
     
     public MenuPanel(JFrame parentFrame) {
         
+        menuFrame = parentFrame;
         this.setLayout(new GridBagLayout());       
         this.setOpaque(false);
 
@@ -52,15 +57,16 @@ public class MenuPanel extends JPanel {
         pnlBotones.setLayout(new BoxLayout(pnlBotones, BoxLayout.Y_AXIS));
         pnlBotones.setOpaque(false);
  
-        this.addComponentListener(new java.awt.event.ComponentAdapter() {
+        this.addComponentListener(new ComponentAdapter() {
             @Override
-            public void componentResized(java.awt.event.ComponentEvent e) {
+            public void componentResized(ComponentEvent e) {
                 updateButtonSizes();
                 updateFontSizes();
                 updateButtonPanel();
                 updatePosition();
             }
         }); 
+        
         btnSalir.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
@@ -68,15 +74,22 @@ public class MenuPanel extends JPanel {
             }
         });
         
-        btnConfig.addMouseListener(new java.awt.event.MouseAdapter() {
+        btnConfig.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
+            public void mouseClicked(MouseEvent evt) {
                 new ConfigWindow(menuFrame);
                 menuFrame.setVisible(false);
             }
         });
         
-        menuFrame = parentFrame;
+        btnNuevaPartida.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evt) {
+        
+                new TableMain(menuFrame);
+                menuFrame.setVisible(false);
+            }
+        });
     }  
     private void updateButtonSizes(){
         

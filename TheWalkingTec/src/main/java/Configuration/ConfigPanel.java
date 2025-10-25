@@ -3,6 +3,8 @@ package Configuration;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -28,10 +30,6 @@ public class ConfigPanel extends JPanel {
     ArrayList<EntityPanel> defenses;
     
     boolean isZombies;
-    
-    public ConfigPanel() {
-        this(null);
-    }
     
     public ConfigPanel(ConfigWindow configWindow) {
         this.configWindow = configWindow;
@@ -80,13 +78,10 @@ public class ConfigPanel extends JPanel {
         updateButtonPanel();
         this.add(pnlConfig);
         
-        btnHome.addMouseListener(new java.awt.event.MouseAdapter() {
+        btnHome.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                if (configWindow != null) {
-                    configWindow.goHome();
-                }
-                
+            public void mouseClicked(MouseEvent evt) {
+                configWindow.goHome();
                 configWindow.dispose();
             }
         });

@@ -8,6 +8,10 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Insets;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -32,9 +36,11 @@ public class SidePanel extends JPanel {
     private JPanel pnlDefenses;
     private JPanel infoPanel;
     private JPanel imgPanel;
+    private TableMain table;
     
-    public SidePanel() {
+    public SidePanel(TableMain parentTable) {
     
+        table = parentTable;
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         
         this.add(createDefensesPane());
@@ -54,12 +60,23 @@ public class SidePanel extends JPanel {
         selection(btnMenu);
         selection(btnSell);
 
-        this.addComponentListener(new java.awt.event.ComponentAdapter() {
-        @Override
-        public void componentResized(java.awt.event.ComponentEvent e) {
-            updatePanelSize();          
-        }
-    });
+        this.addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                updatePanelSize();          
+            }
+        });
+        
+        btnMenu.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evt) {
+                if (table != null) {
+                    table.goMenu();
+                }
+                table.dispose();
+            }
+            
+        });
     } 
     private JPanel createButtonPanel(){
         
