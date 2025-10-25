@@ -13,6 +13,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.JLabel;
 
 public class ConfigPanel extends JPanel {
     
@@ -54,8 +55,10 @@ public class ConfigPanel extends JPanel {
         
         for (EntityPanel entity : zombies) {
             entityContainer.add(entity);
+            
         }
         
+        entityContainer.add(createCheckmarkPanel());
         scrollArea.setViewportView(entityContainer);
         
         btnZombies.setForeground(Color.BLACK);
@@ -183,6 +186,16 @@ public class ConfigPanel extends JPanel {
                 button.setForeground(Color.GREEN);
             }    
         });    
+    }
+    
+    private JPanel createCheckmarkPanel() {
+        JPanel panel = new JPanel();
+        panel.setBackground(Color.GREEN);
+        JLabel checkmark = new JLabel("+");
+        checkmark.setHorizontalAlignment(JLabel.CENTER);
+        checkmark.setVerticalAlignment(JLabel.CENTER);
+        panel.add(checkmark);
+        return panel;
     }
     
 }
