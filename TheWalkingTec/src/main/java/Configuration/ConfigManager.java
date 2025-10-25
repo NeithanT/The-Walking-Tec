@@ -9,8 +9,13 @@ public class ConfigManager {
     private ArrayList<Zombie> zombies;
     private ArrayList<Defense> defenses;
     
-    public void addZombie() {}
-    public void addDefense() {}
+    public void addZombie() {
+    
+    }
+    
+    public void addDefense() {
+    
+    }
     
     public void loadFiles() {}
     

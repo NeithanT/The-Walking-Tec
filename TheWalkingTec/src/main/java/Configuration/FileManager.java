@@ -3,6 +3,7 @@ package Configuration;
 
 
 
+import Defense.Defense;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -19,22 +20,25 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
+import Zombie.Zombie;
 import java.net.URL;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 
 
-
+/**
+ *
+ * @author Prof Diego
+ * @Creditos a el
+ */
 public class FileManager {
     
-    private final URL PATH = getClass().getResource("/Saves");
-            //main/resources/Saves
-    private final String pathDefenses = PATH + "defenses.data";
+    private static final String PATH = "";
     
-    private final String pathZombies = PATH + "zombies.data";
+    private static final String pathDefenses = PATH + "defenses.data";
     
-    private final String pathGames = PATH + "games.data";
+    private static final String pathZombies = PATH + "zombies.data";
+    
+    private static final String pathGames = PATH + "games.data";
     
     // read txt file, para ller el query
     public static String readFile (String path) throws FileNotFoundException, IOException
@@ -73,7 +77,18 @@ public class FileManager {
         
     }
     
-    // escribe un objeto
+    public static void saveZombie(Zombie zombie) {
+        writeObject(zombie, pathZombies);
+    }
+    
+    public static void saveDefense(Defense defense) {
+        writeObject(defense, pathDefenses);
+    }
+    
+    public static void saveGame(int level) {
+        writeObject(level, pathGames);
+    }
+    
     public static void writeObject (Object obj, String filePath)
     {
         try{

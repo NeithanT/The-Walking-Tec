@@ -20,7 +20,7 @@ public class EntityRow extends JPanel {
         setLayout(new FlowLayout(FlowLayout.LEFT));
         setBackground(BG_COLOR);
         
-        createLabel(aspect);
+        label = new JLabel(aspect);
         createTextField();
         
         add(label);
@@ -37,9 +37,7 @@ public class EntityRow extends JPanel {
         ));
     }
     
-    public void createLabel(String aspect) {
-        label = new JLabel(aspect);
-        label.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    public JTextField getTextField() {
+        return textField;
     }
-    
 }
