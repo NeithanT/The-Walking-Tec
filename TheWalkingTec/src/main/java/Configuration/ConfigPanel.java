@@ -3,6 +3,10 @@ package Configuration;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.event.ActionListener;
+import Configuration.EntityPanel;
+import Configuration.FileManager;
+import Zombie.Zombie;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -20,6 +24,7 @@ public class ConfigPanel extends JPanel {
     private JButton btnZombies;
     private JButton btnDefenses;
     private JButton btnHome;
+    private JButton btnCheckmark;
     private JScrollPane scrollArea;
     private JPanel  pnlConfig;
     private JPanel  pnlChoices;
@@ -50,15 +55,15 @@ public class ConfigPanel extends JPanel {
         scrollArea.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         scrollArea.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         
-        JPanel entityContainer = new JPanel();
+        entityContainer = new JPanel();
         entityContainer.setLayout(new BoxLayout(entityContainer, BoxLayout.Y_AXIS));
         
         for (EntityPanel entity : zombies) {
             entityContainer.add(entity);
             
         }
-        
-        entityContainer.add(createCheckmarkPanel());
+        btnCheckmark = createCheckmarkPanel();
+        entityContainer.add(btnCheckmark);
         scrollArea.setViewportView(entityContainer);
         
         btnZombies.setForeground(Color.BLACK);
@@ -188,14 +193,36 @@ public class ConfigPanel extends JPanel {
         });    
     }
     
-    private JPanel createCheckmarkPanel() {
-        JPanel panel = new JPanel();
-        panel.setBackground(Color.GREEN);
-        JLabel checkmark = new JLabel("+");
-        checkmark.setHorizontalAlignment(JLabel.CENTER);
-        checkmark.setVerticalAlignment(JLabel.CENTER);
-        panel.add(checkmark);
-        return panel;
+    private JButton createCheckmarkPanel() {
+        JButton button = new JButton("+");
+        button.setBackground(Color.GREEN);
+        
+        button.addActionListener(e -> {
+            System.out.println("Clickeado");
+            for (int i = 0; i < 2; i++) {
+                EntityPanel panel = zombies.get(i);
+                System.out.println("aca 1");
+                if (panel.allFieldsFilled()) {
+                    String[] values = panel.getFieldValues();
+                    System.out.println("aca 2");
+                    try {
+                        String name = values[0];
+                        int health = Integer.parseInt(values[1]);
+                        int damage = Integer.parseInt(values[2]);
+                        int showUp = Integer.parseInt(values[3]);
+                        int cost = Integer.parseInt(values[4]);
+                        int range = Integer.parseInt(values[5]);
+
+                        Zombie zombie = new Zombie(name, health, damage, showUp, cost, range);
+                        FileManager.saveZombie(zombie);
+                        System.out.println("Se guardo");
+                    } catch (NumberFormatException ex) {
+                        System.out.println("Algo no funco");
+                    }
+                }
+            }
+        });
+        return button;
     }
     
 }

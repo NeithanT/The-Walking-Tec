@@ -36,13 +36,11 @@ public class EntityPanel extends JPanel {
     
     private void createLabels() {
         rows.add(new EntityRow("Nombre: "));
-        rows.add(new EntityRow("Nombre:"));
         rows.add(new EntityRow("Vida:"));
         rows.add(new EntityRow("Daño:"));
         rows.add(new EntityRow("Aparicion:"));
         rows.add(new EntityRow("Costo:"));
         rows.add(new EntityRow("Rango:"));
-        rows.add(new EntityRow("Tipo:"));
     }
     
     private JLabel createImageLabel() {
@@ -100,10 +98,22 @@ public class EntityPanel extends JPanel {
         this.add(rows.get(4), gbc);
         gbc.gridx = 4;
         this.add(rows.get(5), gbc);
-        
-        // Row 3: attribute 6
-        gbc.gridy = 3;
-        gbc.gridx = 0;
-        this.add(rows.get(6), gbc);
+    }
+    
+    public boolean allFieldsFilled() {
+        for (EntityRow row : rows) {
+            if (row.getTextField().getText().trim().isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    public String[] getFieldValues() {
+        String[] values = new String[rows.size()];
+        for (int i = 0; i < rows.size(); i++) {
+            values[i] = rows.get(i).getTextField().getText().trim();
+        }
+        return values;
     }
 }
