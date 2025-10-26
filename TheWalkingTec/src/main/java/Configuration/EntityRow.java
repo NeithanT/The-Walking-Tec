@@ -2,11 +2,11 @@ package Configuration;
 
 import java.awt.Color;
 import java.awt.FlowLayout;
-import java.awt.Insets;
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentListener;
 
 public class EntityRow extends JPanel {
     
@@ -28,6 +28,11 @@ public class EntityRow extends JPanel {
         
     }
     
+    public EntityRow(String aspect, String field) {
+        this(aspect);
+        
+    }
+    
     public void createTextField() {
     
         textField = new JTextField(FIELD_COLUMNS);
@@ -39,5 +44,9 @@ public class EntityRow extends JPanel {
     
     public JTextField getTextField() {
         return textField;
+    }
+
+    public void addDocumentListener(DocumentListener listener) {
+        textField.getDocument().addDocumentListener(listener);
     }
 }

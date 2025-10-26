@@ -1,6 +1,4 @@
-
 package Configuration;
-
 
 
 import Defense.Defense;
@@ -22,6 +20,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import Zombie.Zombie;
 import java.net.URL;
+import java.util.ArrayList;
 
 
 
@@ -31,14 +30,6 @@ import java.net.URL;
  * @Creditos a el
  */
 public class FileManager {
-    
-    private static final String PATH = "";
-    
-    private static final String pathDefenses = PATH + "defenses.data";
-    
-    private static final String pathZombies = PATH + "zombies.data";
-    
-    private static final String pathGames = PATH + "games.data";
     
     // read txt file, para ller el query
     public static String readFile (String path) throws FileNotFoundException, IOException
@@ -64,7 +55,7 @@ public class FileManager {
     }
     
     
-        // read txt file, para ller el query
+    // read txt file, para ller el query
     public static void writeFile (String path, String value) throws IOException 
     {
 
@@ -75,18 +66,6 @@ public class FileManager {
             bw.close();
         }
         
-    }
-    
-    public static void saveZombie(Zombie zombie) {
-        writeObject(zombie, pathZombies);
-    }
-    
-    public static void saveDefense(Defense defense) {
-        writeObject(defense, pathDefenses);
-    }
-    
-    public static void saveGame(int level) {
-        writeObject(level, pathGames);
     }
     
     public static void writeObject (Object obj, String filePath)

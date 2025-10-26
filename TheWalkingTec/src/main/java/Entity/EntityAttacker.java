@@ -1,5 +1,5 @@
 package Entity;
 
-public interface AttackingEntity {
+public interface EntityAttacker {
     public void attack();
 }
