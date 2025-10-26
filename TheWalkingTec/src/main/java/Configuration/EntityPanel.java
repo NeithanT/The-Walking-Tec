@@ -377,6 +377,7 @@ public class EntityPanel extends JPanel {
                 resetImageLabel();
             }
         } catch (IOException ex) {
+            System.out.println("While: " + file.getPath());
             System.err.println("Error loading image: " + ex.getMessage());
             resetImageLabel();
         }
@@ -697,20 +698,20 @@ public class EntityPanel extends JPanel {
         }
         switch (type) {
             case CONTACT:
-                return new DefenseContact();
+                return new DefenseContact("defense", 1, 1, 1, 1);
             case MEDIUMRANGE:
-                return new DefenseMediumRange();
+                return new DefenseMediumRange("defense", 1, 1, 1, 1, 1);
             case FLYING:
-                return new DefenseFlying();
+                return new DefenseFlying("defense", 1, 1, 1, 1, 1);
             case EXPLOSIVE:
-                return new DefenseExplosive();
+                return new DefenseExplosive("defense", 1, 1, 1, 1);
             case MULTIPLEATTACK:
-                return new DefenseMultipleAttack();
+                return new DefenseMultipleAttack("defense", 1, 1, 1, 1, 1, 1);
             case HEALER:
-                return new DefenseHealer();
+                return new DefenseHealer("defense", 1, 1, 1, 1);
             case BLOCKS:
             default:
-                return new Defense();
+                return new Defense("defense", 1, 1, 1);
         }
     }
 
