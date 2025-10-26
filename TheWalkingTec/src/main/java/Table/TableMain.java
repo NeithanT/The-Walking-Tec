@@ -1,9 +1,12 @@
 
 package Table;
 
+import GameLogic.GameManager;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
+import javax.swing.BorderFactory;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
@@ -12,6 +15,7 @@ public class TableMain extends JFrame {
 
     private GraphicsDevice gd = null;
     JFrame parent;
+    private GameManager gameManager;
     
     public TableMain() {
         this(null);
@@ -29,6 +33,13 @@ public class TableMain extends JFrame {
         
         GameBoard background = new GameBoard();
         SidePanel sidepanel = new SidePanel(this);
+        
+        gameManager = new GameManager(background, sidepanel);
+        background.setGameManger(gameManager);
+        sidepanel.setGameManager(gameManager);
+       // sidepanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+
+        
         
         this.add(background, BorderLayout.CENTER);
         this.add(sidepanel, BorderLayout.EAST);
@@ -54,7 +65,7 @@ public class TableMain extends JFrame {
     
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            //new TableMain();
+            new TableMain();
         });
     }
     

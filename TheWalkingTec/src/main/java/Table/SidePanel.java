@@ -1,6 +1,7 @@
 
 package Table;
 
+import GameLogic.GameManager;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -12,6 +13,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -37,6 +39,8 @@ public class SidePanel extends JPanel {
     private JPanel infoPanel;
     private JPanel imgPanel;
     private TableMain table;
+    private GameManager gameManager;
+    private JPanel pnlSelected;
     
     public SidePanel(TableMain parentTable) {
     
@@ -44,11 +48,11 @@ public class SidePanel extends JPanel {
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         
         this.add(createDefensesPane());
-        scpScrollText.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
+        scpScrollText.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
         this.add(createButtonPanel());
-        pnlButtons.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        pnlButtons.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
         this.add(createLogArea());
-        scpScrollLog.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+        scpScrollLog.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
 
         btnStart.setBackground(Color.WHITE);
         btnPause.setBackground(Color.WHITE); 
@@ -78,6 +82,12 @@ public class SidePanel extends JPanel {
             
         });
     } 
+    
+    public void setGameManager(GameManager manager){
+        
+        this.gameManager = manager;
+    }
+    
     private JPanel createButtonPanel(){
         
         pnlButtons = new JPanel();
@@ -139,7 +149,7 @@ public class SidePanel extends JPanel {
         return scpScrollText;   
     }
     
-    private JPanel createDefenseItem(String nombre, int vida, int dano, String imagePath){
+    private JPanel createDefenseItem(String name, int health, int damage, String imagePath){
         
         JPanel itemPanel = new JPanel();
         itemPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
@@ -181,9 +191,9 @@ public class SidePanel extends JPanel {
         
         infoPanel = new JPanel();
         infoPanel.setLayout(new GridLayout(3, 1));
-        infoPanel.add(new JLabel("Nombre: " + nombre));
-        infoPanel.add(new JLabel("Vida: " + vida));
-        infoPanel.add(new JLabel("Daño: " + dano));
+        infoPanel.add(new JLabel("Nombre: " + name));
+        infoPanel.add(new JLabel("Vida: " + health));
+        infoPanel.add(new JLabel("Daño: " + damage));
 
         gbc.gridx = 1;
         gbc.gridy = 0;
@@ -191,9 +201,50 @@ public class SidePanel extends JPanel {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.fill = GridBagConstraints.BOTH;
         itemPanel.add(infoPanel, gbc);
+        
+        itemPanel.addMouseListener(new MouseAdapter() {
+
+            @Override
+            public void mouseClicked(MouseEvent event){
+
+                selectDefense(name, itemPanel);
+            }
+        });
 
         return itemPanel;   
     }
+    
+    private void selectDefense(String defenseName, JPanel panel){
+        
+        if (pnlSelected != null){
+            
+            pnlSelected.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+        }
+        
+        panel.setBorder(BorderFactory.createLineBorder(Color.GREEN, 3));
+        pnlSelected = panel;
+        
+        if (gameManager != null){
+            
+            gameManager.setSelectedDefense(defenseName);
+        }
+        
+        System.out.println("Seleccionada: " + defenseName);
+        
+        
+    }
+    
+    public void deselectDefense(){
+        
+        if (pnlSelected != null){
+            pnlSelected.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+            pnlSelected = null;
+        }
+        
+    }
+    
+    
+    
     private void updateSectionSizes(){
         
         int width = this.getWidth();

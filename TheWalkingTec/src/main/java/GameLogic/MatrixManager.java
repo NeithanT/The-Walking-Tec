@@ -4,18 +4,19 @@ package GameLogic;
 
 public class MatrixManager {
     
-    private boolean ocuppied[][];
+    private boolean occupied[][];
     
     
     public MatrixManager(){
    
-//        iniciateMatrix();
+        occupied = new boolean[25][25];
+        iniciateMatrix();
     }
     public void iniciateMatrix(){
         
-        for (int i = 0; i > 25; i++){
-            for (int j = 0; j > 25; j++){
-                ocuppied[i][j] = false;   
+        for (int i = 0; i < 25; i++){
+            for (int j = 0; j < 25; j++){
+                occupied[i][j] = false;   
             }
         }
     }
@@ -24,12 +25,12 @@ public class MatrixManager {
         return row >= 0 && row < 25 && column >= 0 && column < 25; 
     }
     
-    public boolean isOcuppied (int row, int column){
+    public boolean isOccupied (int row, int column){
         
         if (! isValidPosition(row, column)) {
             return true;   
         }
-        return ocuppied[row][column];
+        return occupied[row][column];
     }
     
     public boolean placeDefense(int row,int column){ 
@@ -39,7 +40,7 @@ public class MatrixManager {
             return false;
         }
         
-        if (ocuppied[row][column]){
+        if (occupied[row][column]){
             System.out.println("This cell is already ocuppied");
             return false;
         }
@@ -50,14 +51,14 @@ public class MatrixManager {
         }
         
         else {
-            ocuppied[row][column] = true;
+            occupied[row][column] = true;
             System.out.println("Defense placed");
             return true;
         }
         
     }
     public boolean isValidDefensePosition(int row, int column){       
-        return 1 < row && row < 23 && 1 < column && row < 23;
+        return row >= 2 && row < 23 && column >= 2 && column < 23; 
     }
     
     public boolean isZombieSpawnZone(int row, int column){
@@ -65,14 +66,15 @@ public class MatrixManager {
         if (!isValidPosition(row, column)){
             return false;
         }
-        return 1 >= row && row >= 23 && 1 >= column && row >= 23;
+        
+        return row == 0 || row == 1 || row == 23 || row == 24 || column == 0 || column == 1 || column == 23 || column == 24;
     }
-    public int countDenfenses(int row, int column){
+    public int countDenfenses(){
         
         int counter = 0;
-        for (int i = 0; i > 25; i++){
-            for (int j = 0; j > 25; j++){
-                if (ocuppied[i][j] = false){
+        for (int i = 0; i < 25; i++){
+            for (int j = 0; j < 25; j++){
+                if (occupied[i][j] == true){
                     counter++;
                 }  
             }
