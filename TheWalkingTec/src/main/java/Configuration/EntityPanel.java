@@ -7,24 +7,34 @@ import Zombie.ZombieType;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Image;
 import java.awt.Insets;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.event.DocumentListener;
 
 public class EntityPanel extends JPanel {
     
     private static final int IMAGE_SIZE = 50;
     private static final int BUTTON_SIZE = 30;
     private static final Color BG_COLOR = new Color(245, 245, 245);
-    private static final Insets INSETS = new Insets(5, 5, 5, 5);
     private static final int ENTITY_ROWS_PER_ROW = 3;
     
     private ArrayList<EntityRow> entityRows;
+    private JLabel imageLabel;
+    private JButton chooseImageButton;
+    private File selectedImageFile;
     
     
     public EntityPanel(Zombie zombie) {
@@ -73,10 +83,23 @@ public class EntityPanel extends JPanel {
     }
     
     private JLabel createImageLabel() {
-        JLabel label = new JLabel("Image");
-        label.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
-        label.setPreferredSize(new Dimension(IMAGE_SIZE, IMAGE_SIZE));
-        return label;
+        if (imageLabel == null) {
+            imageLabel = new JLabel("Image", JLabel.CENTER);
+            imageLabel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
+            imageLabel.setPreferredSize(new Dimension(IMAGE_SIZE, IMAGE_SIZE));
+            imageLabel.setHorizontalAlignment(JLabel.CENTER);
+            imageLabel.setVerticalAlignment(JLabel.CENTER);
+        }
+        return imageLabel;
+    }
+
+    private JButton createImageChooserButton() {
+        if (chooseImageButton == null) {
+            chooseImageButton = new JButton("Elegir Imagen");
+            chooseImageButton.addActionListener(evt -> openImageChooser());
+            chooseImageButton.setMargin(new Insets(5, 10, 5, 10));
+        }
+        return chooseImageButton;
     }
     
     private JButton createRemoveButton() {
@@ -103,9 +126,11 @@ public class EntityPanel extends JPanel {
         headerPanel.setBackground(BG_COLOR);
         
         JLabel image = createImageLabel();
+        JButton chooser = createImageChooserButton();
         JButton remove = createRemoveButton();
         
         headerPanel.add(image);
+        headerPanel.add(chooser);
         headerPanel.add(remove);
         
         return headerPanel;
@@ -144,6 +169,49 @@ public class EntityPanel extends JPanel {
         this.revalidate();
         this.repaint();
     }
+
+    private void openImageChooser() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setFileFilter(new FileNameExtensionFilter("Image Files", "png", "jpg", "jpeg", "gif"));
+        if (selectedImageFile != null && selectedImageFile.getParentFile() != null) {
+            chooser.setCurrentDirectory(selectedImageFile.getParentFile());
+        }
+
+        int result = chooser.showOpenDialog(this);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File file = chooser.getSelectedFile();
+            setImageFromFile(file);
+        }
+    }
+
+    private void setImageFromFile(File file) {
+        try {
+            Image img = ImageIO.read(file);
+            if (img != null) {
+                Image scaled = img.getScaledInstance(IMAGE_SIZE, IMAGE_SIZE, Image.SCALE_SMOOTH);
+                imageLabel.setIcon(new ImageIcon(scaled));
+                imageLabel.setText(null);
+                selectedImageFile = file;
+            } else {
+                resetImageLabel();
+            }
+        } catch (IOException ex) {
+            System.err.println("Error loading image: " + ex.getMessage());
+            resetImageLabel();
+        }
+    }
+
+    private void resetImageLabel() {
+        if (imageLabel != null) {
+            imageLabel.setIcon(null);
+            imageLabel.setText("Image");
+        }
+        selectedImageFile = null;
+    }
+
+    public File getSelectedImageFile() {
+        return selectedImageFile;
+    }
     
     public boolean allFieldsFilled() {
         for (EntityRow row : entityRows) {
@@ -160,5 +228,11 @@ public class EntityPanel extends JPanel {
             values[i] = entityRows.get(i).getTextField().getText().trim();
         }
         return values;
+    }
+
+    public void addDocumentListener(DocumentListener listener) {
+        for (EntityRow row : entityRows) {
+            row.addDocumentListener(listener);
+        }
     }
 }

@@ -1,5 +1,6 @@
 package Entity;
 
+import java.awt.Image;
 import java.io.Serializable;
 
 public abstract class Entity extends Thread implements Serializable {
@@ -9,5 +10,6 @@ public abstract class Entity extends Thread implements Serializable {
     protected int healthPoints;
     protected int cost;
     protected int showUpLevel;
+    protected Image image;
     
 }

@@ -4,7 +4,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -13,8 +12,6 @@ import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.RenderingHints;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -32,6 +29,8 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import Configuration.EntityPanel;
 import Defense.Defense;
 import Vanity.DefaultFont;
@@ -124,20 +123,94 @@ public class ConfigPanel extends JPanel {
         this.zombies.clear();
         for (Zombie zombie : zombies) {
             EntityPanel panel = new EntityPanel(zombie);
-            entityContainer.add(panel);
-            this.zombies.add(panel);
+            addEntityPanel(panel, this.zombies);
         }
-        entityContainer.add(btnCheckmark);
+        updateCheckmarkButtonState();
     }
     
     private void createRowsDefenses(ArrayList<Defense> defenses) {
         this.defenses.clear();
         for (Defense defense : defenses) {
             EntityPanel panel = new EntityPanel(defense);
-            entityContainer.add(panel);
-            this.defenses.add(panel);
+            addEntityPanel(panel, this.defenses);
         }
-        entityContainer.add(btnCheckmark);
+        updateCheckmarkButtonState();
+    }
+
+    private void addEntityPanel(EntityPanel panel, ArrayList<EntityPanel> list) {
+        list.add(panel);
+        attachFieldListener(panel);
+        entityContainer.add(panel);
+    }
+
+    private void attachFieldListener(EntityPanel panel) {
+        panel.addDocumentListener(createFieldListener());
+    }
+
+    private DocumentListener createFieldListener() {
+        return new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                handleFieldChange();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                handleFieldChange();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                handleFieldChange();
+            }
+        };
+    }
+
+    private void handleFieldChange() {
+        updateCheckmarkButtonState();
+    }
+
+    private boolean shouldShowCheckmarkButton() {
+        ArrayList<EntityPanel> panels = getEntitiesForCurrentType();
+        if (panels.isEmpty()) {
+            return true;
+        }
+        for (EntityPanel panel : panels) {
+            if (!panel.allFieldsFilled()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void updateCheckmarkButtonState() {
+        if (entityContainer == null || btnCheckmark == null) {
+            return;
+        }
+        entityContainer.remove(btnCheckmark);
+        if (shouldShowCheckmarkButton()) {
+            entityContainer.add(btnCheckmark);
+        }
+        entityContainer.revalidate();
+        entityContainer.repaint();
+    }
+
+    private void addNewEntityPanel() {
+        if (!shouldShowCheckmarkButton()) {
+            return;
+        }
+
+        entityContainer.remove(btnCheckmark);
+
+        if (type == SaveType.ZOMBIE) {
+            EntityPanel panel = new EntityPanel(new Zombie());
+            addEntityPanel(panel, zombies);
+        } else {
+            EntityPanel panel = new EntityPanel(new Defense());
+            addEntityPanel(panel, defenses);
+        }
+
+        updateCheckmarkButtonState();
     }
     
     private void reloadList() {
@@ -386,6 +459,7 @@ public class ConfigPanel extends JPanel {
             @Override
             public void mouseClicked(MouseEvent evt) {
                 saveAllEntities();
+                addNewEntityPanel();
             }
         });
     }
