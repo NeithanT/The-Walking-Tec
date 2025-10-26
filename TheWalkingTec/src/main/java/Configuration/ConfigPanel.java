@@ -34,6 +34,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import Configuration.EntityPanel;
 import Defense.Defense;
+import Vanity.DefaultFont;
 import Vanity.RoundedButton;
 import Vanity.RoundedPanel;
 import Zombie.Zombie;
@@ -71,7 +72,6 @@ public class ConfigPanel extends JPanel {
     private static final Color SECONDARY_BUTTON_HOVER = new Color(56, 189, 248);
     private static final Color ACCENT_BUTTON_COLOR = new Color(34, 197, 94);
     private static final Color ACCENT_BUTTON_HOVER = new Color(74, 222, 128);
-    private static final Color TEXT_COLOR = Color.WHITE;
     private static final int SPACING = 24;
     private static final int PANEL_CORNER_RADIUS = 28;
     private static final int BUTTON_CORNER_RADIUS = 18;
@@ -79,10 +79,7 @@ public class ConfigPanel extends JPanel {
     private static final int MIN_BUTTON_WIDTH = 200;
     private static final int MIN_BUTTON_HEIGHT = 50;
     private static final int BUTTON_WIDTH_OFFSET = 50;
-    private static final int BUTTON_HEIGHT_OFFSET = 10;
-    private static final int MIN_FONT_SIZE = 12;
-    private static final int MAX_FONT_SIZE = 32;
-    
+    private static final int BUTTON_HEIGHT_OFFSET = 10;    
     
     public ConfigPanel(ConfigWindow confWindow) {
         
@@ -96,7 +93,6 @@ public class ConfigPanel extends JPanel {
             @Override
             public void componentResized(ComponentEvent e) {
                 updateButtonSizes();
-                updateFontSizes();
                 pnlConfig.revalidate();
                 pnlConfig.repaint();
             }
@@ -174,7 +170,6 @@ public class ConfigPanel extends JPanel {
         initializeScrollArea();
         initializePanels();
         updateButtonSizes();
-        updateFontSizes();
     }
     
     private void initializeButtons() {
@@ -368,29 +363,6 @@ public class ConfigPanel extends JPanel {
         pnlConfig.repaint();
     }
     
-    private void updateFontSizes() {
-        int fontSize = calculateFontSize();
-        font = new Font("Arial", Font.PLAIN, fontSize);
-        applyFontToButtons(btnZombies, btnDefenses, btnHome, btnCheckmark);
-    }
-
-    private int calculateFontSize() {
-        return Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, getHeight() / 30));
-    }
-
-    private void applyFontToButtons(JButton... buttons) {
-        for (JButton button : buttons) {
-            if (button != null) {
-                if (button == btnCheckmark) {
-                    button.setFont(font.deriveFont(Font.BOLD));
-                } else {
-                    button.setFont(font);
-                }
-                button.setForeground(TEXT_COLOR);
-            }
-        }
-    }
-    
     private Box createBoxedButton(JButton button) {
         Box box = Box.createHorizontalBox();
         box.setOpaque(false);
@@ -443,10 +415,17 @@ public class ConfigPanel extends JPanel {
                 saveAllEntities();
             }
         });
-        updateFontSizes();
+        updateFonts();
         updateButtonSizes();
     }
     
+    private void updateFonts() {
+        DefaultFont.applyFontToButton(btnZombies);
+        DefaultFont.applyFontToButton(btnDefenses);
+        DefaultFont.applyFontToButton(btnHome);
+        DefaultFont.applyFontToButton(btnCheckmark);
+
+    }
     private void saveAllEntities() {
         ArrayList<EntityPanel> currentEntities = getEntitiesForCurrentType();
         for (EntityPanel panel : currentEntities) {
