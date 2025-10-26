@@ -4,6 +4,25 @@ import Entity.Entity;
 
 public class Defense extends Entity {
 
+    DefenseType type;
+    
+    public Defense() {}
+    public Defense(DefenseType type, String name, int healthPoints, int showUpLevel, int cost) {
+        this.type = type;
+        this.entityName = name;
+        this.healthPoints = healthPoints;
+        this.showUpLevel = showUpLevel;
+        this.cost = cost;
+    }
+    
+    public DefenseType getType() {
+        return type;
+    }
+    
+    public void setType(DefenseType type) {
+        this.type = type;
+    }
+    
     public String getEntityName() {
         return entityName;
     }
@@ -50,16 +69,5 @@ public class Defense extends Entity {
 
     public void setShowUpLevel(int showUpLevel) {
         this.showUpLevel = showUpLevel;
-    }
-    
-    DefenseType type;
-    
-    public Defense() {}
-    public DefenseType getType() {
-        return type;
-    }
-    
-    public void setType(DefenseType type) {
-        this.type = type;
     }
 }
