@@ -41,26 +41,33 @@ public class SidePanel extends JPanel {
     private JTextArea txaLogs;
     private JPanel pnlButtons;
     private JPanel pnlDefenses;
-    private JPanel infoPanel;
-    private JPanel imgPanel;
+
     private TableMain table;
     private GameManager gameManager;
     private JPanel pnlSelected;
-    private ConfigManager configManager;
+    private final ConfigManager configManager;
     
     public SidePanel(TableMain parentTable) {
     
         table = parentTable;
-        this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         
         this.configManager = new ConfigManager();
+        this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         
-        this.add(createDefensesPane());
+        
+        
+        scpScrollText = createDefensesPane();
         scpScrollText.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
-        this.add(createButtonPanel());
+        this.add(scpScrollText);
+        
+        pnlButtons = createButtonPanel();
         pnlButtons.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
-        this.add(createLogArea());
+        this.add(pnlButtons);
+        
+        
+        scpScrollLog = createLogArea();
         scpScrollLog.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+        this.add(createLogArea());
 
         btnStart.setBackground(Color.WHITE);
         btnPause.setBackground(Color.WHITE); 
@@ -145,10 +152,10 @@ public class SidePanel extends JPanel {
             pnlDefenses.add(item);
         }
         
-        scpScrollText = new JScrollPane(pnlDefenses);
-        scpScrollText.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        JScrollPane scroll = new JScrollPane(pnlDefenses);
+        scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         
-        return scpScrollText;   
+        return scroll;   
     }
     
     private JPanel createDefenseItem(Defense def){
@@ -159,12 +166,15 @@ public class SidePanel extends JPanel {
         itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
         itemPanel.setLayout(new GridBagLayout());
         
+        
+        
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets  = new Insets(5, 5, 5, 5);
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.BOTH;
  
-        imgPanel = new JPanel();
+        
+        JPanel imgPanel = new JPanel();
         imgPanel.setPreferredSize(new Dimension(110, 110));
         imgPanel.setMinimumSize(new Dimension(110, 110));
         imgPanel.setMaximumSize(new Dimension(110, 110));
@@ -202,7 +212,7 @@ public class SidePanel extends JPanel {
         gbc.insets = new Insets(5, 5, 5, 5);
         itemPanel.add(imgPanel, gbc);
         
-        infoPanel = new JPanel();
+        JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new GridLayout(3, 1));
         
         String name = def.getEntityName() != null ? def.getEntityName() : "(Sin nombre)";
@@ -276,14 +286,16 @@ public class SidePanel extends JPanel {
         int defencesHeight = (int)(height * 0.50);
         int buttonsHeight = (int)(height * 0.20);
         int logsHeight = (int)(height * 0.30);
-        int defences1Width = (int)(width * 0.30);
-        int defences2Width = (int)(width * 0.70);
         
+        if (scpScrollText != null){
         scpScrollText.setPreferredSize(new Dimension(width, defencesHeight));
+        }
+        if (pnlButtons != null){
         pnlButtons.setPreferredSize(new Dimension(width, buttonsHeight));
+        }
+        if (scpScrollLog != null){
         scpScrollLog.setPreferredSize(new Dimension(width, logsHeight));
-        imgPanel.setPreferredSize(new Dimension(defences1Width, defencesHeight));
-        infoPanel.setPreferredSize(new Dimension(defences2Width, defencesHeight));    
+        }
     }
     
     private void updatePanelSize() {
