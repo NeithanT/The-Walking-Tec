@@ -30,72 +30,33 @@ public class EntityPanel extends JPanel {
     public EntityPanel(Zombie zombie) {
         this();
         
-        switch (zombie.getType()) {
-      
-            case ZombieType.CONTACT:
-                
-                rows.add(new EntityRow("Daño:"));
-                break;
-            
-            case ZombieType.FLYING:
-                
-                break;
-            case ZombieType.MEDIUMRANGE:
-                
-                break;
-                
-            case ZombieType.EXPLOSIVE:
-                
-                break;
-                
-            case ZombieType.HEALER:
-                
-                rows.add(new EntityRow("Cura:"));
-                break;
-                
-            default:
-                break;
+        if (zombie.getType() != ZombieType.HEALER) {
+            rows.add(new EntityRow("Ataque: "));
+        } else if (zombie.getType() == ZombieType.EXPLOSIVE) {
+            rows.add(new EntityRow("Radio Explosión:"));
+        } else {
+            rows.add(new EntityRow("Cura: "));
         }
+        
+
+        updateLayoutWithRows();
     }
     
     public EntityPanel(Defense defense) {
         this();
         
-        switch (defense.getType()) {
-      
-            case DefenseType.BLOCKS:
-                
-                rows.add(new EntityRow("Daño:"));
-                break;
+        if (defense.getType() == DefenseType.HEALER) {
+            rows.add(new EntityRow("Cura:"));
+        } else if (defense.getType() != DefenseType.BLOCKS) {
+            rows.add(new EntityRow("Ataque:"));
             
-            case DefenseType.CONTACT:
-                
-                break;
-            case DefenseType.EXPLOSIVE:
-                
-                break;
-                
-            case DefenseType.FLYING:
-                
-                break;
-      
-            case DefenseType.MEDIUMRANGE:
-                
-                rows.add(new EntityRow("Cura:"));
-                break;
-                
-            case DefenseType.MULTIPLEATTACK:
-                
-                break;
-            
-            case DefenseType.HEALER:
-                
-                rows.add(new EntityRow("Cura:"));
-                break;
-                
-            default:
-                break;
+            if (defense.getType() == DefenseType.MULTIPLEATTACK) {
+                rows.add(new EntityRow("Cantidad de ataques:"));
+            }
         }
+        
+        
+        updateLayoutWithRows();
     }
     
     public EntityPanel() {
@@ -152,26 +113,70 @@ public class EntityPanel extends JPanel {
         gbc.gridwidth = 1;
         this.add(remove, gbc);
         
-        // Row 1: attributes 0, 1, 2
+        // Add all rows dynamically
         gbc.gridwidth = 1;
         gbc.fill = GridBagConstraints.NONE;
-        gbc.gridy = 1;
-        gbc.gridx = 0;
-        this.add(rows.get(0), gbc);
         
-        gbc.gridx = 2;
-        this.add(rows.get(1), gbc);
-        gbc.gridx = 4;
-        this.add(rows.get(2), gbc);
+        int rowIndex = 0;
+        int currentRow = 1;
         
-        // Row 2: attributes 3, 4, 5
-        gbc.gridy = 2;
+        // Add rows in groups of 3 per visual row
+        while (rowIndex < rows.size()) {
+            gbc.gridy = currentRow;
+            
+            // Add up to 3 items per row
+            for (int col = 0; col < 3 && rowIndex < rows.size(); col++) {
+                gbc.gridx = col * 2;
+                this.add(rows.get(rowIndex), gbc);
+                rowIndex++;
+            }
+            currentRow++;
+        }
+    }
+    
+    private void updateLayoutWithRows() {
+        this.removeAll();
+        this.setLayout(new GridBagLayout());
+        
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = INSETS;
+        gbc.anchor = GridBagConstraints.WEST;
+        
+        // Row 0: image spanning columns 0-4, X at column 5
+        JLabel image = createImageLabel();
         gbc.gridx = 0;
-        this.add(rows.get(3), gbc);
-        gbc.gridx = 2;
-        this.add(rows.get(4), gbc);
-        gbc.gridx = 4;
-        this.add(rows.get(5), gbc);
+        gbc.gridy = 0;
+        gbc.gridwidth = 5;
+        gbc.fill = GridBagConstraints.NONE;
+        this.add(image, gbc);
+        
+        JButton remove = createRemoveButton();
+        gbc.gridx = 5;
+        gbc.gridwidth = 1;
+        this.add(remove, gbc);
+        
+        // Add all rows dynamically
+        gbc.gridwidth = 1;
+        gbc.fill = GridBagConstraints.NONE;
+        
+        int rowIndex = 0;
+        int currentRow = 1;
+        
+        // Add rows in groups of 3 per visual row
+        while (rowIndex < rows.size()) {
+            gbc.gridy = currentRow;
+            
+            // Add up to 3 items per row
+            for (int col = 0; col < 3 && rowIndex < rows.size(); col++) {
+                gbc.gridx = col * 2;
+                this.add(rows.get(rowIndex), gbc);
+                rowIndex++;
+            }
+            currentRow++;
+        }
+        
+        this.revalidate();
+        this.repaint();
     }
     
     public boolean allFieldsFilled() {

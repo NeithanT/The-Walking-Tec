@@ -97,7 +97,18 @@ public class ConfigPanel extends JPanel {
     }
     
     private void reloadList() {
+        entityContainer.removeAll();
         
+        if (type == SaveType.ZOMBIE) {
+            ArrayList<Zombie> zombies = manager.getZombies();
+            createRowsZombies(zombies);
+        } else {
+            ArrayList<Defense> defenses = manager.getDefenses();
+            createRowsDefenses(defenses);
+        }
+        
+        entityContainer.revalidate();
+        entityContainer.repaint();
     }
     
     private void initializeComponents() {
@@ -116,6 +127,37 @@ public class ConfigPanel extends JPanel {
         
         setButtonColors(btnZombies, btnDefenses, btnHome);
         addHoverListeners(btnZombies, btnDefenses, btnHome);
+        setupButtonClickListeners();
+    }
+    
+    private void setupButtonClickListeners() {
+        btnZombies.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evt) {
+                switchToZombies();
+            }
+        });
+        
+        btnDefenses.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evt) {
+                switchToDefenses();
+            }
+        });
+    }
+    
+    private void switchToZombies() {
+        if (type == SaveType.DEFENSE) {
+            type = SaveType.ZOMBIE;
+            reloadList();
+        }
+    }
+    
+    private void switchToDefenses() {
+        if (type == SaveType.ZOMBIE) {
+            type = SaveType.DEFENSE;
+            reloadList();
+        }
     }
     
     private void setButtonColors(JButton... buttons) {
