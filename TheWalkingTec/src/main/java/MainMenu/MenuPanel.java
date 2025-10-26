@@ -1,5 +1,6 @@
 package MainMenu;
 
+import Configuration.AdminLoginDialog;
 import Configuration.ConfigWindow;
 import Table.TableMain;
 import java.awt.Color;
@@ -77,8 +78,12 @@ public class MenuPanel extends JPanel {
         btnConfig.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent evt) {
-                new ConfigWindow(menuFrame);
-                menuFrame.setVisible(false);
+                AdminLoginDialog dialog = new AdminLoginDialog(menuFrame);
+                boolean authenticated = dialog.showAndAuthenticate();
+                if (authenticated) {
+                    new ConfigWindow(menuFrame);
+                    menuFrame.setVisible(false);
+                }
             }
         });
         

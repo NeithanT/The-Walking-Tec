@@ -44,6 +44,7 @@ public class ConfigPanel extends JPanel {
     private JButton btnZombies;
     private JButton btnDefenses;
     private JButton btnHome;
+    private JButton btnAdmins;
     private JButton btnCheckmark;
     
     private JScrollPane scrollArea;
@@ -244,10 +245,12 @@ public class ConfigPanel extends JPanel {
         btnZombies = createPrimaryButton("Zombies");
         btnDefenses = createPrimaryButton("Defenses");
         btnHome = createSecondaryButton("Home");
+        btnAdmins = createSecondaryButton("Admins");
 
         btnZombies.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnDefenses.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnHome.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btnAdmins.setAlignmentX(Component.CENTER_ALIGNMENT);
         
         setupButtonClickListeners();
     }
@@ -264,6 +267,13 @@ public class ConfigPanel extends JPanel {
             @Override
             public void mouseClicked(MouseEvent evt) {
                 switchToDefenses();
+            }
+        });
+
+        btnAdmins.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evt) {
+                openAdminManager();
             }
         });
     }
@@ -358,6 +368,9 @@ public class ConfigPanel extends JPanel {
         
         btnHome.setPreferredSize(preferredSize);
         btnHome.setMaximumSize(preferredSize);
+
+        btnAdmins.setPreferredSize(preferredSize);
+        btnAdmins.setMaximumSize(preferredSize);
         
         btnCheckmark.setPreferredSize(new Dimension(1600, 60));
         btnCheckmark.setMaximumSize(new Dimension(1600, 60));
@@ -379,6 +392,8 @@ public class ConfigPanel extends JPanel {
         pnlChoices.add(createBoxedButton(btnZombies));
         pnlChoices.add(Box.createHorizontalStrut(SPACING));
         pnlChoices.add(createBoxedButton(btnDefenses));
+        pnlChoices.add(Box.createHorizontalStrut(SPACING));
+        pnlChoices.add(createBoxedButton(btnAdmins));
         pnlChoices.add(Box.createHorizontalGlue());
     }
     
@@ -449,6 +464,7 @@ public class ConfigPanel extends JPanel {
         DefaultFont.applyFontToButton(btnZombies);
         DefaultFont.applyFontToButton(btnDefenses);
         DefaultFont.applyFontToButton(btnHome);
+        DefaultFont.applyFontToButton(btnAdmins);
         DefaultFont.applyFontToButton(btnCheckmark);
     }
     
@@ -500,6 +516,11 @@ public class ConfigPanel extends JPanel {
         }
         
         return true;
+    }
+
+    private void openAdminManager() {
+        AdminManagementDialog dialog = new AdminManagementDialog(configWindow, manager);
+        dialog.setVisible(true);
     }
     
     public void chooseFile() throws UnsupportedLookAndFeelException {
