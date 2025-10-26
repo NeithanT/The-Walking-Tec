@@ -158,6 +158,7 @@ public class SidePanel extends JPanel {
         imgPanel.setMaximumSize(new Dimension(110, 110));
         imgPanel.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 1));
         imgPanel.setLayout(null); 
+        
  
         try {
             Image image = ImageIO.read(getClass().getResource(imagePath));
