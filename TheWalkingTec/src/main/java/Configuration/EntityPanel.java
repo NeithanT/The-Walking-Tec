@@ -4,11 +4,12 @@ import Defense.Defense;
 import Defense.DefenseType;
 import Zombie.Zombie;
 import Zombie.ZombieType;
+import Vanity.RoundedButton;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.Image;
-import java.awt.Insets;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,25 +21,46 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
+import javax.swing.DefaultListModel;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.event.DocumentListener;
 
 public class EntityPanel extends JPanel {
     
-    private static final int IMAGE_SIZE = 50;
+    @FunctionalInterface
+    public interface RemovalListener {
+        void onEntityRemoved(EntityPanel panel);
+    }
+    
+    private RemovalListener removalListener;
+    
+    private static final int IMAGE_SIZE = 160;
     private static final int BUTTON_SIZE = 30;
     private static final Color BG_COLOR = new Color(245, 245, 245);
     private static final int ENTITY_ROWS_PER_ROW = 3;
     
     private ArrayList<EntityRow> entityRows;
+    private JPanel headerPanel;
     private JLabel imageLabel;
+    private JLabel image;
+    private JButton chooser;
+    private JButton remove;
+   // private JButton typeBtn;
     private JButton chooseImageButton;
+    private JButton typeSelectButton;
     private File selectedImageFile;
+    private Zombie currentZombie;
+    private Defense currentDefense;
+    private JList<ZombieType> typeList;
+    private JList<DefenseType> defenseTypeList;
     
     
     public EntityPanel(Zombie zombie) {
         this();
+        currentZombie = zombie;
         
         if (zombie.getType() != ZombieType.HEALER) {
             entityRows.add(new EntityRow("Ataque: "));
@@ -52,6 +74,7 @@ public class EntityPanel extends JPanel {
     
     public EntityPanel(Defense defense) {
         this();
+        currentDefense = defense;
         
         if (defense.getType() == DefenseType.HEALER) {
             entityRows.add(new EntityRow("Cura:"));
@@ -82,56 +105,215 @@ public class EntityPanel extends JPanel {
         entityRows.add(new EntityRow("Costo:"));
     }
     
-    private JLabel createImageLabel() {
+    private void setupLayout() {
+        this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+        this.setBackground(BG_COLOR);
+        this.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.GRAY, 1),
+            BorderFactory.createEmptyBorder(20, 20, 20, 20)
+        ));
+        this.setMaximumSize(new Dimension(4000, getPreferredSize().height + 180));
+        
+        createHeaderPanel();
+        this.add(headerPanel);
+        this.add(Box.createHorizontalStrut(10));
+        
+        addEntityRowsInGroups();
+    }
+    
+    private void createImageLabel() {
         if (imageLabel == null) {
             imageLabel = new JLabel("Image", JLabel.CENTER);
             imageLabel.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
             imageLabel.setPreferredSize(new Dimension(IMAGE_SIZE, IMAGE_SIZE));
+            imageLabel.setMaximumSize(new Dimension(IMAGE_SIZE, IMAGE_SIZE));
             imageLabel.setHorizontalAlignment(JLabel.CENTER);
             imageLabel.setVerticalAlignment(JLabel.CENTER);
         }
-        return imageLabel;
     }
 
-    private JButton createImageChooserButton() {
-        if (chooseImageButton == null) {
-            chooseImageButton = new JButton("Elegir Imagen");
-            chooseImageButton.addActionListener(evt -> openImageChooser());
-            chooseImageButton.setMargin(new Insets(5, 10, 5, 10));
+    private void createImageChooserButton() {
+        if (chooser == null) {
+            Color normalColor = new Color(40, 167, 69);
+            Color hoverColor = new Color(32, 134, 56);
+            chooser = new RoundedButton("Elegir Imagen", normalColor, hoverColor, 15);
+            chooser.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent evt) {
+                    openImageChooser();
+                }
+            });
         }
-        return chooseImageButton;
     }
     
-    private JButton createRemoveButton() {
-        JButton btn = new JButton("X");
-        btn.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
-        return btn;
+    private void createRemoveButton() {
+        Color redColor = new Color(220, 53, 69);
+        Color darkRedColor = new Color(200, 35, 51);
+        remove = new RoundedButton("X", redColor, darkRedColor, 15);
+        remove.setPreferredSize(new Dimension(BUTTON_SIZE, BUTTON_SIZE));
+        remove.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evt) {
+                handleRemoveClick();
+            }
+        });
     }
     
-    private void setupLayout() {
-        this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-        this.setBackground(BG_COLOR);
-        this.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+    private void handleRemoveClick() {
+        if (removalListener != null) {
+            removalListener.onEntityRemoved(this);
+        }
+    }
+    
+    private void createTypeSelectButton() {
+        if (typeSelectButton == null) {
+            String typeLabel = "Tipo: ";
+            if (currentZombie != null) {
+                typeLabel += currentZombie.getType();
+            } else if (currentDefense != null) {
+                typeLabel += currentDefense.getType();
+            }
+            Color normalColor = new Color(0, 123, 255);
+            Color hoverColor = new Color(0, 102, 204);
+            typeSelectButton = new RoundedButton(typeLabel, normalColor, hoverColor, 15);
+            typeSelectButton.addActionListener(evt -> showTypeSelector());
+        }
+    }
+    
+    private void showTypeSelector() {
+        if (currentZombie != null) {
+            showZombieTypeSelector();
+        } else if (currentDefense != null) {
+            showDefenseTypeSelector();
+        }
+    }
+    
+    private void showZombieTypeSelector() {
+        DefaultListModel<ZombieType> model = new DefaultListModel<>();
+        for (ZombieType type : ZombieType.values()) {
+            model.addElement(type);
+        }
         
-        JPanel headerPanel = createHeaderPanel();
-        this.add(headerPanel);
-        this.add(Box.createHorizontalStrut(10));
+        typeList = new JList<>(model);
+        typeList.setSelectedValue(currentZombie.getType(), true);
+        typeList.addListSelectionListener(evt -> {
+            if (!evt.getValueIsAdjusting()) {
+                ZombieType selectedType = typeList.getSelectedValue();
+                if (selectedType != null) {
+                    changeZombieType(selectedType);
+                }
+            }
+        });
         
-        // Add EntityRows in groups of 3 per row
-        addEntityRowsInGroups();
+        JPopupMenu popup = new JPopupMenu();
+        popup.add(typeList);
+        popup.show(typeSelectButton, 0, typeSelectButton.getHeight());
+    }
+    
+    private void showDefenseTypeSelector() {
+        DefaultListModel<DefenseType> model = new DefaultListModel<>();
+        for (DefenseType type : DefenseType.values()) {
+            model.addElement(type);
+        }
+        
+        defenseTypeList = new JList<>(model);
+        defenseTypeList.setSelectedValue(currentDefense.getType(), true);
+        defenseTypeList.addListSelectionListener(evt -> {
+            if (!evt.getValueIsAdjusting()) {
+                DefenseType selectedType = defenseTypeList.getSelectedValue();
+                if (selectedType != null) {
+                    changeDefenseType(selectedType);
+                }
+            }
+        });
+        
+        JPopupMenu popup = new JPopupMenu();
+        popup.add(defenseTypeList);
+        popup.show(typeSelectButton, 0, typeSelectButton.getHeight());
+    }
+    
+    private void changeZombieType(ZombieType newType) {
+        if (currentZombie == null || currentZombie.getType() == newType) {
+            return;
+        }
+        
+        currentZombie.setType(newType);
+        typeSelectButton.setText("Tipo: " + newType);
+        updateZombieTypeSpecificFields();
+        updateLayoutWithRows();
+    }
+    
+    private void changeDefenseType(DefenseType newType) {
+        if (currentDefense == null || currentDefense.getType() == newType) {
+            return;
+        }
+        
+        currentDefense.setType(newType);
+        typeSelectButton.setText("Tipo: " + newType);
+        updateDefenseTypeSpecificFields();
+        updateLayoutWithRows();
+    }
+    
+    private void updateZombieTypeSpecificFields() {
+        entityRows.removeIf(row -> {
+            String label = row.getLabel().getText().toLowerCase();
+            return label.contains("ataque") || label.contains("cura") || label.contains("rango");
+        });
+        
+        if (currentZombie.getType() != ZombieType.HEALER) {
+            entityRows.add(new EntityRow("Ataque: "));
+            entityRows.add(new EntityRow("Rango: "));
+        } else {
+            entityRows.add(new EntityRow("Cura: "));
+        }
+    }
+    
+    private void updateDefenseTypeSpecificFields() {
+        entityRows.removeIf(row -> {
+            String label = row.getLabel().getText().toLowerCase();
+            return label.contains("ataque") || label.contains("cura") || label.contains("rango") || label.contains("cantidad");
+        });
+        
+        if (currentDefense.getType() == DefenseType.HEALER) {
+            entityRows.add(new EntityRow("Cura:"));
+        } else if (currentDefense.getType() != DefenseType.BLOCKS) {
+            entityRows.add(new EntityRow("Ataque:"));
+            if (currentDefense.getType() == DefenseType.MULTIPLEATTACK) {
+                entityRows.add(new EntityRow("Cantidad de ataques:"));
+            }
+            if (currentDefense.getType() != DefenseType.MEDIUMRANGE) {
+                entityRows.add(new EntityRow("Rango:"));
+            }
+        }
     }
     
     private JPanel createHeaderPanel() {
-        JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        headerPanel = new JPanel();
+        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
         headerPanel.setBackground(BG_COLOR);
+        headerPanel.setPreferredSize(new Dimension(150, 250));
         
-        JLabel image = createImageLabel();
-        JButton chooser = createImageChooserButton();
-        JButton remove = createRemoveButton();
+        createImageLabel();
+        createImageChooserButton();
+        createRemoveButton();
         
-        headerPanel.add(image);
+        if (currentZombie != null || currentDefense != null) {
+            createTypeSelectButton();
+        }
+        
+        headerPanel.add(Box.createVerticalStrut(10));
+        headerPanel.add(imageLabel);
+        headerPanel.add(Box.createVerticalStrut(10));
+        
+        //if (typeBtn != null) {
+        //    headerPanel.add(typeBtn);
+        //    headerPanel.add(Box.createVerticalStrut(5));
+        //}
+        
         headerPanel.add(chooser);
+        headerPanel.add(Box.createVerticalStrut(10));
         headerPanel.add(remove);
+        headerPanel.add(Box.createVerticalGlue());
         
         return headerPanel;
     }
@@ -159,8 +341,9 @@ public class EntityPanel extends JPanel {
     private void updateLayoutWithRows() {
         this.removeAll();
         this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+        this.setMaximumSize(new Dimension(Integer.MAX_VALUE, getPreferredSize().height + 180));
         
-        JPanel headerPanel = createHeaderPanel();
+        headerPanel = createHeaderPanel();
         this.add(headerPanel);
         this.add(Box.createHorizontalStrut(10));
         
@@ -213,6 +396,20 @@ public class EntityPanel extends JPanel {
         return selectedImageFile;
     }
     
+    public ZombieType getZombieType() {
+        if (currentZombie != null) {
+            return currentZombie.getType();
+        }
+        return ZombieType.CONTACT;
+    }
+    
+    public DefenseType getDefenseType() {
+        if (currentDefense != null) {
+            return currentDefense.getType();
+        }
+        return DefenseType.CONTACT;
+    }
+    
     public boolean allFieldsFilled() {
         for (EntityRow row : entityRows) {
             if (row.getTextField().getText().trim().isEmpty()) {
@@ -234,5 +431,17 @@ public class EntityPanel extends JPanel {
         for (EntityRow row : entityRows) {
             row.addDocumentListener(listener);
         }
+    }
+    
+    public void setRemovalListener(RemovalListener listener) {
+        this.removalListener = listener;
+    }
+    
+    public Zombie getCurrentZombie() {
+        return currentZombie;
+    }
+    
+    public Defense getCurrentDefense() {
+        return currentDefense;
     }
 }
