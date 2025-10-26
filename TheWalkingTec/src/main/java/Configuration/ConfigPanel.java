@@ -196,14 +196,7 @@ public class ConfigPanel extends JPanel {
         entityContainer.remove(btnCheckmark);
 
         if (type == SaveType.ZOMBIE) {
-            ZombieAttacker zom = new ZombieAttacker();
-            zom.setType(ZombieType.CONTACT);
-            zom.setName("zombie");
-            zom.setCost(1);
-            zom.setShowUpLevel(1);
-            zom.setHealthPoints(1);
-            zom.setDamage(1);
-            zom.setRange(1);
+            ZombieAttacker zom = new ZombieAttacker("zombie", 1, 1, 1, 1, 1);
             
             EntityPanel panel = new EntityPanel(zom);
             addEntityPanel(panel, zombies);

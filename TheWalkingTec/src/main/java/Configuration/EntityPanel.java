@@ -674,20 +674,20 @@ public class EntityPanel extends JPanel {
 
     private Zombie instantiateZombie(ZombieType type) {
         if (type == null) {
-            return new ZombieAttacker();
+            return new ZombieAttacker("zombie", 1, 1, 1, 1, 1);
         }
         switch (type) {
             case FLYING:
-                return new ZombieFlying();
+                return new ZombieFlying("zombie", 1, 1, 1, 1, 1);
             case MEDIUMRANGE:
-                return new ZombieMediumRange();
+                return new ZombieMediumRange("zombie", 1, 1, 1, 1);
             case EXPLOSIVE:
-                return new ZombieExplosive();
+                return new ZombieExplosive("zombie", 1, 1, 1, 1);
             case HEALER:
-                return new ZombieHealer();
+                return new ZombieHealer("zombie", 1, 1, 1, 1);
             case CONTACT:
             default:
-                return new ZombieContact();
+                return new ZombieContact("zombie", 1, 1, 1, 1);
         }
     }
 

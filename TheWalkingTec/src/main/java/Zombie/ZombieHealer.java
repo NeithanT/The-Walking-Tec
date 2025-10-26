@@ -6,6 +6,12 @@ public class ZombieHealer extends Zombie implements EntityHealer {
 
     protected int healPower;
 
+    public ZombieHealer(String name, int healthPoints, int showUpLevel, int cost, int healingPow) {
+        super(name, healthPoints, showUpLevel, cost);
+        this.healPower = healingPow;
+        this.type = ZombieType.HEALER;
+    }
+    
     @Override
     public void heal() {
     
