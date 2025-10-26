@@ -45,49 +45,25 @@ public class EntityPanel extends JPanel {
     private ArrayList<EntityRow> entityRows;
     private JPanel headerPanel;
     private JLabel imageLabel;
-    private JLabel image;
-    private JButton chooser;
     private JButton remove;
-   // private JButton typeBtn;
-    private JButton chooseImageButton;
+    private JButton chooser;
     private JButton typeSelectButton;
     private File selectedImageFile;
     private Zombie currentZombie;
     private Defense currentDefense;
-    private JList<ZombieType> typeList;
-    private JList<DefenseType> defenseTypeList;
     
     
     public EntityPanel(Zombie zombie) {
         this();
         currentZombie = zombie;
-        
-        if (zombie.getType() != ZombieType.HEALER) {
-            entityRows.add(new EntityRow("Ataque: "));
-            entityRows.add(new EntityRow("Rango: "));
-        } else {
-            entityRows.add(new EntityRow("Cura: "));
-        }
-        
+        addZombieSpecificFields();
         updateLayoutWithRows();
     }
     
     public EntityPanel(Defense defense) {
         this();
         currentDefense = defense;
-        
-        if (defense.getType() == DefenseType.HEALER) {
-            entityRows.add(new EntityRow("Cura:"));
-        } else if (defense.getType() != DefenseType.BLOCKS) {
-            entityRows.add(new EntityRow("Ataque:"));
-            if (defense.getType() == DefenseType.MULTIPLEATTACK) {
-                entityRows.add(new EntityRow("Cantidad de ataques:"));
-            }
-            if (defense.getType() != DefenseType.MEDIUMRANGE) {
-                entityRows.add(new EntityRow("Rango:"));
-            }
-        }
-        
+        addDefenseSpecificFields();
         updateLayoutWithRows();
     }
     
@@ -182,53 +158,31 @@ public class EntityPanel extends JPanel {
     
     private void showTypeSelector() {
         if (currentZombie != null) {
-            showZombieTypeSelector();
+            showGenericTypeSelector(ZombieType.class, currentZombie::getType, this::changeZombieType);
         } else if (currentDefense != null) {
-            showDefenseTypeSelector();
+            showGenericTypeSelector(DefenseType.class, currentDefense::getType, this::changeDefenseType);
         }
     }
     
-    private void showZombieTypeSelector() {
-        DefaultListModel<ZombieType> model = new DefaultListModel<>();
-        for (ZombieType type : ZombieType.values()) {
+    private <T extends Enum<?>> void showGenericTypeSelector(Class<T> enumClass, java.util.function.Supplier<T> getCurrentType, java.util.function.Consumer<T> onSelect) {
+        DefaultListModel<T> model = new DefaultListModel<>();
+        for (T type : enumClass.getEnumConstants()) {
             model.addElement(type);
         }
         
-        typeList = new JList<>(model);
-        typeList.setSelectedValue(currentZombie.getType(), true);
+        JList<T> typeList = new JList<>(model);
+        typeList.setSelectedValue(getCurrentType.get(), true);
         typeList.addListSelectionListener(evt -> {
             if (!evt.getValueIsAdjusting()) {
-                ZombieType selectedType = typeList.getSelectedValue();
+                T selectedType = typeList.getSelectedValue();
                 if (selectedType != null) {
-                    changeZombieType(selectedType);
+                    onSelect.accept(selectedType);
                 }
             }
         });
         
         JPopupMenu popup = new JPopupMenu();
         popup.add(typeList);
-        popup.show(typeSelectButton, 0, typeSelectButton.getHeight());
-    }
-    
-    private void showDefenseTypeSelector() {
-        DefaultListModel<DefenseType> model = new DefaultListModel<>();
-        for (DefenseType type : DefenseType.values()) {
-            model.addElement(type);
-        }
-        
-        defenseTypeList = new JList<>(model);
-        defenseTypeList.setSelectedValue(currentDefense.getType(), true);
-        defenseTypeList.addListSelectionListener(evt -> {
-            if (!evt.getValueIsAdjusting()) {
-                DefenseType selectedType = defenseTypeList.getSelectedValue();
-                if (selectedType != null) {
-                    changeDefenseType(selectedType);
-                }
-            }
-        });
-        
-        JPopupMenu popup = new JPopupMenu();
-        popup.add(defenseTypeList);
         popup.show(typeSelectButton, 0, typeSelectButton.getHeight());
     }
     
@@ -239,7 +193,7 @@ public class EntityPanel extends JPanel {
         
         currentZombie.setType(newType);
         typeSelectButton.setText("Tipo: " + newType);
-        updateZombieTypeSpecificFields();
+        updateTypeSpecificFields();
         updateLayoutWithRows();
     }
     
@@ -250,16 +204,26 @@ public class EntityPanel extends JPanel {
         
         currentDefense.setType(newType);
         typeSelectButton.setText("Tipo: " + newType);
-        updateDefenseTypeSpecificFields();
+        updateTypeSpecificFields();
         updateLayoutWithRows();
     }
     
-    private void updateZombieTypeSpecificFields() {
+    private void updateTypeSpecificFields() {
+        // Remove all dynamic type-specific fields
         entityRows.removeIf(row -> {
             String label = row.getLabel().getText().toLowerCase();
-            return label.contains("ataque") || label.contains("cura") || label.contains("rango");
+            return label.contains("ataque") || label.contains("cura") || label.contains("rango") || label.contains("cantidad");
         });
         
+        // Add fields based on current entity type
+        if (currentZombie != null) {
+            addZombieSpecificFields();
+        } else if (currentDefense != null) {
+            addDefenseSpecificFields();
+        }
+    }
+    
+    private void addZombieSpecificFields() {
         if (currentZombie.getType() != ZombieType.HEALER) {
             entityRows.add(new EntityRow("Ataque: "));
             entityRows.add(new EntityRow("Rango: "));
@@ -268,12 +232,7 @@ public class EntityPanel extends JPanel {
         }
     }
     
-    private void updateDefenseTypeSpecificFields() {
-        entityRows.removeIf(row -> {
-            String label = row.getLabel().getText().toLowerCase();
-            return label.contains("ataque") || label.contains("cura") || label.contains("rango") || label.contains("cantidad");
-        });
-        
+    private void addDefenseSpecificFields() {
         if (currentDefense.getType() == DefenseType.HEALER) {
             entityRows.add(new EntityRow("Cura:"));
         } else if (currentDefense.getType() != DefenseType.BLOCKS) {
@@ -305,10 +264,10 @@ public class EntityPanel extends JPanel {
         headerPanel.add(imageLabel);
         headerPanel.add(Box.createVerticalStrut(10));
         
-        //if (typeBtn != null) {
-        //    headerPanel.add(typeBtn);
-        //    headerPanel.add(Box.createVerticalStrut(5));
-        //}
+        if (typeSelectButton != null) {
+            headerPanel.add(typeSelectButton);
+            headerPanel.add(Box.createVerticalStrut(10));
+        }
         
         headerPanel.add(chooser);
         headerPanel.add(Box.createVerticalStrut(10));
