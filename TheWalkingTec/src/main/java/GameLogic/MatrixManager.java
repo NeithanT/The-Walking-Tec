@@ -57,6 +57,12 @@ public class MatrixManager {
         }
         
     }
+    public void free (int row, int column){
+        if (isValidPosition(row, column)){
+            occupied[row][column] = false;
+        }
+    }
+    
     public boolean isValidDefensePosition(int row, int column){       
         return row >= 2 && row < 23 && column >= 2 && column < 23; 
     }

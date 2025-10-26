@@ -1,29 +1,43 @@
 
 package GameLogic;
 
+import Configuration.ConfigManager;
 import Defense.Defense;
+import Defense.DefenseType;
 import Table.GameBoard;
+import Table.PlacedDefense;
 import java.awt.event.ActionEvent;
 import Table.SidePanel;
+import Zombie.Zombie;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.List;
+import java.util.Random;
 import javax.imageio.ImageIO;
 import javax.swing.Timer;
 
 
 public class GameManager {
     
-    private GameBoard board;
-    private SidePanel sidePanel;
-    private MatrixManager matrixManager;
+    private final GameBoard board;
+    private final SidePanel sidePanel;
+    private final MatrixManager matrixManager;
     private Timer gameTimer;
     private boolean isPaused;
     private int level;
     private int baseHealth;
+    
     private Defense selectedDefense;
     private int actualSpace;
-            
+    private int coinsThisLevel;
+    private Defense lifeTree;
+    private PlacedDefense lifeTreePlaced;
+    private int lifeTreeRow = -1;
+    private int lifeTreeColumn = -1;
+    
+    private final Random rnd = new Random();
+    
     public GameManager(GameBoard board, SidePanel sidePanel){
         
         this.board = board;
@@ -33,11 +47,16 @@ public class GameManager {
         this.level = 1;
         this.baseHealth = 100;
         this.selectedDefense = null;
-        this.actualSpace = 0;
+        this.coinsThisLevel = coinsForLevel(level);
+      //  this.actualSpace = 0;
     }
     
     public void startGame(){
         
+        if (lifeTreePlaced == null){
+            System.out.println("Place the life tree first");
+            return;
+        }
         if (gameTimer == null){
             int delay = 17;
             gameTimer = new Timer(delay, (ActionEvent e) -> {
@@ -48,8 +67,12 @@ public class GameManager {
             gameTimer.start();
         }
         isPaused = false;
+        
+        coinsThisLevel = coinsForLevel(level);
+
+        generateWave();
         System.out.println("Juego iniciado");    
-        }
+    }
         
     public void pauseGame(){
         
@@ -77,31 +100,27 @@ public class GameManager {
         if (selectedDefense == null){
             return false;
         }
+        
+        final boolean isLifeTree = "LIFE TREE".equalsIgnoreCase(selectedDefense.getEntityName());
+        if (isLifeTree && lifeTreePlaced != null){
+            System.out.println("Life Tree already exists");
+            return false;
+        }
+        
         if (!matrixManager.placeDefense(row, column)){
             return false;
         }
         
-        Image img = null;
-        try {
-            String path = selectedDefense.getImagePath();
-            if (path != null && !path.isEmpty()){
-                BufferedImage raw = ImageIO.read(new File(path));
-                if (raw != null){
-                    
-                    int w = (int)(board.getWidth() / 25.0);
-                    int h = (int)(board.getHeight() / 25.0);
-                    img = raw.getScaledInstance(w, h, Image.SCALE_AREA_AVERAGING);
-                }
-                
-            }
-        } catch (Exception e) {
+        Image img = loadAndScale(selectedDefense.getImagePath());
+        PlacedDefense placed = new PlacedDefense(selectedDefense, row, column, img);
+        board.addDefense(placed);    
+        
+        
+        if (isLifeTree){
+            lifeTree = selectedDefense;
+            lifeTreePlaced = placed;   
         }
-        
-        Table.PlacedDefense placed = new Table.PlacedDefense(selectedDefense, row, column, img);
-        board.addDefense(placed);
-        
-        
-        
+
         System.out.println("Defensa [" + selectedDefense.getEntityName() + "] colocada en [" + row + "][" + column + "]"); 
         selectedDefense = null;
         board.clearSelectedDefense();
@@ -109,19 +128,39 @@ public class GameManager {
         
         return true;
     }
-    
+
     public boolean removeDefences(int row, int column){
         
-       // matrixManager.removeDefenses(row, column);
-        //TODO: BUSCAR DEFENSA EN BOARD.GETDEFENSES() Y REMOVERLA
-        board.repaint();
+        if (lifeTreePlaced != null && row == lifeTreeRow && column == lifeTreeColumn){
+            System.out.println("Life Tree cannot be removed");
+            return false;
+        }
         
+        matrixManager.free(row, column);
+        
+        board.repaint();
         return true;
     }
     
     public void generateWave(){
         
-        //TODO: CREAR ZOMBIES SEGÚN NIVEL
+        ConfigManager cfg = new ConfigManager();
+        List<Zombie> pool = cfg.getZombies();
+        if (pool == null || pool.isEmpty()) {
+            return;
+        }
+        
+        int spawnCount = Math.max(1, coinsThisLevel);
+        for (int i = 0; i < spawnCount; i++){
+            Zombie z = pool.get(rnd.nextInt(pool.size()));
+            
+         //   matrixManager.isZombieSpawnZone(row, column);
+            
+        
+            System.out.println("Spawn zombie: " + (z.getEntityName() != null ? z.getEntityName() : "Zombie") + " #" + (i + 1));
+        }
+        
+        
         System.out.println("Wave level [" + level + "] generated");
     }
     
@@ -132,6 +171,14 @@ public class GameManager {
         }   
         //TODO: todo lo que pase en cada frame (mov, ataques, verificaciones de colisiones, etc)
         board.repaint();
+        
+        verifyVictory();
+        verifyLoss();
+    }
+    
+    private int coinsForLevel (int lvl){
+        
+        return 20 + 5 * (lvl - 1);
     }
     
     public boolean isValidPlacement(int row, int column){
@@ -159,6 +206,29 @@ public class GameManager {
             stopGame();
         }
     }
+    
+    private Image loadAndScale (String path){
+        
+        if (path == null || path.isEmpty()){
+            return null;
+        }
+        try {
+            BufferedImage raw = ImageIO.read(new File(path));
+            if (raw == null){
+                return null;
+            }
+            int w = (int)(board.getWidth() / 25.0);
+            int h = (int)(board.getHeight() / 25.0);
+            if (w <= 0 || h  <= 0){
+                return raw;
+            }
+            return raw.getScaledInstance(w, h, Image.SCALE_AREA_AVERAGING);
+            
+            
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
     public int getLevel() {
         return level;
@@ -171,6 +241,8 @@ public class GameManager {
     public Defense getSelectedDefense() {
         return selectedDefense;
     }
-    
+    public int getCoinsThisLevel(){
+        return coinsThisLevel;
+    }
     
 }
