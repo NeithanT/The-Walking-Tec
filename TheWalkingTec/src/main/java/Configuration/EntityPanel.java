@@ -50,10 +50,11 @@ public class EntityPanel extends JPanel {
     
     private RemovalListener removalListener;
     
-    private static final int IMAGE_SIZE = 160;
-    private static final int BUTTON_SIZE = 30;
+    private static final int IMAGE_SIZE = 50;
+    private static final int BUTTON_SIZE = 22;
     private static final Color BG_COLOR = new Color(245, 245, 245);
     private static final int ENTITY_ROWS_PER_ROW = 3;
+    private static final int SPACING = 5;
     
     private ArrayList<EntityRow> entityRows;
     private JPanel headerPanel;
@@ -63,6 +64,7 @@ public class EntityPanel extends JPanel {
     private JButton typeSelectButton;
     private JFileChooser ch;
     private File selectedImageFile;
+    private Runnable onContentChanged;
     
     private Zombie currentZombie;
     private Defense currentDefense;
@@ -295,13 +297,13 @@ public class EntityPanel extends JPanel {
             createTypeSelectButton();
         }
         
-        headerPanel.add(Box.createVerticalStrut(10));
+        headerPanel.add(Box.createVerticalStrut(SPACING));
         headerPanel.add(imageLabel);
-        headerPanel.add(Box.createVerticalStrut(10));
+        headerPanel.add(Box.createVerticalStrut(SPACING));
         
         if (typeSelectButton != null) {
             headerPanel.add(typeSelectButton);
-            headerPanel.add(Box.createVerticalStrut(10));
+            headerPanel.add(Box.createVerticalStrut(SPACING));
         }
         
         headerPanel.add(chooser);
@@ -327,7 +329,7 @@ public class EntityPanel extends JPanel {
             
             this.add(rowPanel);
             if (rowIndex < entityRows.size()) {
-                this.add(Box.createHorizontalStrut(10));
+                this.add(Box.createHorizontalStrut(SPACING));
             }
         }
     }
@@ -339,7 +341,7 @@ public class EntityPanel extends JPanel {
         
         headerPanel = createHeaderPanel();
         this.add(headerPanel);
-        this.add(Box.createHorizontalStrut(10));
+        this.add(Box.createHorizontalStrut(SPACING));
         
         addEntityRowsInGroups();
         
@@ -370,6 +372,7 @@ public class EntityPanel extends JPanel {
                 imageLabel.setText(null);
                 selectedImageFile = file;
                 updateEntityImagePath(file.getAbsolutePath());
+                notifyContentChanged();
             } else {
                 resetImageLabel();
             }
@@ -386,6 +389,7 @@ public class EntityPanel extends JPanel {
         }
         selectedImageFile = null;
         updateEntityImagePath(null);
+        notifyContentChanged();
     }
 
     private void updateEntityImagePath(String path) {
@@ -515,7 +519,7 @@ public class EntityPanel extends JPanel {
                 return false;
             }
         }
-        return true;
+        return hasImageSelected();
     }
     
     public String[] getFieldValues() {
@@ -524,6 +528,35 @@ public class EntityPanel extends JPanel {
             values[i] = entityRows.get(i).getTextField().getText().trim();
         }
         return values;
+    }
+
+    public void setOnContentChanged(Runnable onContentChanged) {
+        this.onContentChanged = onContentChanged;
+    }
+
+    private void notifyContentChanged() {
+        if (onContentChanged != null) {
+            onContentChanged.run();
+        }
+    }
+
+    private boolean hasImageSelected() {
+        if (selectedImageFile != null) {
+            return true;
+        }
+        if (currentZombie != null) {
+            String imagePath = currentZombie.getImagePath();
+            if (imagePath != null && !imagePath.trim().isEmpty()) {
+                return true;
+            }
+        }
+        if (currentDefense != null) {
+            String imagePath = currentDefense.getImagePath();
+            if (imagePath != null && !imagePath.trim().isEmpty()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String normalizeLabel(String text) {

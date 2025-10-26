@@ -134,7 +134,9 @@ public class ConfigPanel extends JPanel {
     }
 
     private void attachFieldListener(EntityPanel panel) {
-        panel.addDocumentListener(createFieldListener());
+        DocumentListener listener = createFieldListener();
+        panel.addDocumentListener(listener);
+        panel.setOnContentChanged(this::handleFieldChange);
     }
 
     private DocumentListener createFieldListener() {
@@ -330,6 +332,7 @@ public class ConfigPanel extends JPanel {
         btnHome.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent evt) {
+                saveAllEntities();
                 configWindow.goHome();
                 configWindow.dispose();
             }
