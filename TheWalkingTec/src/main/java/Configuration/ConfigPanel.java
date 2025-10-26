@@ -3,7 +3,6 @@ package Configuration;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GradientPaint;
@@ -35,6 +34,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import Configuration.EntityPanel;
 import Defense.Defense;
+import Vanity.RoundedButton;
+import Vanity.RoundedPanel;
 import Zombie.Zombie;
 
 public class ConfigPanel extends JPanel {
@@ -471,77 +472,6 @@ public class ConfigPanel extends JPanel {
         }
         
         return true;
-    }
-
-    private static class RoundedPanel extends JPanel {
-        private final Color backgroundColor;
-        private final int cornerRadius;
-
-        RoundedPanel(Color backgroundColor, int cornerRadius) {
-            this.backgroundColor = backgroundColor;
-            this.cornerRadius = cornerRadius;
-            setOpaque(false);
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(backgroundColor);
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), cornerRadius, cornerRadius);
-            g2.dispose();
-            super.paintComponent(g);
-        }
-    }
-
-    private static class RoundedButton extends JButton {
-        private final Color normalColor;
-        private final Color hoverColor;
-        private final int cornerRadius;
-        private Color currentColor;
-
-        RoundedButton(String text, Color normalColor, Color hoverColor, int cornerRadius) {
-            super(text);
-            this.normalColor = normalColor;
-            this.hoverColor = hoverColor;
-            this.cornerRadius = cornerRadius;
-            this.currentColor = normalColor;
-            setFocusPainted(false);
-            setContentAreaFilled(false);
-            setBorderPainted(false);
-            setOpaque(false);
-            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            setBorder(new EmptyBorder(12, 28, 12, 28));
-            addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseEntered(MouseEvent e) {
-                    currentColor = RoundedButton.this.hoverColor;
-                    repaint();
-                }
-
-                @Override
-                public void mouseExited(MouseEvent e) {
-                    currentColor = RoundedButton.this.normalColor;
-                    repaint();
-                }
-            });
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            Color fillColor = currentColor;
-            if (!isEnabled()) {
-                fillColor = fillColor.darker();
-            } else if (getModel().isArmed() && getModel().isPressed()) {
-                fillColor = fillColor.darker();
-            }
-            g2.setColor(fillColor);
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), cornerRadius, cornerRadius);
-            g2.dispose();
-            super.paintComponent(g);
-        }
     }
     
     public void chooseFile() throws UnsupportedLookAndFeelException {
