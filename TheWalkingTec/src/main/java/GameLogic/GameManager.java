@@ -1,9 +1,14 @@
 
 package GameLogic;
 
+import Defense.Defense;
 import Table.GameBoard;
 import java.awt.event.ActionEvent;
 import Table.SidePanel;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import javax.imageio.ImageIO;
 import javax.swing.Timer;
 
 
@@ -16,7 +21,7 @@ public class GameManager {
     private boolean isPaused;
     private int level;
     private int baseHealth;
-    private String selectedDefense;
+    private Defense selectedDefense;
     private int actualSpace;
             
     public GameManager(GameBoard board, SidePanel sidePanel){
@@ -60,11 +65,11 @@ public class GameManager {
         isPaused = true;
     }
     
-    public void setSelectedDefense(String defenseName){
+    public void setSelectedDefense(Defense defenseName){
         
         this.selectedDefense = defenseName;
-        board.setSelectedDefense(defenseName);
-        System.out.println("Selected Defense: " + defenseName);
+        board.setSelectedDefense(defenseName != null ? defenseName.getEntityName() : null);
+        System.out.println("Selected Defense: " + (defenseName != null ? defenseName.getEntityName() : "null"));
         
     }
     public boolean placeDefences(int row, int column){
@@ -75,13 +80,29 @@ public class GameManager {
         if (!matrixManager.placeDefense(row, column)){
             return false;
         }
-        System.out.println("Defensa [" + selectedDefense + "] colocada en [" + row + "][" + column + "]");
         
-        int x = board.cellToPixelX(column);
-        int y = board.cellToPixelY(row);
+        Image img = null;
+        try {
+            String path = selectedDefense.getImagePath();
+            if (path != null && !path.isEmpty()){
+                BufferedImage raw = ImageIO.read(new File(path));
+                if (raw != null){
+                    
+                    int w = (int)(board.getWidth() / 25.0);
+                    int h = (int)(board.getHeight() / 25.0);
+                    img = raw.getScaledInstance(w, h, Image.SCALE_AREA_AVERAGING);
+                }
+                
+            }
+        } catch (Exception e) {
+        }
         
-        //TODO: crear objeto Defense y agregarlo
+        Table.PlacedDefense placed = new Table.PlacedDefense(selectedDefense, row, column, img);
+        board.addDefense(placed);
         
+        
+        
+        System.out.println("Defensa [" + selectedDefense.getEntityName() + "] colocada en [" + row + "][" + column + "]"); 
         selectedDefense = null;
         board.clearSelectedDefense();
         sidePanel.deselectDefense();
@@ -147,7 +168,7 @@ public class GameManager {
         return baseHealth;
     }
 
-    public String getSelectedDefense() {
+    public Defense getSelectedDefense() {
         return selectedDefense;
     }
     

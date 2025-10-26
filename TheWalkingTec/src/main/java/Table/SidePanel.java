@@ -1,6 +1,8 @@
 
 package Table;
 
+import Configuration.ConfigManager;
+import Defense.Defense;
 import GameLogic.GameManager;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -14,6 +16,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -24,6 +27,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JLabel;
+import Defense.DefenseAttacker;
+import Defense.DefenseHealer;
 
 public class SidePanel extends JPanel {
     
@@ -36,23 +41,33 @@ public class SidePanel extends JPanel {
     private JTextArea txaLogs;
     private JPanel pnlButtons;
     private JPanel pnlDefenses;
-    private JPanel infoPanel;
-    private JPanel imgPanel;
+
     private TableMain table;
     private GameManager gameManager;
     private JPanel pnlSelected;
+    private final ConfigManager configManager;
     
     public SidePanel(TableMain parentTable) {
     
         table = parentTable;
+        
+        this.configManager = new ConfigManager();
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         
-        this.add(createDefensesPane());
+        
+        
+        scpScrollText = createDefensesPane();
         scpScrollText.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
-        this.add(createButtonPanel());
+        this.add(scpScrollText);
+        
+        pnlButtons = createButtonPanel();
         pnlButtons.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
-        this.add(createLogArea());
+        this.add(pnlButtons);
+        
+        
+        scpScrollLog = createLogArea();
         scpScrollLog.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+        this.add(createLogArea());
 
         btnStart.setBackground(Color.WHITE);
         btnPause.setBackground(Color.WHITE); 
@@ -131,25 +146,19 @@ public class SidePanel extends JPanel {
         pnlDefenses = new JPanel();
         pnlDefenses.setLayout(new BoxLayout(pnlDefenses, BoxLayout.Y_AXIS));
         
-        try {
-            pnlDefenses.add(createDefenseItem("Perro WhatsApp", 15, 5, "/assets/PerroWhatsApp.jpg"));
-            pnlDefenses.add(createDefenseItem("Waguri", 20, 7, "/assets/Kaoroku.jpg"));
-            pnlDefenses.add(createDefenseItem("Bloque de madera", 25, 0, "/assets/BloqueDeMadera.jpg"));
-            pnlDefenses.add(createDefenseItem("Bloque de hierro", 50, 0, "/assets/BloqueDeHierro.jpg"));
-            pnlDefenses.add(createDefenseItem("AlienLockin", 25, 10,"/assets/AlienLockIn.jpg"));
-            pnlDefenses.add(createDefenseItem("AlienLockin", 25, 10,"/assets/Lebron_James.jpg"));
-            pnlDefenses.add(createDefenseItem("Trampa de redstone", 1, 1000,"/assets/TNT.jpg"));
-            pnlDefenses.add(createDefenseItem("Goku", 35, 10,"/assets/GokuxD.jpg"));
-        } catch(IllegalArgumentException e) {
-            System.out.println("No estan presentes algunas iamgenes");
+        for (Defense d : configManager.getDefenses()){
+            
+            JPanel item = createDefenseItem(d);
+            pnlDefenses.add(item);
         }
-        scpScrollText = new JScrollPane(pnlDefenses);
-        scpScrollText.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
         
-        return scpScrollText;   
+        JScrollPane scroll = new JScrollPane(pnlDefenses);
+        scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        
+        return scroll;   
     }
     
-    private JPanel createDefenseItem(String name, int health, int damage, String imagePath){
+    private JPanel createDefenseItem(Defense def){
         
         JPanel itemPanel = new JPanel();
         itemPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
@@ -157,12 +166,15 @@ public class SidePanel extends JPanel {
         itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
         itemPanel.setLayout(new GridBagLayout());
         
+        
+        
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets  = new Insets(5, 5, 5, 5);
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.BOTH;
  
-        imgPanel = new JPanel();
+        
+        JPanel imgPanel = new JPanel();
         imgPanel.setPreferredSize(new Dimension(110, 110));
         imgPanel.setMinimumSize(new Dimension(110, 110));
         imgPanel.setMaximumSize(new Dimension(110, 110));
@@ -171,29 +183,51 @@ public class SidePanel extends JPanel {
         
  
         try {
-            Image image = ImageIO.read(getClass().getResource(imagePath));
-            if (image != null){
-                ImageIcon icon = new ImageIcon (image);
+            if (def.getImagePath() != null && !def.getImagePath().isEmpty()){
+                Image image = ImageIO.read(new File(def.getImagePath()));
+                if (image != null){
+                    
+                    Image img = image.getScaledInstance(108, 108, Image.SCALE_AREA_AVERAGING);
+                    
              
-                Image img = icon.getImage().getScaledInstance(108, 108, Image.SCALE_AREA_AVERAGING);
-                JLabel lblImg = new JLabel(new ImageIcon(img));
-                lblImg.setBounds(0, 0, 110, 110);
+                    JLabel lblImg = new JLabel(new ImageIcon(img));
+                    lblImg.setBounds(0, 0, 110, 110);
                 
-                imgPanel.add(lblImg);    
+                    imgPanel.add(lblImg);
+                }
+                else {
+                    imgPanel.add(new JLabel ("No img"));
+                }
             }
+            else{
+                imgPanel.add(new JLabel ("No img"));  
+            }     
         }catch (IOException e){
             imgPanel.add(new JLabel("No img"));    
         }
+        
+        
         gbc.gridx = 0;
         gbc.weightx = 0; 
         gbc.insets = new Insets(5, 5, 5, 5);
         itemPanel.add(imgPanel, gbc);
         
-        infoPanel = new JPanel();
+        JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new GridLayout(3, 1));
-        infoPanel.add(new JLabel("Nombre: " + name));
-        infoPanel.add(new JLabel("Vida: " + health));
-        infoPanel.add(new JLabel("Daño: " + damage));
+        
+        String name = def.getEntityName() != null ? def.getEntityName() : "(Sin nombre)";
+        infoPanel.add(new JLabel("Name" + name));
+        infoPanel.add(new JLabel("Health: " + def.getHealthPoints()));
+        if (def instanceof DefenseAttacker attack){
+            infoPanel.add(new JLabel("Damage: " + attack.getAttack()));    
+        }
+        infoPanel.add(new JLabel("Size: " + def.getCost()));
+        if (def instanceof DefenseHealer heal){
+            infoPanel.add(new JLabel("Healing Power: " + heal.getHealPower()));    
+        }
+        if (def instanceof DefenseAttacker range){
+            infoPanel.add(new JLabel("Ataque: " + range.getRange()));    
+        }
 
         gbc.gridx = 1;
         gbc.gridy = 0;
@@ -202,19 +236,21 @@ public class SidePanel extends JPanel {
         gbc.fill = GridBagConstraints.BOTH;
         itemPanel.add(infoPanel, gbc);
         
+        itemPanel.putClientProperty("defenseDef", def);
+        
         itemPanel.addMouseListener(new MouseAdapter() {
 
             @Override
             public void mouseClicked(MouseEvent event){
 
-                selectDefense(name, itemPanel);
+                selectDefense(itemPanel);
             }
         });
 
         return itemPanel;   
     }
     
-    private void selectDefense(String defenseName, JPanel panel){
+    private void selectDefense(JPanel panel){
         
         if (pnlSelected != null){
             
@@ -225,13 +261,10 @@ public class SidePanel extends JPanel {
         pnlSelected = panel;
         
         if (gameManager != null){
-            
-            gameManager.setSelectedDefense(defenseName);
-        }
-        
-        System.out.println("Seleccionada: " + defenseName);
-        
-        
+            Defense def = (Defense) panel.getClientProperty("defenseDef");
+            gameManager.setSelectedDefense(def);
+            System.out.println("Seleccionada: " + (def != null ? def.getEntityName() : "null"));
+        }   
     }
     
     public void deselectDefense(){
@@ -253,14 +286,16 @@ public class SidePanel extends JPanel {
         int defencesHeight = (int)(height * 0.50);
         int buttonsHeight = (int)(height * 0.20);
         int logsHeight = (int)(height * 0.30);
-        int defences1Width = (int)(width * 0.30);
-        int defences2Width = (int)(width * 0.70);
         
+        if (scpScrollText != null){
         scpScrollText.setPreferredSize(new Dimension(width, defencesHeight));
+        }
+        if (pnlButtons != null){
         pnlButtons.setPreferredSize(new Dimension(width, buttonsHeight));
+        }
+        if (scpScrollLog != null){
         scpScrollLog.setPreferredSize(new Dimension(width, logsHeight));
-        imgPanel.setPreferredSize(new Dimension(defences1Width, defencesHeight));
-        infoPanel.setPreferredSize(new Dimension(defences2Width, defencesHeight));    
+        }
     }
     
     private void updatePanelSize() {
