@@ -27,21 +27,4 @@ public class DefenseAttacker extends Defense implements EntityAttacker {
     public void setRange(int range) {
         this.range = range;
     }
-    
-    public int getAttack() {
-        return attack;
-    }
-    
-    public void setAttack(int attack) {
-        this.attack = attack;
-    }
-    
-    public int getRange() {
-        return range;
-    }
-    
-    public void setRange(int range) {
-        this.range = range;
-    }
-    
 }
