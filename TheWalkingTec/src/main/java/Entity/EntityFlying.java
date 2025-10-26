@@ -2,7 +2,7 @@
 package Entity;
 
 
-public interface FlyingEntity {
+public interface EntityFlying {
     
     public void fly();
 }

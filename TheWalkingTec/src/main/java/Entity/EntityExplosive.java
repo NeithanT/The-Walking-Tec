@@ -1,7 +1,7 @@
 
 package Entity;
 
-public interface ExplosiveEntity {
+public interface EntityExplosive {
     
     public void explode();
 }

@@ -2,7 +2,7 @@
 package Entity;
 
 
-public interface HealingEntity {
+public interface EntityHealer {
     
     public void heal();
 }

@@ -1,5 +1,5 @@
 package Zombie;
 
-public class ZombieContact {
+public class ZombieContact extends ZombieAttacker {
     
 }
