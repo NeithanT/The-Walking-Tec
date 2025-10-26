@@ -33,10 +33,12 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import Configuration.EntityPanel;
 import Defense.Defense;
+import Defense.DefenseType;
 import Vanity.DefaultFont;
 import Vanity.RoundedButton;
 import Vanity.RoundedPanel;
 import Zombie.Zombie;
+import Zombie.ZombieType;
 
 public class ConfigPanel extends JPanel {
     
@@ -59,7 +61,6 @@ public class ConfigPanel extends JPanel {
     
     private ConfigManager manager;
     
-    private static final Color BACKGROUND_TOP = new Color(16, 24, 39);
     private static final Color BACKGROUND_BOTTOM = new Color(30, 41, 59);
     private static final Color PANEL_COLOR = new Color(46, 56, 86, 225);
     private static final Color CHOICES_COLOR = new Color(67, 56, 202, 210);
@@ -85,7 +86,6 @@ public class ConfigPanel extends JPanel {
         
         setOpaque(false);
         setLayout(new GridBagLayout());
-        setBackground(BACKGROUND_TOP);
 
         initializeComponents();
         initializeData();
@@ -94,17 +94,6 @@ public class ConfigPanel extends JPanel {
         updateFonts();
         addCenteredConfigPanel();
        
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-        Graphics2D g2 = (Graphics2D) g.create();
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        GradientPaint gradient = new GradientPaint(0, 0, BACKGROUND_TOP, getWidth(), getHeight(), BACKGROUND_BOTTOM);
-        g2.setPaint(gradient);
-        g2.fillRect(0, 0, getWidth(), getHeight());
-        g2.dispose();
-        super.paintComponent(g);
     }
     
     private void initializeData() {
@@ -140,7 +129,9 @@ public class ConfigPanel extends JPanel {
     private void addEntityPanel(EntityPanel panel, ArrayList<EntityPanel> list) {
         list.add(panel);
         attachFieldListener(panel);
+        panel.setRemovalListener(this::handleEntityRemoval);
         entityContainer.add(panel);
+        entityContainer.add(Box.createVerticalStrut(SPACING));
     }
 
     private void attachFieldListener(EntityPanel panel) {
@@ -434,14 +425,24 @@ public class ConfigPanel extends JPanel {
     private void saveEntity(EntityPanel panel) {
         try {
             String[] values = panel.getFieldValues();
-            Zombie zombie = parseEntityValues(values);
-            manager.addZombie(zombie);
+            
+            if (type == SaveType.ZOMBIE) {
+                Zombie zombie = parseZombieValues(values);
+                ZombieType zombieType = panel.getZombieType();
+                zombie.setType(zombieType);
+                manager.addZombie(zombie);
+            } else {
+                Defense defense = parseDefenseValues(values);
+                DefenseType defenseType = panel.getDefenseType();
+                defense.setType(defenseType);
+                manager.addDefense(defense);
+            }
         } catch (NumberFormatException ex) {
             System.out.println("No se guardo correctamente");
         }
     }
     
-    private Zombie parseEntityValues(String[] values) throws NumberFormatException {
+    private Zombie parseZombieValues(String[] values) throws NumberFormatException {
         String name = values[0];
         int health = Integer.parseInt(values[1]);
         int damage = Integer.parseInt(values[2]);
@@ -450,6 +451,22 @@ public class ConfigPanel extends JPanel {
         int range = Integer.parseInt(values[5]);
         
         return new Zombie(name, health, damage, showUp, cost, range);
+    }
+    
+    private Defense parseDefenseValues(String[] values) throws NumberFormatException {
+        String name = values[0];
+        int health = Integer.parseInt(values[1]);
+        int damage = Integer.parseInt(values[2]);
+        int showUp = Integer.parseInt(values[3]);
+        int cost = Integer.parseInt(values[4]);
+        int range = Integer.parseInt(values[5]);
+        
+        Defense defense = new Defense();
+        defense.setName(name);
+        defense.setHealthPoints(health);
+        defense.setShowUpLevel(showUp);
+        defense.setCost(cost);
+        return defense;
     }
     
     private void createCheckmarkButton() {
@@ -518,6 +535,41 @@ public class ConfigPanel extends JPanel {
                 System.err.println("¡Error! No se pudo cargar la imagen de fondo: " + selectedFile);
             }
         }
+    }
+    
+    private void handleEntityRemoval(EntityPanel panelToRemove) {
+        // Remove from UI
+        if (type == SaveType.ZOMBIE) {
+            zombies.remove(panelToRemove);
+        } else {
+            defenses.remove(panelToRemove);
+        }
+        
+        // Remove from ConfigManager
+        Zombie zombie = panelToRemove.getCurrentZombie();
+        Defense defense = panelToRemove.getCurrentDefense();
+        
+        if (zombie != null) {
+            manager.removeZombie(zombie);
+        } else if (defense != null) {
+            manager.removeDefense(defense);
+        }
+        
+        // Update UI
+        entityContainer.remove(panelToRemove);
+        // Remove the spacing box after the panel (if it exists)
+        for (int i = 0; i < entityContainer.getComponentCount() - 1; i++) {
+            if (entityContainer.getComponent(i) == panelToRemove) {
+                if (i + 1 < entityContainer.getComponentCount()) {
+                    entityContainer.remove(i + 1);
+                }
+                break;
+            }
+        }
+        
+        entityContainer.revalidate();
+        entityContainer.repaint();
+        updateCheckmarkButtonState();
     }
     
 }
