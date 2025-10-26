@@ -9,7 +9,7 @@ public class Zombie extends Entity {
     
     public Zombie() {}
     public Zombie(String name, int healthPoints, int damage, int showUpLevel, int cost, int range) {
-        this.name = name;
+        this.entityName = name;
         this.healthPoints = healthPoints;
         this.showUpLevel = showUpLevel;
         this.cost = cost;
@@ -17,5 +17,7 @@ public class Zombie extends Entity {
     }
     
     public ZombieType getType() { return type; }
+    
+    public void setType(ZombieType type) { this.type = type; }
     
 }

@@ -78,6 +78,15 @@ public class ConfigManager {
     }
     
     
+    public void removeZombie(Zombie zombie) {
+        zombies.remove(zombie);
+        writeObject(zombies, pathZombies);
+    }
+    
+    public void removeDefense(Defense defense) {
+        defenses.remove(defense);
+        writeObject(defenses, pathDefenses);
+    }
     
     public boolean isValidZombie() {return false;}
     public boolean isValidDefense() {return false;}

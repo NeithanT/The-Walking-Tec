@@ -45,6 +45,10 @@ public class EntityRow extends JPanel {
     public JTextField getTextField() {
         return textField;
     }
+    
+    public JLabel getLabel() {
+        return label;
+    }
 
     public void addDocumentListener(DocumentListener listener) {
         textField.getDocument().addDocumentListener(listener);
