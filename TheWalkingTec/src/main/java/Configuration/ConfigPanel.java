@@ -60,6 +60,7 @@ public class ConfigPanel extends JPanel {
         initializeData();
         setupHomeButtonListener();
         updateButtonPanel();
+        createCheckmarkButton();
         add(pnlConfig);
     }
     
@@ -105,7 +106,6 @@ public class ConfigPanel extends JPanel {
         btnZombies = new JButton("Zombies");
         btnDefenses = new JButton("Defenses");
         btnHome = new JButton("Home");
-        btnCheckmark = createCheckmarkButton();
         
         setButtonColors(btnZombies, btnDefenses, btnHome);
         addHoverListeners(btnZombies, btnDefenses, btnHome);
@@ -145,7 +145,6 @@ public class ConfigPanel extends JPanel {
     private void initializeEntityContainer() {
         entityContainer = new JPanel();
         entityContainer.setLayout(new BoxLayout(entityContainer, BoxLayout.Y_AXIS));
-        entityContainer.add(btnCheckmark);
         scrollArea.setViewportView(entityContainer);
     }
     
@@ -287,16 +286,15 @@ public class ConfigPanel extends JPanel {
         return new Zombie(name, health, damage, showUp, cost, range);
     }
     
-    private JButton createCheckmarkButton() {
-        JButton button = new JButton("+");
-        button.setBackground(Color.GREEN);
-        button.addMouseListener(new MouseAdapter() {
+    private void createCheckmarkButton() {
+        btnCheckmark = new JButton("+");
+        btnCheckmark.setBackground(Color.GREEN);
+        btnCheckmark.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent evt) {
                 saveAllEntities();
             }
         });
-        return button;
     }
     
     private void saveAllEntities() {
@@ -307,6 +305,23 @@ public class ConfigPanel extends JPanel {
             }
             saveEntity(panel);
         }
-    }    
+        isPossibleToAddZombie();
+    }
+    
+    private void isPossibleToAddZombie() {
+        ArrayList<EntityPanel> panels;
+        if (type == SaveType.ZOMBIE) {
+            panels = zombies;
+        } else {
+            panels = defenses;
+        }
+        for (EntityPanel panel : panels) {
+            if (!panel.allFieldsFilled()) {
+                return;
+            }
+        }
+        
+        entityContainer.add(btnCheckmark);
+    }
     
 }
