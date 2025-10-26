@@ -15,7 +15,7 @@ public class GameBoard extends JPanel {
     private Image backgroundImage;
     private static final String IMAGE_PATH = "/assets/tablero.png";
 
-    private ArrayList<Object> defenses;
+    private ArrayList<PlacedDefense> defenses;
     private ArrayList<Object> zombies;
 
     private final int ROWS = 25;
@@ -116,14 +116,19 @@ public class GameBoard extends JPanel {
             drawPreview(g);
         }
         
-        for (Object defense : defenses){
-            
-          //  draw
+        for (PlacedDefense defense : defenses){
+            if (defense.image != null){
+                
+                int x = (int)(defense.column * cellWidth);
+                int y = (int)(defense.row * cellHeight);
+                int w = (int) cellWidth;
+                int h = (int) cellHeight;
+                g.drawImage(defense.image, x, y, w, h, this);
+            }
         }
+       
         
-//        if ()
-        
-        //TODO: DIBUJAR DEFENSAS Y ZOMBIES
+        //TODO: DIBUJAR  ZOMBIES
     }
 
     private void drawPreview(Graphics g){
@@ -166,7 +171,7 @@ public class GameBoard extends JPanel {
         return (int)(row * cellHeight + cellHeight / 2.0);
     }
 
-    public void addDefense(Object defense){
+    public void addDefense(PlacedDefense defense){
 
         defenses.add(defense);
         repaint();
@@ -178,7 +183,7 @@ public class GameBoard extends JPanel {
 
     }
 
-    public void deleteDefense(Object defense){
+    public void deleteDefense(PlacedDefense defense){
 
         defenses.remove(defense);
         repaint();
@@ -215,7 +220,7 @@ public class GameBoard extends JPanel {
         this.gameManager = manager;
     }    
     
-    public ArrayList<Object> getDefenses() {
+    public ArrayList<PlacedDefense> getDefenses() {
         return defenses;
     }
     public ArrayList<Object> getZombies() {
