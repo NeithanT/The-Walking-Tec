@@ -52,7 +52,6 @@ public class ConfigPanel extends JPanel {
     private RoundedPanel pnlChoices;
     private RoundedPanel listWrapper;
     private JPanel entityContainer;
-    private Font font;
     private ConfigWindow configWindow;
     
     private SaveType type;
@@ -72,38 +71,30 @@ public class ConfigPanel extends JPanel {
     private static final Color SECONDARY_BUTTON_HOVER = new Color(56, 189, 248);
     private static final Color ACCENT_BUTTON_COLOR = new Color(34, 197, 94);
     private static final Color ACCENT_BUTTON_HOVER = new Color(74, 222, 128);
+    
+    
     private static final int SPACING = 24;
-    private static final int PANEL_CORNER_RADIUS = 28;
-    private static final int BUTTON_CORNER_RADIUS = 18;
-    private static final int LIST_CORNER_RADIUS = 24;
+    private static final int CORNER_RADIUS = 28;
     private static final int MIN_BUTTON_WIDTH = 200;
-    private static final int MIN_BUTTON_HEIGHT = 50;
-    private static final int BUTTON_WIDTH_OFFSET = 50;
-    private static final int BUTTON_HEIGHT_OFFSET = 10;    
+    private static final int MIN_BUTTON_HEIGHT = 50;  
     
     public ConfigPanel(ConfigWindow confWindow) {
         
         configWindow = confWindow;
         manager = new ConfigManager();
         type = SaveType.ZOMBIE;
+        
         setOpaque(false);
         setLayout(new GridBagLayout());
         setBackground(BACKGROUND_TOP);
-        addComponentListener(new ComponentAdapter() {
-            @Override
-            public void componentResized(ComponentEvent e) {
-                updateButtonSizes();
-                pnlConfig.revalidate();
-                pnlConfig.repaint();
-            }
-        });
 
         initializeComponents();
         initializeData();
         setupHomeButtonListener();
-        createCheckmarkButton();
         updateButtonPanel();
+        updateFonts();
         addCenteredConfigPanel();
+       
     }
 
     @Override
@@ -136,6 +127,7 @@ public class ConfigPanel extends JPanel {
             entityContainer.add(panel);
             this.zombies.add(panel);
         }
+        entityContainer.add(btnCheckmark);
     }
     
     private void createRowsDefenses(ArrayList<Defense> defenses) {
@@ -145,6 +137,7 @@ public class ConfigPanel extends JPanel {
             entityContainer.add(panel);
             this.defenses.add(panel);
         }
+        entityContainer.add(btnCheckmark);
     }
     
     private void reloadList() {
@@ -166,6 +159,7 @@ public class ConfigPanel extends JPanel {
     
     private void initializeComponents() {
         initializeButtons();
+        createCheckmarkButton();
         initializeEntityContainer();
         initializeScrollArea();
         initializePanels();
@@ -221,29 +215,28 @@ public class ConfigPanel extends JPanel {
         scrollArea.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollArea.setBorder(BorderFactory.createEmptyBorder());
         scrollArea.setOpaque(false);
-        scrollArea.getViewport().setOpaque(false);
     }
     
     private void initializeEntityContainer() {
         entityContainer = new JPanel();
         entityContainer.setLayout(new BoxLayout(entityContainer, BoxLayout.Y_AXIS));
         entityContainer.setOpaque(false);
-        entityContainer.setBorder(new EmptyBorder(12, 12, 12, 12));
+        entityContainer.setBorder(new EmptyBorder(10, 10, 10, 10));
     }
     
     private void initializePanels() {
-        pnlChoices = new RoundedPanel(CHOICES_COLOR, BUTTON_CORNER_RADIUS * 2);
+        pnlChoices = new RoundedPanel(CHOICES_COLOR, CORNER_RADIUS);
         pnlChoices.setLayout(new BoxLayout(pnlChoices, BoxLayout.X_AXIS));
         pnlChoices.setBorder(new EmptyBorder(16, 24, 16, 24));
         pnlChoices.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        listWrapper = new RoundedPanel(LIST_COLOR, LIST_CORNER_RADIUS);
+        listWrapper = new RoundedPanel(LIST_COLOR, CORNER_RADIUS);
         listWrapper.setLayout(new BorderLayout());
         listWrapper.setBorder(new EmptyBorder(16, 16, 16, 16));
         listWrapper.add(scrollArea, BorderLayout.CENTER);
         listWrapper.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        pnlConfig = new RoundedPanel(PANEL_COLOR, PANEL_CORNER_RADIUS);
+        pnlConfig = new RoundedPanel(PANEL_COLOR, CORNER_RADIUS);
         pnlConfig.setLayout(new BoxLayout(pnlConfig, BoxLayout.Y_AXIS));
         pnlConfig.setBorder(new EmptyBorder(32, 36, 32, 36));
         pnlConfig.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -280,33 +273,19 @@ public class ConfigPanel extends JPanel {
     }
     
     private void updateButtonSizes() {
-        int width = calculateButtonWidth();
-        int height = calculateButtonHeight();
+        Dimension preferredSize = new Dimension(MIN_BUTTON_WIDTH, MIN_BUTTON_HEIGHT);
         
-        Dimension maxButtonSize = new Dimension(width + BUTTON_WIDTH_OFFSET, height + BUTTON_HEIGHT_OFFSET);
-        Dimension normalButtonSize = new Dimension(width, height);
+        btnZombies.setPreferredSize(preferredSize);
+        btnZombies.setMaximumSize(preferredSize);
         
-        setButtonDimensions(btnZombies, maxButtonSize, normalButtonSize);
-        setButtonDimensions(btnDefenses, maxButtonSize, normalButtonSize);
-        setButtonDimensions(btnHome, maxButtonSize, normalButtonSize);
-        if (btnCheckmark != null) {
-            setButtonDimensions(btnCheckmark, maxButtonSize, normalButtonSize);
-        }
-    }
-    
-    private int calculateButtonWidth() {
-        return Math.max(MIN_BUTTON_WIDTH, (int)(getWidth() * 0.10));
-    }
-    
-    private int calculateButtonHeight() {
-        return Math.max(MIN_BUTTON_HEIGHT, (int)(getHeight() * 0.06));
-    }
-    
-    private void setButtonDimensions(JButton button, Dimension maxSize, Dimension preferredSize) {
-        if (button != null) {
-            button.setMaximumSize(maxSize);
-            button.setPreferredSize(preferredSize);
-        }
+        btnDefenses.setPreferredSize(preferredSize);
+        btnDefenses.setMaximumSize(preferredSize);
+        
+        btnHome.setPreferredSize(preferredSize);
+        btnHome.setMaximumSize(preferredSize);
+        
+        btnCheckmark.setPreferredSize(new Dimension(1600, 60));
+        btnCheckmark.setMaximumSize(new Dimension(1600, 60));
     }
     
     private void updateButtonPanel() {
@@ -322,14 +301,9 @@ public class ConfigPanel extends JPanel {
     }
     
     private void buildChoicesPanel() {
-        pnlChoices.add(Box.createHorizontalGlue());
         pnlChoices.add(createBoxedButton(btnZombies));
         pnlChoices.add(Box.createHorizontalStrut(SPACING));
         pnlChoices.add(createBoxedButton(btnDefenses));
-        if (btnCheckmark != null) {
-            pnlChoices.add(Box.createHorizontalStrut(SPACING));
-            pnlChoices.add(createBoxedButton(btnCheckmark));
-        }
         pnlChoices.add(Box.createHorizontalGlue());
     }
     
@@ -347,7 +321,6 @@ public class ConfigPanel extends JPanel {
     private Box createHomeButtonBox() {
         Box homeBox = Box.createHorizontalBox();
         homeBox.setOpaque(false);
-        homeBox.add(Box.createHorizontalGlue());
         homeBox.add(btnHome);
         homeBox.add(Box.createHorizontalGlue());
         homeBox.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -374,15 +347,15 @@ public class ConfigPanel extends JPanel {
     }
 
     private JButton createPrimaryButton(String text) {
-        return new RoundedButton(text, PRIMARY_BUTTON_COLOR, PRIMARY_BUTTON_HOVER, BUTTON_CORNER_RADIUS);
+        return new RoundedButton(text, PRIMARY_BUTTON_COLOR, PRIMARY_BUTTON_HOVER, CORNER_RADIUS);
     }
 
     private JButton createSecondaryButton(String text) {
-        return new RoundedButton(text, SECONDARY_BUTTON_COLOR, SECONDARY_BUTTON_HOVER, BUTTON_CORNER_RADIUS);
+        return new RoundedButton(text, SECONDARY_BUTTON_COLOR, SECONDARY_BUTTON_HOVER, CORNER_RADIUS);
     }
 
     private JButton createAccentButton(String text) {
-        return new RoundedButton(text, ACCENT_BUTTON_COLOR, ACCENT_BUTTON_HOVER, BUTTON_CORNER_RADIUS);
+        return new RoundedButton(text, ACCENT_BUTTON_COLOR, ACCENT_BUTTON_HOVER, CORNER_RADIUS);
     }
     
     private void saveEntity(EntityPanel panel) {
@@ -415,8 +388,6 @@ public class ConfigPanel extends JPanel {
                 saveAllEntities();
             }
         });
-        updateFonts();
-        updateButtonSizes();
     }
     
     private void updateFonts() {
@@ -424,8 +395,8 @@ public class ConfigPanel extends JPanel {
         DefaultFont.applyFontToButton(btnDefenses);
         DefaultFont.applyFontToButton(btnHome);
         DefaultFont.applyFontToButton(btnCheckmark);
-
     }
+    
     private void saveAllEntities() {
         ArrayList<EntityPanel> currentEntities = getEntitiesForCurrentType();
         for (EntityPanel panel : currentEntities) {
