@@ -1,4 +1,5 @@
 package Table;
+import Defense.Defense;
 import GameLogic.GameManager;
 import java.awt.Color;
 import java.awt.Graphics;
@@ -113,6 +114,11 @@ public class GameBoard extends JPanel {
         
         if (showPreview && rowPreview != -1){
             drawPreview(g);
+        }
+        
+        for (Object defense : defenses){
+            
+          //  draw
         }
         
 //        if ()
