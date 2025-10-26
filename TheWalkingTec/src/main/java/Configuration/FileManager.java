@@ -1,7 +1,5 @@
 package Configuration;
 
-
-import Defense.Defense;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -18,10 +16,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import Zombie.Zombie;
-import java.net.URL;
-import java.util.ArrayList;
-
 
 
 /**
@@ -110,8 +104,6 @@ public class FileManager {
             
           }
         return null;
-    }  
+    }
     
-    
-    
-}// fin clase
+}
