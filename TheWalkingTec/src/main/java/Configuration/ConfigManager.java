@@ -40,7 +40,9 @@ public class ConfigManager {
     
     public void loadDefenses() {
         ArrayList<Defense> loaded = (ArrayList<Defense>)FileManager.readObject(pathDefenses);
-        defenses = loaded != null ? loaded : new ArrayList<>();
+        if (loaded != null) {
+            defenses = loaded;
+        }
     }
     
     public void loadGames() {
@@ -49,7 +51,10 @@ public class ConfigManager {
     
     public void loadZombies() {
         ArrayList<Zombie> loaded = (ArrayList<Zombie>)FileManager.readObject(pathZombies);
-        zombies = loaded != null ? loaded : zombies;
+        
+        if (loaded != null) {
+            zombies = loaded;
+        }
     }
     
     

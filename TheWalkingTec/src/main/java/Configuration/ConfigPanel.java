@@ -8,17 +8,24 @@ import Configuration.EntityPanel;
 import Configuration.FileManager;
 import Defense.Defense;
 import Zombie.Zombie;
+import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
+import javax.imageio.ImageIO;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.JLabel;
+import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class ConfigPanel extends JPanel {
     
@@ -28,6 +35,7 @@ public class ConfigPanel extends JPanel {
     private JButton btnCheckmark;
     
     private JScrollPane scrollArea;
+    private JFileChooser fileChooser;
     private JPanel pnlConfig;
     private JPanel pnlChoices;
     private JPanel entityContainer;
@@ -77,7 +85,6 @@ public class ConfigPanel extends JPanel {
     }
     
     private void createRowsZombies(ArrayList<Zombie> zombies) {
-        System.out.println("llego");
         for (Zombie zombie : zombies) {
             entityContainer.add(new EntityPanel(zombie));
         }
@@ -308,7 +315,7 @@ public class ConfigPanel extends JPanel {
         isPossibleToAddZombie();
     }
     
-    private void isPossibleToAddZombie() {
+    private boolean isPossibleToAddZombie() {
         ArrayList<EntityPanel> panels;
         if (type == SaveType.ZOMBIE) {
             panels = zombies;
@@ -317,11 +324,33 @@ public class ConfigPanel extends JPanel {
         }
         for (EntityPanel panel : panels) {
             if (!panel.allFieldsFilled()) {
-                return;
+                return false;
             }
         }
         
-        entityContainer.add(btnCheckmark);
+        return true;
+    }
+    
+    public void chooseFile() throws UnsupportedLookAndFeelException {
+
+        if (fileChooser == null) {
+            fileChooser = new JFileChooser();
+        }
+        
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(
+            "Image Files (*.jpg, *.png, *.gif)", "jpg", "png", "gif");
+        
+        fileChooser.setFileFilter(filter);
+
+        int result = fileChooser.showOpenDialog(null);
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File selectedFile = fileChooser.getSelectedFile();
+            try {          
+                Image backgroundImage = ImageIO.read(selectedFile);
+            } catch (IOException | NullPointerException e) {
+                System.err.println("¡Error! No se pudo cargar la imagen de fondo: " + selectedFile);
+            }
+        }
     }
     
 }

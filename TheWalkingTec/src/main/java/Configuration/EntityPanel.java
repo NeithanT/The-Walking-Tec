@@ -1,6 +1,7 @@
 package Configuration;
 
 import Defense.Defense;
+import Defense.DefenseType;
 import Zombie.Zombie;
 import Zombie.ZombieType;
 import java.awt.BorderLayout;
@@ -30,8 +31,10 @@ public class EntityPanel extends JPanel {
         this();
         
         switch (zombie.getType()) {
+      
             case ZombieType.CONTACT:
                 
+                rows.add(new EntityRow("Daño:"));
                 break;
             
             case ZombieType.FLYING:
@@ -47,6 +50,7 @@ public class EntityPanel extends JPanel {
                 
             case ZombieType.HEALER:
                 
+                rows.add(new EntityRow("Cura:"));
                 break;
                 
             default:
@@ -56,6 +60,42 @@ public class EntityPanel extends JPanel {
     
     public EntityPanel(Defense defense) {
         this();
+        
+        switch (defense.getType()) {
+      
+            case DefenseType.BLOCKS:
+                
+                rows.add(new EntityRow("Daño:"));
+                break;
+            
+            case DefenseType.CONTACT:
+                
+                break;
+            case DefenseType.EXPLOSIVE:
+                
+                break;
+                
+            case DefenseType.FLYING:
+                
+                break;
+      
+            case DefenseType.MEDIUMRANGE:
+                
+                rows.add(new EntityRow("Cura:"));
+                break;
+                
+            case DefenseType.MULTIPLEATTACK:
+                
+                break;
+            
+            case DefenseType.HEALER:
+                
+                rows.add(new EntityRow("Cura:"));
+                break;
+                
+            default:
+                break;
+        }
     }
     
     public EntityPanel() {
@@ -72,7 +112,6 @@ public class EntityPanel extends JPanel {
     private void createLabels() {
         rows.add(new EntityRow("Nombre: "));
         rows.add(new EntityRow("Vida:"));
-        rows.add(new EntityRow("Daño:"));
         rows.add(new EntityRow("Aparicion:"));
         rows.add(new EntityRow("Costo:"));
         rows.add(new EntityRow("Rango:"));
