@@ -33,8 +33,8 @@ public class AdminManagementDialog extends JDialog {
         this.usernameField = new JTextField(18);
         this.passwordField = new JPasswordField(18);
 
-        setPreferredSize(new Dimension(460, 320));
-        setMinimumSize(new Dimension(420, 280));
+        setPreferredSize(new Dimension(720, 400));
+        setMinimumSize(new Dimension(720, 400));
 
         initializeLayout();
         loadAdmins();

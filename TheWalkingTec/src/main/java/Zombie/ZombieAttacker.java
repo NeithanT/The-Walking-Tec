@@ -7,9 +7,10 @@ public class ZombieAttacker extends Zombie implements EntityAttacker {
     protected int damage;
     protected int range;
     
-    @Override
-    public void attack() {
-
+    public ZombieAttacker(String name, int healthPoints, int showUpLevel, int cost, int damage, int range) {
+        super(name, healthPoints, showUpLevel, cost);
+        this.damage = damage;
+        this.range = range;
     }
     
     public int getDamage() {
@@ -26,6 +27,11 @@ public class ZombieAttacker extends Zombie implements EntityAttacker {
     
     public void setRange(int range) {
         this.range = range;
+    }
+
+    @Override
+    public void attack() {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
     
 }

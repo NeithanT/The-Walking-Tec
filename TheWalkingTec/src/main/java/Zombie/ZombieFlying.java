@@ -1,12 +1,10 @@
 package Zombie;
 
-import Entity.EntityFlying;
+public class ZombieFlying extends ZombieAttacker {
 
-public class ZombieFlying extends ZombieAttacker implements EntityFlying {
-
-    @Override
-    public void fly() {
-    
+    public ZombieFlying(String name, int healthPoints, int showUpLevel, int cost, int damage, int range) {
+        super(name, healthPoints, showUpLevel, cost, damage, range);
+        this.type = ZombieType.FLYING;
     }
     
 }

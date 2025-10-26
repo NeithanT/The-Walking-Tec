@@ -196,14 +196,7 @@ public class ConfigPanel extends JPanel {
         entityContainer.remove(btnCheckmark);
 
         if (type == SaveType.ZOMBIE) {
-            ZombieAttacker zom = new ZombieAttacker();
-            zom.setType(ZombieType.CONTACT);
-            zom.setName("zombie");
-            zom.setCost(1);
-            zom.setShowUpLevel(1);
-            zom.setHealthPoints(1);
-            zom.setDamage(1);
-            zom.setRange(1);
+            ZombieAttacker zom = new ZombieAttacker("zombie", 1, 1, 1, 1, 1);
             
             EntityPanel panel = new EntityPanel(zom);
             addEntityPanel(panel, zombies);
@@ -395,6 +388,7 @@ public class ConfigPanel extends JPanel {
         pnlChoices.add(Box.createHorizontalStrut(SPACING));
         pnlChoices.add(createBoxedButton(btnAdmins));
         pnlChoices.add(Box.createHorizontalGlue());
+        pnlChoices.add(createBoxedButton(btnHome));
     }
     
     private void buildConfigPanel() {
@@ -402,10 +396,7 @@ public class ConfigPanel extends JPanel {
         pnlConfig.add(pnlChoices);
         pnlConfig.add(Box.createVerticalStrut(SPACING));
         pnlConfig.add(listWrapper);
-        pnlConfig.add(Box.createVerticalStrut(SPACING));
-        pnlConfig.add(createHomeButtonBox());
         pnlConfig.add(Box.createVerticalGlue());
-
     }
     
     private Box createHomeButtonBox() {
