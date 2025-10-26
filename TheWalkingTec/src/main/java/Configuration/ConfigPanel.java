@@ -1,31 +1,41 @@
 package Configuration;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.event.ActionListener;
-import Configuration.EntityPanel;
-import Configuration.FileManager;
-import Defense.Defense;
-import Zombie.Zombie;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Image;
+import java.awt.Insets;
+import java.awt.RenderingHints;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.ScrollPaneConstants;
-import javax.swing.JLabel;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import Configuration.EntityPanel;
+import Defense.Defense;
+import Zombie.Zombie;
 
 public class ConfigPanel extends JPanel {
     
@@ -36,19 +46,35 @@ public class ConfigPanel extends JPanel {
     
     private JScrollPane scrollArea;
     private JFileChooser fileChooser;
-    private JPanel pnlConfig;
-    private JPanel pnlChoices;
+    private RoundedPanel pnlConfig;
+    private RoundedPanel pnlChoices;
+    private RoundedPanel listWrapper;
     private JPanel entityContainer;
     private Font font;
     private ConfigWindow configWindow;
     
     private SaveType type;
-    private ArrayList<EntityPanel> zombies;
-    private ArrayList<EntityPanel> defenses;
+    private final ArrayList<EntityPanel> zombies = new ArrayList<>();
+    private final ArrayList<EntityPanel> defenses = new ArrayList<>();
     
     private ConfigManager manager;
     
-    private static final int SPACING = 2;
+    private static final Color BACKGROUND_TOP = new Color(16, 24, 39);
+    private static final Color BACKGROUND_BOTTOM = new Color(30, 41, 59);
+    private static final Color PANEL_COLOR = new Color(46, 56, 86, 225);
+    private static final Color CHOICES_COLOR = new Color(67, 56, 202, 210);
+    private static final Color LIST_COLOR = new Color(30, 64, 175, 200);
+    private static final Color PRIMARY_BUTTON_COLOR = new Color(99, 102, 241);
+    private static final Color PRIMARY_BUTTON_HOVER = new Color(129, 140, 248);
+    private static final Color SECONDARY_BUTTON_COLOR = new Color(14, 165, 233);
+    private static final Color SECONDARY_BUTTON_HOVER = new Color(56, 189, 248);
+    private static final Color ACCENT_BUTTON_COLOR = new Color(34, 197, 94);
+    private static final Color ACCENT_BUTTON_HOVER = new Color(74, 222, 128);
+    private static final Color TEXT_COLOR = Color.WHITE;
+    private static final int SPACING = 24;
+    private static final int PANEL_CORNER_RADIUS = 28;
+    private static final int BUTTON_CORNER_RADIUS = 18;
+    private static final int LIST_CORNER_RADIUS = 24;
     private static final int MIN_BUTTON_WIDTH = 200;
     private static final int MIN_BUTTON_HEIGHT = 50;
     private static final int BUTTON_WIDTH_OFFSET = 50;
@@ -63,13 +89,35 @@ public class ConfigPanel extends JPanel {
         manager = new ConfigManager();
         type = SaveType.ZOMBIE;
         setOpaque(false);
-        
+        setLayout(new GridBagLayout());
+        setBackground(BACKGROUND_TOP);
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                updateButtonSizes();
+                updateFontSizes();
+                pnlConfig.revalidate();
+                pnlConfig.repaint();
+            }
+        });
+
         initializeComponents();
         initializeData();
         setupHomeButtonListener();
-        updateButtonPanel();
         createCheckmarkButton();
-        add(pnlConfig);
+        updateButtonPanel();
+        addCenteredConfigPanel();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        GradientPaint gradient = new GradientPaint(0, 0, BACKGROUND_TOP, getWidth(), getHeight(), BACKGROUND_BOTTOM);
+        g2.setPaint(gradient);
+        g2.fillRect(0, 0, getWidth(), getHeight());
+        g2.dispose();
+        super.paintComponent(g);
     }
     
     private void initializeData() {
@@ -85,19 +133,27 @@ public class ConfigPanel extends JPanel {
     }
     
     private void createRowsZombies(ArrayList<Zombie> zombies) {
+        this.zombies.clear();
         for (Zombie zombie : zombies) {
-            entityContainer.add(new EntityPanel(zombie));
+            EntityPanel panel = new EntityPanel(zombie);
+            entityContainer.add(panel);
+            this.zombies.add(panel);
         }
     }
     
     private void createRowsDefenses(ArrayList<Defense> defenses) {
+        this.defenses.clear();
         for (Defense defense : defenses) {
-            entityContainer.add(new EntityPanel(defense));
+            EntityPanel panel = new EntityPanel(defense);
+            entityContainer.add(panel);
+            this.defenses.add(panel);
         }
     }
     
     private void reloadList() {
         entityContainer.removeAll();
+        zombies.clear();
+        defenses.clear();
         
         if (type == SaveType.ZOMBIE) {
             ArrayList<Zombie> zombies = manager.getZombies();
@@ -113,20 +169,22 @@ public class ConfigPanel extends JPanel {
     
     private void initializeComponents() {
         initializeButtons();
-        initializeScrollArea();
         initializeEntityContainer();
+        initializeScrollArea();
         initializePanels();
         updateButtonSizes();
         updateFontSizes();
     }
     
     private void initializeButtons() {
-        btnZombies = new JButton("Zombies");
-        btnDefenses = new JButton("Defenses");
-        btnHome = new JButton("Home");
+        btnZombies = createPrimaryButton("Zombies");
+        btnDefenses = createPrimaryButton("Defenses");
+        btnHome = createSecondaryButton("Home");
+
+        btnZombies.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btnDefenses.setAlignmentX(Component.CENTER_ALIGNMENT);
+        btnHome.setAlignmentX(Component.CENTER_ALIGNMENT);
         
-        setButtonColors(btnZombies, btnDefenses, btnHome);
-        addHoverListeners(btnZombies, btnDefenses, btnHome);
         setupButtonClickListeners();
     }
     
@@ -160,51 +218,51 @@ public class ConfigPanel extends JPanel {
         }
     }
     
-    private void setButtonColors(JButton... buttons) {
-        for (JButton button : buttons) {
-            button.setForeground(Color.BLACK);
-        }
-    }
-    
-    private void addHoverListeners(JButton... buttons) {
-        for (JButton button : buttons) {
-            addHoverListener(button);
-        }
-    }
-    
-    private void addHoverListener(JButton button) {
-        button.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent evt) {
-                button.setForeground(Color.GREEN);   
-            }
-            @Override
-            public void mouseExited(MouseEvent evt) {
-                button.setForeground(Color.BLACK);
-            }    
-        });
-    }
     
     private void initializeScrollArea() {
-        scrollArea = new JScrollPane();
+        scrollArea = new JScrollPane(entityContainer);
         scrollArea.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         scrollArea.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollArea.setBorder(BorderFactory.createEmptyBorder());
+        scrollArea.setOpaque(false);
+        scrollArea.getViewport().setOpaque(false);
     }
     
     private void initializeEntityContainer() {
         entityContainer = new JPanel();
         entityContainer.setLayout(new BoxLayout(entityContainer, BoxLayout.Y_AXIS));
-        scrollArea.setViewportView(entityContainer);
+        entityContainer.setOpaque(false);
+        entityContainer.setBorder(new EmptyBorder(12, 12, 12, 12));
     }
     
     private void initializePanels() {
-        pnlChoices = new JPanel();
+        pnlChoices = new RoundedPanel(CHOICES_COLOR, BUTTON_CORNER_RADIUS * 2);
         pnlChoices.setLayout(new BoxLayout(pnlChoices, BoxLayout.X_AXIS));
-        pnlChoices.setOpaque(false);
-        
-        pnlConfig = new JPanel();
+        pnlChoices.setBorder(new EmptyBorder(16, 24, 16, 24));
+        pnlChoices.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        listWrapper = new RoundedPanel(LIST_COLOR, LIST_CORNER_RADIUS);
+        listWrapper.setLayout(new BorderLayout());
+        listWrapper.setBorder(new EmptyBorder(16, 16, 16, 16));
+        listWrapper.add(scrollArea, BorderLayout.CENTER);
+        listWrapper.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        pnlConfig = new RoundedPanel(PANEL_COLOR, PANEL_CORNER_RADIUS);
         pnlConfig.setLayout(new BoxLayout(pnlConfig, BoxLayout.Y_AXIS));
-        pnlConfig.setOpaque(false);
+        pnlConfig.setBorder(new EmptyBorder(32, 36, 32, 36));
+        pnlConfig.setAlignmentX(Component.CENTER_ALIGNMENT);
+        pnlConfig.setMaximumSize(new Dimension(960, Integer.MAX_VALUE));
+    }
+
+    private void addCenteredConfigPanel() {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.insets = new Insets(40, 80, 40, 80);
+        gbc.fill = GridBagConstraints.BOTH;
+        add(pnlConfig, gbc);
     }
     
     private void setupHomeButtonListener() {
@@ -235,6 +293,9 @@ public class ConfigPanel extends JPanel {
         setButtonDimensions(btnZombies, maxButtonSize, normalButtonSize);
         setButtonDimensions(btnDefenses, maxButtonSize, normalButtonSize);
         setButtonDimensions(btnHome, maxButtonSize, normalButtonSize);
+        if (btnCheckmark != null) {
+            setButtonDimensions(btnCheckmark, maxButtonSize, normalButtonSize);
+        }
     }
     
     private int calculateButtonWidth() {
@@ -246,8 +307,10 @@ public class ConfigPanel extends JPanel {
     }
     
     private void setButtonDimensions(JButton button, Dimension maxSize, Dimension preferredSize) {
-        button.setMaximumSize(maxSize);
-        button.setPreferredSize(preferredSize);
+        if (button != null) {
+            button.setMaximumSize(maxSize);
+            button.setPreferredSize(preferredSize);
+        }
     }
     
     private void updateButtonPanel() {
@@ -263,28 +326,41 @@ public class ConfigPanel extends JPanel {
     }
     
     private void buildChoicesPanel() {
+        pnlChoices.add(Box.createHorizontalGlue());
         pnlChoices.add(createBoxedButton(btnZombies));
         pnlChoices.add(Box.createHorizontalStrut(SPACING));
         pnlChoices.add(createBoxedButton(btnDefenses));
+        if (btnCheckmark != null) {
+            pnlChoices.add(Box.createHorizontalStrut(SPACING));
+            pnlChoices.add(createBoxedButton(btnCheckmark));
+        }
         pnlChoices.add(Box.createHorizontalGlue());
     }
     
     private void buildConfigPanel() {
+        pnlConfig.add(Box.createVerticalGlue());
         pnlConfig.add(pnlChoices);
         pnlConfig.add(Box.createVerticalStrut(SPACING));
-        pnlConfig.add(scrollArea);
+        pnlConfig.add(listWrapper);
         pnlConfig.add(Box.createVerticalStrut(SPACING));
         pnlConfig.add(createHomeButtonBox());
+        pnlConfig.add(Box.createVerticalGlue());
+
     }
     
     private Box createHomeButtonBox() {
         Box homeBox = Box.createHorizontalBox();
+        homeBox.setOpaque(false);
+        homeBox.add(Box.createHorizontalGlue());
         homeBox.add(btnHome);
         homeBox.add(Box.createHorizontalGlue());
+        homeBox.setAlignmentX(Component.CENTER_ALIGNMENT);
         return homeBox;
     }
     
     private void refreshPanels() {
+        listWrapper.revalidate();
+        listWrapper.repaint();
         pnlChoices.revalidate();
         pnlChoices.repaint();
         pnlConfig.revalidate();
@@ -294,24 +370,46 @@ public class ConfigPanel extends JPanel {
     private void updateFontSizes() {
         int fontSize = calculateFontSize();
         font = new Font("Arial", Font.PLAIN, fontSize);
-        
-        applyFontToButtons(btnZombies, btnDefenses);
+        applyFontToButtons(btnZombies, btnDefenses, btnHome, btnCheckmark);
     }
-    
+
     private int calculateFontSize() {
         return Math.min(MAX_FONT_SIZE, Math.max(MIN_FONT_SIZE, getHeight() / 30));
     }
-    
+
     private void applyFontToButtons(JButton... buttons) {
         for (JButton button : buttons) {
-            button.setFont(font);
+            if (button != null) {
+                if (button == btnCheckmark) {
+                    button.setFont(font.deriveFont(Font.BOLD));
+                } else {
+                    button.setFont(font);
+                }
+                button.setForeground(TEXT_COLOR);
+            }
         }
     }
     
     private Box createBoxedButton(JButton button) {
-        Box box = Box.createHorizontalBox();  
-        box.add(button);
-        return box;     
+        Box box = Box.createHorizontalBox();
+        box.setOpaque(false);
+        box.setAlignmentX(Component.CENTER_ALIGNMENT);
+        if (button != null) {
+            box.add(button);
+        }
+        return box;
+    }
+
+    private JButton createPrimaryButton(String text) {
+        return new RoundedButton(text, PRIMARY_BUTTON_COLOR, PRIMARY_BUTTON_HOVER, BUTTON_CORNER_RADIUS);
+    }
+
+    private JButton createSecondaryButton(String text) {
+        return new RoundedButton(text, SECONDARY_BUTTON_COLOR, SECONDARY_BUTTON_HOVER, BUTTON_CORNER_RADIUS);
+    }
+
+    private JButton createAccentButton(String text) {
+        return new RoundedButton(text, ACCENT_BUTTON_COLOR, ACCENT_BUTTON_HOVER, BUTTON_CORNER_RADIUS);
     }
     
     private void saveEntity(EntityPanel panel) {
@@ -336,14 +434,16 @@ public class ConfigPanel extends JPanel {
     }
     
     private void createCheckmarkButton() {
-        btnCheckmark = new JButton("+");
-        btnCheckmark.setBackground(Color.GREEN);
+        btnCheckmark = createAccentButton("+");
+        btnCheckmark.setAlignmentX(Component.CENTER_ALIGNMENT);
         btnCheckmark.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent evt) {
                 saveAllEntities();
             }
         });
+        updateFontSizes();
+        updateButtonSizes();
     }
     
     private void saveAllEntities() {
@@ -371,6 +471,77 @@ public class ConfigPanel extends JPanel {
         }
         
         return true;
+    }
+
+    private static class RoundedPanel extends JPanel {
+        private final Color backgroundColor;
+        private final int cornerRadius;
+
+        RoundedPanel(Color backgroundColor, int cornerRadius) {
+            this.backgroundColor = backgroundColor;
+            this.cornerRadius = cornerRadius;
+            setOpaque(false);
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(backgroundColor);
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), cornerRadius, cornerRadius);
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
+    private static class RoundedButton extends JButton {
+        private final Color normalColor;
+        private final Color hoverColor;
+        private final int cornerRadius;
+        private Color currentColor;
+
+        RoundedButton(String text, Color normalColor, Color hoverColor, int cornerRadius) {
+            super(text);
+            this.normalColor = normalColor;
+            this.hoverColor = hoverColor;
+            this.cornerRadius = cornerRadius;
+            this.currentColor = normalColor;
+            setFocusPainted(false);
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setOpaque(false);
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            setBorder(new EmptyBorder(12, 28, 12, 28));
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    currentColor = RoundedButton.this.hoverColor;
+                    repaint();
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    currentColor = RoundedButton.this.normalColor;
+                    repaint();
+                }
+            });
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            Color fillColor = currentColor;
+            if (!isEnabled()) {
+                fillColor = fillColor.darker();
+            } else if (getModel().isArmed() && getModel().isPressed()) {
+                fillColor = fillColor.darker();
+            }
+            g2.setColor(fillColor);
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), cornerRadius, cornerRadius);
+            g2.dispose();
+            super.paintComponent(g);
+        }
     }
     
     public void chooseFile() throws UnsupportedLookAndFeelException {

@@ -32,8 +32,7 @@ public class EntityPanel extends JPanel {
         
         if (zombie.getType() != ZombieType.HEALER) {
             entityRows.add(new EntityRow("Ataque: "));
-        } else if (zombie.getType() == ZombieType.EXPLOSIVE) {
-            entityRows.add(new EntityRow("Radio de explosion:"));
+            entityRows.add(new EntityRow("Rango: "));
         } else {
             entityRows.add(new EntityRow("Cura: "));
         }
@@ -48,9 +47,11 @@ public class EntityPanel extends JPanel {
             entityRows.add(new EntityRow("Cura:"));
         } else if (defense.getType() != DefenseType.BLOCKS) {
             entityRows.add(new EntityRow("Ataque:"));
-
             if (defense.getType() == DefenseType.MULTIPLEATTACK) {
                 entityRows.add(new EntityRow("Cantidad de ataques:"));
+            }
+            if (defense.getType() != DefenseType.MEDIUMRANGE) {
+                entityRows.add(new EntityRow("Rango:"));
             }
         }
         
@@ -67,7 +68,7 @@ public class EntityPanel extends JPanel {
     private void createLabels() {
         entityRows.add(new EntityRow("Nombre: "));
         entityRows.add(new EntityRow("Vida:"));
-        entityRows.add(new EntityRow("Aparicion:"));
+        entityRows.add(new EntityRow("Ronda de Aparicion:"));
         entityRows.add(new EntityRow("Costo:"));
     }
     
@@ -85,14 +86,13 @@ public class EntityPanel extends JPanel {
     }
     
     private void setupLayout() {
-        this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         this.setBackground(BG_COLOR);
         this.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Header panel with image and remove button
         JPanel headerPanel = createHeaderPanel();
         this.add(headerPanel);
-        this.add(Box.createVerticalStrut(10));
+        this.add(Box.createHorizontalStrut(10));
         
         // Add EntityRows in groups of 3 per row
         addEntityRowsInGroups();
@@ -115,29 +115,30 @@ public class EntityPanel extends JPanel {
         int rowIndex = 0;
         
         while (rowIndex < entityRows.size()) {
-            JPanel rowPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+            JPanel rowPanel = new JPanel();
+            rowPanel.setLayout(new BoxLayout(rowPanel, BoxLayout.Y_AXIS));
             rowPanel.setBackground(BG_COLOR);
             
-            // Add up to 3 EntityRows per horizontal row
             for (int i = 0; i < ENTITY_ROWS_PER_ROW && rowIndex < entityRows.size(); i++) {
                 rowPanel.add(entityRows.get(rowIndex));
                 rowIndex++;
             }
             
             this.add(rowPanel);
+            if (rowIndex < entityRows.size()) {
+                this.add(Box.createHorizontalStrut(10));
+            }
         }
     }
     
     private void updateLayoutWithRows() {
         this.removeAll();
-        this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
         
-        // Header panel with image and remove button
         JPanel headerPanel = createHeaderPanel();
         this.add(headerPanel);
-        this.add(Box.createVerticalStrut(10));
+        this.add(Box.createHorizontalStrut(10));
         
-        // Add EntityRows in groups of 3 per row
         addEntityRowsInGroups();
         
         this.revalidate();
