@@ -4,14 +4,10 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.GradientPaint;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Insets;
-import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -38,7 +34,10 @@ import Vanity.DefaultFont;
 import Vanity.RoundedButton;
 import Vanity.RoundedPanel;
 import Zombie.Zombie;
+import Zombie.ZombieAttacker;
 import Zombie.ZombieType;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ConfigPanel extends JPanel {
     
@@ -194,10 +193,19 @@ public class ConfigPanel extends JPanel {
         entityContainer.remove(btnCheckmark);
 
         if (type == SaveType.ZOMBIE) {
-            EntityPanel panel = new EntityPanel(new Zombie());
+            ZombieAttacker zom = new ZombieAttacker();
+            zom.setType(ZombieType.CONTACT);
+            zom.setName("zombie");
+            zom.setCost(1);
+            zom.setShowUpLevel(1);
+            zom.setHealthPoints(1);
+            zom.setDamage(1);
+            zom.setRange(1);
+            
+            EntityPanel panel = new EntityPanel(zom);
             addEntityPanel(panel, zombies);
         } else {
-            EntityPanel panel = new EntityPanel(new Defense());
+            EntityPanel panel = new EntityPanel(new Defense(DefenseType.BLOCKS, "defense", 1, 1, 1));
             addEntityPanel(panel, defenses);
         }
 
@@ -422,53 +430,6 @@ public class ConfigPanel extends JPanel {
         return new RoundedButton(text, ACCENT_BUTTON_COLOR, ACCENT_BUTTON_HOVER, CORNER_RADIUS);
     }
     
-    private void saveEntity(EntityPanel panel) {
-        try {
-            String[] values = panel.getFieldValues();
-            
-            if (type == SaveType.ZOMBIE) {
-                Zombie zombie = parseZombieValues(values);
-                ZombieType zombieType = panel.getZombieType();
-                zombie.setType(zombieType);
-                manager.addZombie(zombie);
-            } else {
-                Defense defense = parseDefenseValues(values);
-                DefenseType defenseType = panel.getDefenseType();
-                defense.setType(defenseType);
-                manager.addDefense(defense);
-            }
-        } catch (NumberFormatException ex) {
-            System.out.println("No se guardo correctamente");
-        }
-    }
-    
-    private Zombie parseZombieValues(String[] values) throws NumberFormatException {
-        String name = values[0];
-        int health = Integer.parseInt(values[1]);
-        int damage = Integer.parseInt(values[2]);
-        int showUp = Integer.parseInt(values[3]);
-        int cost = Integer.parseInt(values[4]);
-        int range = Integer.parseInt(values[5]);
-        
-        return new Zombie(name, health, damage, showUp, cost, range);
-    }
-    
-    private Defense parseDefenseValues(String[] values) throws NumberFormatException {
-        String name = values[0];
-        int health = Integer.parseInt(values[1]);
-        int damage = Integer.parseInt(values[2]);
-        int showUp = Integer.parseInt(values[3]);
-        int cost = Integer.parseInt(values[4]);
-        int range = Integer.parseInt(values[5]);
-        
-        Defense defense = new Defense();
-        defense.setName(name);
-        defense.setHealthPoints(health);
-        defense.setShowUpLevel(showUp);
-        defense.setCost(cost);
-        return defense;
-    }
-    
     private void createCheckmarkButton() {
         btnCheckmark = createAccentButton("+");
         btnCheckmark.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -490,11 +451,34 @@ public class ConfigPanel extends JPanel {
     
     private void saveAllEntities() {
         ArrayList<EntityPanel> currentEntities = getEntitiesForCurrentType();
-        for (EntityPanel panel : currentEntities) {
-            if (!panel.allFieldsFilled()) {
-                continue;
+        if (type == SaveType.ZOMBIE) {
+            ArrayList<Zombie> zombiesToSave = new ArrayList<>();
+            for (EntityPanel panel : currentEntities) {
+                if (!panel.allFieldsFilled()) {
+                    continue;
+                }
+                try {
+                    Zombie zombie = panel.buildZombieFromFields();
+                    zombiesToSave.add(zombie);
+                } catch (NumberFormatException ex) {
+                    System.out.println("No se guardo correctamente");
+                }
             }
-            saveEntity(panel);
+            manager.saveZombies(zombiesToSave);
+        } else {
+            ArrayList<Defense> defensesToSave = new ArrayList<>();
+            for (EntityPanel panel : currentEntities) {
+                if (!panel.allFieldsFilled()) {
+                    continue;
+                }
+                try {
+                    Defense defense = panel.buildDefenseFromFields();
+                    defensesToSave.add(defense);
+                } catch (NumberFormatException ex) {
+                    System.out.println("No se guardo correctamente");
+                }
+            }
+            manager.saveDefenses(defensesToSave);
         }
         isPossibleToAddZombie();
     }
@@ -545,16 +529,6 @@ public class ConfigPanel extends JPanel {
             defenses.remove(panelToRemove);
         }
         
-        // Remove from ConfigManager
-        Zombie zombie = panelToRemove.getCurrentZombie();
-        Defense defense = panelToRemove.getCurrentDefense();
-        
-        if (zombie != null) {
-            manager.removeZombie(zombie);
-        } else if (defense != null) {
-            manager.removeDefense(defense);
-        }
-        
         // Update UI
         entityContainer.remove(panelToRemove);
         // Remove the spacing box after the panel (if it exists)
@@ -570,6 +544,7 @@ public class ConfigPanel extends JPanel {
         entityContainer.revalidate();
         entityContainer.repaint();
         updateCheckmarkButtonState();
+        saveAllEntities();
     }
     
 }

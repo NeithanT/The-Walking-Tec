@@ -11,5 +11,13 @@ public class DefenseHealer extends Defense implements EntityHealer {
     public void heal() {
     
     }
+    
+    public int getHealPower() {
+        return healPower;
+    }
+    
+    public void setHealPower(int healPower) {
+        this.healPower = healPower;
+    }
 
 }

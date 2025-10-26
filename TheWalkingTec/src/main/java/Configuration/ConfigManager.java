@@ -4,6 +4,7 @@ import static Configuration.FileManager.writeObject;
 import Defense.Defense;
 import Zombie.Zombie;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ConfigManager {
     
@@ -90,6 +91,16 @@ public class ConfigManager {
     
     public boolean isValidZombie() {return false;}
     public boolean isValidDefense() {return false;}
+    
+    public void saveZombies(List<Zombie> updatedZombies) {
+        zombies = new ArrayList<>(updatedZombies);
+        writeObject(zombies, pathZombies);
+    }
+    
+    public void saveDefenses(List<Defense> updatedDefenses) {
+        defenses = new ArrayList<>(updatedDefenses);
+        writeObject(defenses, pathDefenses);
+    }
     
     
 }
