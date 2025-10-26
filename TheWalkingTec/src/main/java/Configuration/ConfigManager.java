@@ -9,33 +9,38 @@ public class ConfigManager {
     
     private ArrayList<Zombie> zombies;
     private ArrayList<Defense> defenses;
-    private int[] gameLevels;
+    private ArrayList<Integer> gameLevels;
     
-    private static final String PATH = "src/main/resources/";
+    private static final String PATH = "src/main/resources/Saves/";
     private static final String pathDefenses = PATH + "defenses.data";
     private static final String pathZombies = PATH + "zombies.data";
     private static final String pathGames = PATH + "games.data";
     
     public ConfigManager() {
         zombies = new ArrayList<>();
-        zombies.add(new Zombie("pepe", 0, 0, 0, 0, 0));
         defenses = new ArrayList<>();
+        gameLevels = new ArrayList<>();
         
         loadDefenses();
         loadGames();
         loadZombies();
     }
     
-    public void addDefense(Defense defense) {
-        writeObject(defense, pathDefenses);
+    public void addDefense(Defense newDefense) {
+        defenses.add(newDefense);
+        
+        writeObject(defenses, pathDefenses);
     }
     
     public void addGame(int level) {
-        writeObject(level, pathGames);
+        gameLevels.add(level);
+        writeObject(gameLevels, pathGames);
     }
     
     public void addZombie(Zombie newZombie) {
-        writeObject(newZombie, pathZombies);
+        zombies.add(newZombie);
+        
+        writeObject(zombies, pathZombies);
     }
     
     public void loadDefenses() {
@@ -46,7 +51,10 @@ public class ConfigManager {
     }
     
     public void loadGames() {
-        gameLevels = (int[])FileManager.readObject(pathGames);
+        ArrayList<Integer> loaded = (ArrayList<Integer>)FileManager.readObject(pathGames);
+        if (loaded != null) {
+            gameLevels = loaded;
+        }
     }
     
     public void loadZombies() {
@@ -57,10 +65,6 @@ public class ConfigManager {
         }
     }
     
-    
-    public boolean isValidZombie() {return false;}
-    public boolean isValidDefense() {return false;}
-    
     public ArrayList<Zombie> getZombies() {
         return zombies;
     }
@@ -69,8 +73,14 @@ public class ConfigManager {
         return defenses;
     }
 
-    public int[] getGameLevels() {
+    public ArrayList<Integer> getGameLevels() {
         return gameLevels;
     }
+    
+    
+    
+    public boolean isValidZombie() {return false;}
+    public boolean isValidDefense() {return false;}
+    
     
 }
