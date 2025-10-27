@@ -27,25 +27,25 @@ public class loadDefaultConfig {
         // String name, int healthPoints, int showUpLevel, int cost, int damage
         ConfigManager manager = new ConfigManager();
         
-        Zombie z1 = new ZombieContact("Locomotor", 30, 1, 1, 5);
+        Zombie z1 = new ZombieContact("Locomotor", 30, 1, 1, 5, 2);
         z1.setImagePath("src/main/resources/assets/Locomotor.png");
-        Zombie z2 = new ZombieExplosive("Kamikaze", 10, 1, 1, 1);
+        Zombie z2 = new ZombieExplosive("Kamikaze", 10, 1, 1, 1, 2);
         z2.setImagePath("src/main/resources/assets/Kamikaze.png");
-        Zombie z3 = new ZombieFlying("Cell Drip", 25, 1, 1, 7, 3);
+        Zombie z3 = new ZombieFlying("Cell Drip", 25, 1, 1, 7, 3, 2);
         z3.setImagePath("src/main/resources/assets/Cell_Drip.png");
-        Zombie z4 = new ZombieContact("Perro de md", 10, 1, 1, 5);
+        Zombie z4 = new ZombieContact("Perro de md", 10, 1, 1, 5, 0.5);
         z4.setImagePath("src/main/resources/assets/PerroMd.png");
-        Zombie z5 = new ZombieExplosive("Sneaky Golem", 60, 5, 3, 2);
+        Zombie z5 = new ZombieExplosive("Sneaky Golem", 60, 5, 3, 2, 0.5);
         z5.setImagePath("src/main/resources/assets/SneakyGolem.png");
-        Zombie z6 = new ZombieFlying("Terminator", 35, 3, 2, 5, 4);
+        Zombie z6 = new ZombieFlying("Terminator", 35, 3, 2, 5, 4, 1.5);
         z6.setImagePath("src/main/resources/assets/Terminator.png");
-        Zombie z7 = new ZombieHealer("Makima", 100, 7, 4, 15);
+        Zombie z7 = new ZombieHealer("Makima", 100, 7, 4, 15, 1);
         z7.setImagePath("src/main/resources/assets/Makima.png");
-        Zombie z8 = new ZombieContact("Big Mom", 55, 2, 3, 10);
+        Zombie z8 = new ZombieContact("Big Mom", 55, 2, 3, 10, 0.5);
         z8.setImagePath("src/main/resources/assets/BigMom.png");
-        Zombie z9 = new ZombieExplosive("Job Application", 1000, 10, 10, 10);
+        Zombie z9 = new ZombieExplosive("Job Application", 1000, 10, 10, 10, 0.2);
         z9.setImagePath("src/main/resources/assets/JobApplication.png");
-        Zombie z10 = new ZombieFlying("Dragona del End", 70, 7, 8, 12, 3);
+        Zombie z10 = new ZombieFlying("Dragona del End", 70, 7, 8, 12, 3, 1.5);
         z10.setImagePath("src/main/resources/assets/DragonaDelEnd.png");
         
         ArrayList<Zombie> zombies = new ArrayList<>();
