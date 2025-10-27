@@ -8,12 +8,11 @@ import java.util.Arrays;
 public class ZombieAttacker extends Zombie implements EntityAttacker {
 
     protected int damage;
-    protected int range;
     
     public ZombieAttacker(String name, int healthPoints, int showUpLevel, int cost, int damage, int range, double movementSpeed) {
         super(name, healthPoints, showUpLevel, cost, movementSpeed);
         this.damage = damage;
-        this.range = range;
+        // range parameter ignored - range is now auto-calculated based on types
     }
     
     public ZombieAttacker(ZombieType type, String name, int healthPoints, int showUpLevel, int cost, int damage, int range, double movementSpeed) {
@@ -34,23 +33,8 @@ public class ZombieAttacker extends Zombie implements EntityAttacker {
         this.damage = damage;
     }
     
-    public int getRange() {
-        return range;
-    }
-    
-    public void setRange(int range) {
-        this.range = range;
-    }
-    
-    @Override
-    public int getAttackRange() {
-        // Special case: EXPLOSIVE zombies always have range 1 (contact)
-        if (types.contains(ZombieType.EXPLOSIVE)) {
-            return 1;
-        }
-        // Otherwise use configured range
-        return range;
-    }
+    // getAttackRange() is inherited from Zombie class which calculates based on types
+    // No override needed - use parent implementation for type-based auto-calculation
 
     @Override
     public void attack() {

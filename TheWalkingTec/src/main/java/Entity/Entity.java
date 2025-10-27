@@ -4,6 +4,9 @@ import java.io.Serializable;
 
 public abstract class Entity extends Thread implements Serializable {
     
+    private static int nextEntityId = 1; // Static counter for unique IDs
+    
+    protected int entityId; // Unique ID for each entity instance
     protected String entityName;
     protected String actions;
     protected String imagePath;
@@ -12,6 +15,20 @@ public abstract class Entity extends Thread implements Serializable {
     protected int showUpLevel;
     protected int currentRow;
     protected int currentColumn;
+    
+    // Constructor to assign unique ID
+    public Entity() {
+        super();
+        this.entityId = nextEntityId++;
+    }
+    
+    public int getEntityId() {
+        return entityId;
+    }
+    
+    public String getDisplayName() {
+        return entityName + " #" + entityId;
+    }
     
     public String getEntityName() {
         return entityName;

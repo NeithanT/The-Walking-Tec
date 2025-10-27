@@ -276,11 +276,11 @@ public class ConfigManager {
         d2.setImagePath("src/main/resources/assets/Carrerin.png");
         defenses.add(d2);
         
-        Defense d3 = new DefenseContact("Bloque de madera", 50, 1, 1, 10);
+        Defense d3 = new Defense(DefenseType.BLOCKS, "Bloque de madera", 50, 1, 1);
         d3.setImagePath("src/main/resources/assets/BloqueDeMadera.jpg");
         defenses.add(d3);
         
-        Defense d4 = new DefenseContact("Bloque de hierro", 50, 1, 1, 10);
+        Defense d4 = new Defense(DefenseType.BLOCKS, "Bloque de hierro", 50, 1, 1);
         d4.setImagePath("src/main/resources/assets/BloqueDeHierro.jpg");
         defenses.add(d4);
         

@@ -15,27 +15,32 @@ public class ZombieTypeValidator {
     private static final Map<ZombieType, Set<ZombieType>> INCOMPATIBLE_TYPES = new HashMap<>();
     
     static {
-        // CONTACT is incompatible with ranged types
+        // CONTACT is incompatible with EXPLOSIVE, HEALER, MEDIUMRANGE
         INCOMPATIBLE_TYPES.put(ZombieType.CONTACT, new HashSet<>(Arrays.asList(
-            ZombieType.MEDIUMRANGE  // Can't be melee and long-range
+            ZombieType.MEDIUMRANGE,
+            ZombieType.EXPLOSIVE,
+            ZombieType.HEALER
         )));
         
-        // MEDIUMRANGE is incompatible with melee
+        // MEDIUMRANGE is incompatible with CONTACT
         INCOMPATIBLE_TYPES.put(ZombieType.MEDIUMRANGE, new HashSet<>(Arrays.asList(
-            ZombieType.CONTACT  // Can't be long-range and melee
+            ZombieType.CONTACT
         )));
         
-        // EXPLOSIVE is incompatible with HEALER (can't heal if you explode)
+        // EXPLOSIVE is only compatible with FLYING (incompatible with all others)
         INCOMPATIBLE_TYPES.put(ZombieType.EXPLOSIVE, new HashSet<>(Arrays.asList(
-            ZombieType.HEALER  // Can't heal allies if you explode
+            ZombieType.CONTACT,
+            ZombieType.MEDIUMRANGE,
+            ZombieType.HEALER
         )));
         
-        // HEALER is incompatible with EXPLOSIVE
+        // HEALER is incompatible with EXPLOSIVE and CONTACT
         INCOMPATIBLE_TYPES.put(ZombieType.HEALER, new HashSet<>(Arrays.asList(
-            ZombieType.EXPLOSIVE  // Can't heal if you explode
+            ZombieType.EXPLOSIVE,
+            ZombieType.CONTACT
         )));
         
-        // FLYING can combine with all types (no restrictions)
+        // FLYING has no restrictions (can combine with any)
         INCOMPATIBLE_TYPES.put(ZombieType.FLYING, new HashSet<>());
     }
     

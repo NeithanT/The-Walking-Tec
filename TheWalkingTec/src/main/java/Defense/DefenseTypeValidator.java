@@ -15,7 +15,7 @@ public class DefenseTypeValidator {
     private static final Map<DefenseType, Set<DefenseType>> INCOMPATIBLE_TYPES = new HashMap<>();
     
     static {
-        // BLOCKS is incompatible with everything except itself
+        // BLOCKS is incompatible with everything
         INCOMPATIBLE_TYPES.put(DefenseType.BLOCKS, new HashSet<>(Arrays.asList(
             DefenseType.CONTACT,
             DefenseType.MEDIUMRANGE,
@@ -25,36 +25,44 @@ public class DefenseTypeValidator {
             DefenseType.HEALER
         )));
         
-        // CONTACT is incompatible with ranged types
+        // CONTACT is incompatible with EXPLOSIVE, HEALER, BLOCKS, MEDIUMRANGE
         INCOMPATIBLE_TYPES.put(DefenseType.CONTACT, new HashSet<>(Arrays.asList(
             DefenseType.BLOCKS,
-            DefenseType.MEDIUMRANGE  // Can't be melee and long-range
+            DefenseType.EXPLOSIVE,
+            DefenseType.HEALER,
+            DefenseType.MEDIUMRANGE
         )));
         
-        // MEDIUMRANGE is incompatible with melee
+        // MEDIUMRANGE is incompatible with CONTACT and BLOCKS
         INCOMPATIBLE_TYPES.put(DefenseType.MEDIUMRANGE, new HashSet<>(Arrays.asList(
             DefenseType.BLOCKS,
-            DefenseType.CONTACT  // Can't be long-range and melee
+            DefenseType.CONTACT
         )));
         
-        // EXPLOSIVE is incompatible with HEALER (can't heal if you explode)
+        // EXPLOSIVE is only compatible with FLYING (incompatible with all others)
         INCOMPATIBLE_TYPES.put(DefenseType.EXPLOSIVE, new HashSet<>(Arrays.asList(
             DefenseType.BLOCKS,
-            DefenseType.HEALER  // Can't heal allies if you explode
+            DefenseType.CONTACT,
+            DefenseType.MEDIUMRANGE,
+            DefenseType.HEALER,
+            DefenseType.MULTIPLEATTACK
         )));
         
-        // HEALER is incompatible with EXPLOSIVE and BLOCKS
+        // HEALER is incompatible with EXPLOSIVE, CONTACT, BLOCKS
         INCOMPATIBLE_TYPES.put(DefenseType.HEALER, new HashSet<>(Arrays.asList(
             DefenseType.BLOCKS,
-            DefenseType.EXPLOSIVE  // Can't heal if you explode
+            DefenseType.EXPLOSIVE,
+            DefenseType.CONTACT
         )));
         
-        // MULTIPLEATTACK can combine with most, but not BLOCKS
+        // MULTIPLEATTACK is incompatible with HEALER, EXPLOSIVE, BLOCKS
         INCOMPATIBLE_TYPES.put(DefenseType.MULTIPLEATTACK, new HashSet<>(Arrays.asList(
-            DefenseType.BLOCKS
+            DefenseType.BLOCKS,
+            DefenseType.HEALER,
+            DefenseType.EXPLOSIVE
         )));
         
-        // FLYING can combine with most, but not BLOCKS
+        // FLYING is incompatible with BLOCKS only
         INCOMPATIBLE_TYPES.put(DefenseType.FLYING, new HashSet<>(Arrays.asList(
             DefenseType.BLOCKS
         )));

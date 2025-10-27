@@ -15,6 +15,7 @@ import Zombie.ZombieType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 final class WaveManager {
 
@@ -27,6 +28,10 @@ final class WaveManager {
     static int coinsForLevel(int level) {
         return 20 + 5 * (level - 1); // Nivel 1 = 20, Nivel 2 = 25, etc.
     }
+    
+    static int zombiesForLevel(int level) {
+        return 20 + 5 * (level - 1); // Nivel 1 = 20, Nivel 2 = 25, Nivel 3 = 30, etc.
+    }
 
     void startRound() {
         gameManager.setWaveGenerated(false);
@@ -37,8 +42,16 @@ final class WaveManager {
         gameManager.setDefenseCostLimit(coins);
 
         gameManager.getWaveZombiesInternal().clear();
+        
         syncWaveDefenseWithBoard();
+        
+        // Initialize new combat log AFTER syncing defenses so they can be registered
+        gameManager.initializeCombatLog();
+        
         generateWave();
+        
+        // Register all zombies in combat log after generating wave
+        gameManager.registerZombiesInCombatLog();
         
         gameManager.setRoundActive(true); // Activar después de generar
 
@@ -65,12 +78,20 @@ final class WaveManager {
         }
 
         gameManager.getWaveZombiesInternal().clear();
+        
         syncWaveDefenseWithBoard();
+        
+        // Initialize new combat log AFTER syncing defenses so they can be registered
+        gameManager.initializeCombatLog();
 
         if (gameManager.getSidePanel() != null) {
             gameManager.getSidePanel().appendLog("Starting round " + gameManager.getLevel());
         }
         generateWave();
+        
+        // Register all zombies in combat log after generating wave
+        gameManager.registerZombiesInCombatLog();
+        
         gameManager.setRoundActive(true);
 
         SidePanel sidePanel = gameManager.getSidePanel();
@@ -124,10 +145,9 @@ final class WaveManager {
         ArrayList<Zombie> waveZombies = gameManager.getWaveZombiesInternal();
         waveZombies.clear();
 
-        int budget = gameManager.getCoinsThisLevel();
-        int attemptsWithoutFit = 0;
+        // Use fixed number of zombies per level instead of budget
+        int targetZombieCount = zombiesForLevel(level);
         int spawned = 0;
-        int maxAttempts = Math.max(availableZombies.size() * 3, 15);
         gameManager.setZombiesRemaining(0);
 
         GameBoard board = gameManager.getBoard();
@@ -136,26 +156,21 @@ final class WaveManager {
         }
 
         Random rnd = gameManager.getRandomGenerator();
-        while (budget > 0 && attemptsWithoutFit < maxAttempts) {
+        while (spawned < targetZombieCount) {
             Zombie prototype = availableZombies.get(rnd.nextInt(availableZombies.size()));
-            int cost = Math.max(1, prototype.getCost());
-            if (cost > budget) {
-                attemptsWithoutFit++;
-                continue;
-            }
 
             Zombie spawnedZombie = cloneZombie(prototype);
             if (spawnedZombie == null) {
-                attemptsWithoutFit++;
-                continue;
+                continue; // Skip null zombies
             }
 
             spawnedZombie.setGameManager(gameManager);
             spawnedZombie.setAlive(true);
+            
+            // Apply level scaling to the zombie
+            gameManager.applyZombieScaling(spawnedZombie);
 
             spawned++;
-            budget -= cost;
-            attemptsWithoutFit = 0;
 
             waveZombies.add(spawnedZombie);
 
@@ -170,14 +185,15 @@ final class WaveManager {
         }
 
         gameManager.setZombiesRemaining(waveZombies.size());
+        gameManager.setTotalZombiesInWave(waveZombies.size()); // Set the total count that won't change
 
         if (spawned == 0) {
             if (gameManager.getSidePanel() != null) {
-                gameManager.getSidePanel().appendLog("No zombies could be spawned with the current round budget");
+                gameManager.getSidePanel().appendLog("No zombies could be spawned for this level");
             }
         } else {
             if (gameManager.getSidePanel() != null) {
-                gameManager.getSidePanel().appendLog("Wave level [" + level + "] generated with cost " + (gameManager.getCoinsThisLevel() - budget) + "/" + gameManager.getCoinsThisLevel());
+                gameManager.getSidePanel().appendLog("Wave level [" + level + "] generated with " + spawned + " zombies (target: " + targetZombieCount + ")");
             }
         }
 
@@ -213,9 +229,9 @@ final class WaveManager {
 
         Zombie clone;
         if (source instanceof ZombieExplosive explosive) {
-            clone = new ZombieExplosive(explosive.getEntityName(), explosive.getHealthPoints(), explosive.getShowUpLevel(), explosive.getCost(), explosive.getRange(), explosive.getMovementSpeed());
+            clone = new ZombieExplosive(explosive.getEntityName(), explosive.getHealthPoints(), explosive.getShowUpLevel(), explosive.getCost(), 0, explosive.getMovementSpeed());
         } else if (source instanceof ZombieFlying flying) {
-            clone = new ZombieFlying(flying.getEntityName(), flying.getHealthPoints(), flying.getShowUpLevel(), flying.getCost(), flying.getDamage(), flying.getRange(), flying.getMovementSpeed());
+            clone = new ZombieFlying(flying.getEntityName(), flying.getHealthPoints(), flying.getShowUpLevel(), flying.getCost(), flying.getDamage(), 0, flying.getMovementSpeed());
         } else if (source instanceof ZombieMediumRange medium) {
             clone = new ZombieMediumRange(medium.getEntityName(), medium.getHealthPoints(), medium.getShowUpLevel(), medium.getCost(), medium.getDamage(), medium.getMovementSpeed());
         } else if (source instanceof ZombieContact contact) {
@@ -223,15 +239,15 @@ final class WaveManager {
         } else if (source instanceof ZombieHealer healer) {
             clone = new ZombieHealer(healer.getEntityName(), healer.getHealthPoints(), healer.getShowUpLevel(), healer.getCost(), healer.getHealPower(), healer.getMovementSpeed());
         } else if (source instanceof ZombieAttacker attacker) {
-            clone = new ZombieAttacker(attacker.getEntityName(), attacker.getHealthPoints(), attacker.getShowUpLevel(), attacker.getCost(), attacker.getDamage(), attacker.getRange(), attacker.getMovementSpeed());
+            clone = new ZombieAttacker(attacker.getEntityName(), attacker.getHealthPoints(), attacker.getShowUpLevel(), attacker.getCost(), attacker.getDamage(), 0, attacker.getMovementSpeed());
         } else {
-            ZombieType type = source.getType();
-            clone = new Zombie(type, source.getEntityName(), source.getHealthPoints(), source.getShowUpLevel(), source.getCost(), source.getMovementSpeed());
+            Set<ZombieType> types = source.getTypes();
+            clone = new Zombie(types, source.getEntityName(), source.getHealthPoints(), source.getShowUpLevel(), source.getCost(), source.getMovementSpeed());
         }
 
         clone.setActions(source.getActions());
         clone.setImagePath(source.getImagePath());
-        clone.setType(source.getType());
+        clone.setTypes(source.getTypes());
         return clone;
     }
 }

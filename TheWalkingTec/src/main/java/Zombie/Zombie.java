@@ -70,17 +70,6 @@ public class Zombie extends Entity {
         return types.contains(type);
     }
     
-    // Backward compatibility - returns first type or CONTACT
-    @Deprecated
-    public ZombieType getType() { 
-        return types.isEmpty() ? ZombieType.CONTACT : types.iterator().next();
-    }
-    
-    @Deprecated
-    public void setType(ZombieType type) { 
-        this.types = new HashSet<>(Arrays.asList(type));
-    }
-    
     // Pixel position getters and setters
     public double getPixelX() { return pixelX; }
     
@@ -207,38 +196,40 @@ public class Zombie extends Entity {
     
     @Override
     public int getAttackRange() {
-        // Explosive always has range 1 (contact)
+        // Priority order: EXPLOSIVE > CONTACT > FLYING+MEDIUMRANGE > FLYING > MEDIUMRANGE > HEALER
+        
+        // EXPLOSIVE always has contact range (1) for triggering
         if (types.contains(ZombieType.EXPLOSIVE)) {
             return 1;
         }
         
-        // For multiple types, return the longest range
-        int maxRange = 0;
-        for (ZombieType type : types) {
-            int range = getRangeForType(type);
-            if (range > maxRange) {
-                maxRange = range;
-            }
+        // CONTACT has range 1
+        if (types.contains(ZombieType.CONTACT)) {
+            return 1;
         }
-        return maxRange > 0 ? maxRange : 1;
-    }
-    
-    private int getRangeForType(ZombieType type) {
-        switch (type) {
-            case CONTACT:
-                return 1; // Must be adjacent
-            case FLYING:
-                return 5; // 5x5 grid centered on zombie
-            case MEDIUMRANGE:
-                return 7; // 7x7 grid centered on zombie
-            case EXPLOSIVE:
-                return 1; // Same as contact - needs to be close to explode
-            case HEALER:
-                return 7; // 7x7 healing range
-            default:
-                return 1;
+        
+        // FLYING + MEDIUMRANGE combination = 5x5 (radius 2)
+        if (types.contains(ZombieType.FLYING) && types.contains(ZombieType.MEDIUMRANGE)) {
+            return 2;
         }
+        
+        // FLYING alone = 5x5 (radius 2)
+        if (types.contains(ZombieType.FLYING)) {
+            return 2;
+        }
+        
+        // MEDIUMRANGE = 7x7 (radius 3)
+        if (types.contains(ZombieType.MEDIUMRANGE)) {
+            return 3;
+        }
+        
+        // HEALER = 7x7 (radius 3)
+        if (types.contains(ZombieType.HEALER)) {
+            return 3;
+        }
+        
+        // Default (shouldn't reach here)
+        return 1;
     }
     
 }
-

@@ -103,13 +103,13 @@ public class loadDefaultConfig {
         d2.setImagePath("src/main/resources/assets/Carrerin.png");
         defenses.add(d2);
         
-        // Bloque de madera - Contact
-        Defense d3 = new DefenseContact(names.get(3), 50, 1, 1, 10);
+        // Bloque de madera - Blocks
+        Defense d3 = new Defense(DefenseType.BLOCKS, names.get(3), 50, 1, 1);
         d3.setImagePath("src/main/resources/assets/BloqueDeMadera.jpg");
         defenses.add(d3);
         
-        // Bloque de hierro - Contact
-        Defense d4 = new DefenseContact(names.get(4), 50, 1, 1, 10);
+        // Bloque de hierro - Blocks
+        Defense d4 = new Defense(DefenseType.BLOCKS, names.get(4), 50, 1, 1);
         d4.setImagePath("src/main/resources/assets/BloqueDeHierro.jpg");
         defenses.add(d4);
         

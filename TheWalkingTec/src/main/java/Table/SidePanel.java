@@ -428,7 +428,7 @@ public class SidePanel extends JPanel {
             lblDamage.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
             infoPanel.add(lblDamage);
             
-            JLabel lblRange = new JLabel("Range: " + attack.getRange());
+            JLabel lblRange = new JLabel("Range: " + def.getAttackRange());
             lblRange.setForeground(new Color(33, 150, 243));
             lblRange.setFont(lblRange.getFont().deriveFont(Font.BOLD));
             lblRange.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
@@ -675,7 +675,7 @@ public class SidePanel extends JPanel {
                 Object property = panel.getClientProperty("defenseDef");
                 if (property instanceof Defense) {
                     Defense def = (Defense) property;
-                    if (def.getType() == DefenseType.BLOCKS) {
+                    if (def.hasType(DefenseType.BLOCKS)) {
                         panel.setVisible(false);
                         break;
                     }
@@ -699,7 +699,7 @@ public class SidePanel extends JPanel {
                 Object property = panel.getClientProperty("defenseDef");
                 if (property instanceof Defense) {
                     Defense def = (Defense) property;
-                    if (def.getType() == DefenseType.BLOCKS) {
+                    if (def.hasType(DefenseType.BLOCKS)) {
                         panel.setVisible(true);
                         break;
                     }

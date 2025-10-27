@@ -1,5 +1,7 @@
 package Table;
 import GameLogic.GameManager;
+import Defense.Defense;
+import Entity.Entity;
 import Zombie.Zombie;
 import java.awt.Color;
 import java.awt.Graphics;
@@ -30,6 +32,10 @@ public class GameBoard extends JPanel {
     private boolean sellMode = false;
     
     private GameManager gameManager;
+    
+    // Prevent duplicate dialog openings
+    private long lastClickTime = 0;
+    private static final long CLICK_DEBOUNCE_MS = 500;
     
     public GameBoard(){
 
@@ -89,6 +95,26 @@ public class GameBoard extends JPanel {
             return;
         }
         
+        // If round is active and combat log exists, check for entity click to show stats
+        if (gameManager.isRoundActive() && gameManager.getCombatLog() != null) {
+            Entity clickedEntity = getEntityAt(row, column);
+            if (clickedEntity != null) {
+                // Debounce: prevent duplicate clicks within 500ms
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - lastClickTime < CLICK_DEBOUNCE_MS) {
+                    return; // Ignore duplicate click
+                }
+                lastClickTime = currentTime;
+                
+                // Show entity stats dialog
+                javax.swing.JFrame parentFrame = (javax.swing.JFrame) javax.swing.SwingUtilities.getWindowAncestor(this);
+                if (parentFrame != null) {
+                    Table.EntityStatsDialog.showStats(parentFrame, clickedEntity, gameManager.getCombatLog());
+                }
+                return; // Don't place defense if clicking on entity
+            }
+        }
+        
         // Otherwise, place a new defense if one is selected
         if (selectedDefenseString != null) {
             gameManager.placeDefences(row, column);
@@ -112,6 +138,30 @@ public class GameBoard extends JPanel {
         rowPreview = pixelToCellRow(event.getY());
         showPreview = true;
         repaint();
+    }
+    
+    private Entity getEntityAt(int row, int column) {
+        // Check defenses first
+        for (PlacedDefense placedDefense : defenses) {
+            if (placedDefense != null) {
+                Defense defense = placedDefense.definition;
+                if (defense != null && defense.getCurrentRow() == row && defense.getCurrentColumn() == column) {
+                    return defense;
+                }
+            }
+        }
+        
+        // Then check zombies
+        for (Object obj : zombies) {
+            if (obj instanceof Zombie) {
+                Zombie zombie = (Zombie) obj;
+                if (zombie != null && zombie.getCurrentRow() == row && zombie.getCurrentColumn() == column) {
+                    return zombie;
+                }
+            }
+        }
+        
+        return null;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package GameLogic;
 
 import Defense.Defense;
+import Defense.DefenseType;
 import Table.GameBoard;
 import Zombie.Zombie;
 import java.util.Random;
@@ -133,14 +134,7 @@ final class ZombieMovementController {
             targetRow = nearestDefense.getCurrentRow();
             targetColumn = nearestDefense.getCurrentColumn();
             
-            // Log para debugging solo si la ronda está activa
-            if (gameManager.isRoundActive() && (zombie.getTargetRow() != targetRow || zombie.getTargetColumn() != targetColumn)) {
-                if (gameManager.getSidePanel() != null) {
-                    gameManager.getSidePanel().appendLog(zombie.getEntityName() + " (flying:" + zombie.isFlying() + 
-                        ") targeting defense " + nearestDefense.getEntityName() + 
-                        " (flying:" + nearestDefense.isFlying() + ") at (" + targetRow + "," + targetColumn + ")");
-                }
-            }
+            // Movement tracking removed - spam logs disabled
         } else {
             // Si no, ir hacia el Life Tree
             targetRow = gameManager.getLifeTreeRow();
@@ -211,7 +205,10 @@ final class ZombieMovementController {
      * @return La defensa más cercana o null si no hay ninguna en rango
      */
     private Defense findNearestDefenseInRange(Zombie zombie, int zombieRow, int zombieCol) {
-        final int DETECTION_RANGE = 5; // Zombies detectan defensas a 5 casillas de distancia
+        // Zombies should detect defenses at a range greater than their attack range
+        // to give them time to path towards the target
+        // Use zombie's attack range + 2 for detection (or minimum of 3)
+        final int DETECTION_RANGE = Math.max(zombie.getAttackRange() + 2, 3);
         
         Defense nearestDefense = null;
         int minDistance = Integer.MAX_VALUE;
@@ -220,8 +217,6 @@ final class ZombieMovementController {
         if (board == null) {
             return null;
         }
-        
-        boolean zombieIsFlying = zombie.isFlying();
         
         // Buscar en todas las defensas del tablero
         for (Table.PlacedDefense placedDef : board.getDefenses()) {
@@ -240,15 +235,10 @@ final class ZombieMovementController {
                 continue;
             }
             
-            // APLICAR REGLAS DE VUELO:
-            // - Flying zombies pueden trackear y atacar a flying y ground
-            // - Ground zombies SOLO pueden trackear y atacar a ground
-            boolean defenseIsFlying = defense.isFlying();
-            
-            if (!zombieIsFlying && defenseIsFlying) {
-                // Zombie terrestre no puede trackear defensa voladora
-                continue;
-            }
+            // Use CombatRules to check if zombie can attack this defense
+            // This handles FLYING rules automatically
+            // For pathfinding, we only need to check basic compatibility
+            // The actual attack will be validated by CombatRules.canAttack() later
             
             int defRow = defense.getCurrentRow();
             int defCol = defense.getCurrentColumn();
@@ -256,10 +246,25 @@ final class ZombieMovementController {
             // Calcular distancia Chebyshev (la misma que usa el combate)
             int distance = Math.max(Math.abs(defRow - zombieRow), Math.abs(defCol - zombieCol));
             
-            // Si está en rango y es más cercana que la anterior
+            // Si está en rango de detección y es más cercana que la anterior
             if (distance <= DETECTION_RANGE && distance < minDistance) {
-                nearestDefense = defense;
-                minDistance = distance;
+                // Check if zombie could potentially attack this defense
+                // using temporary positions for the check
+                int originalZombieRow = zombie.getCurrentRow();
+                int originalZombieCol = zombie.getCurrentColumn();
+                zombie.setCurrentRow(zombieRow);
+                zombie.setCurrentColumn(zombieCol);
+                
+                boolean canTarget = CombatRules.canAttack(zombie, defense) || 
+                                   distance <= zombie.getAttackRange();
+                
+                zombie.setCurrentRow(originalZombieRow);
+                zombie.setCurrentColumn(originalZombieCol);
+                
+                if (canTarget || distance <= 2) {  // Always path towards very close defenses
+                    nearestDefense = defense;
+                    minDistance = distance;
+                }
             }
         }
         

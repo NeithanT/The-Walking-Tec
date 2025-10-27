@@ -85,8 +85,8 @@ public class EntityPanel extends JPanel {
     public EntityPanel(Zombie zombie) {
         this();
         currentZombie = zombie;
-        if (currentZombie.getType() == null) {
-            currentZombie.setType(ZombieType.CONTACT);
+        if (currentZombie.getTypes() == null || currentZombie.getTypes().isEmpty()) {
+            currentZombie.setTypes(new java.util.HashSet<>(java.util.Arrays.asList(ZombieType.CONTACT)));
         }
         addZombieSpecificFields();
         populateZombieFields();
@@ -96,8 +96,8 @@ public class EntityPanel extends JPanel {
     public EntityPanel(Defense defense) {
         this();
         currentDefense = defense;
-        if (currentDefense.getType() == null) {
-            currentDefense.setType(DefenseType.BLOCKS);
+        if (currentDefense.getTypes() == null || currentDefense.getTypes().isEmpty()) {
+            currentDefense.setTypes(new java.util.HashSet<>(java.util.Arrays.asList(DefenseType.BLOCKS)));
         }
         addDefenseSpecificFields();
         populateDefenseFields();
@@ -302,15 +302,28 @@ public class EntityPanel extends JPanel {
             }
         }
         
-        // Enable/disable checkboxes based on incompatibility
+        // Check if maximum of 2 types are selected
+        boolean maxTypesReached = selectedTypes.size() >= 2;
+        
+        // Enable/disable checkboxes based on incompatibility and max types
         for (java.util.Map.Entry<T, JCheckBox> entry : checkBoxes.entrySet()) {
             JCheckBox checkBox = entry.getValue();
             T type = entry.getKey();
             
-            if (!checkBox.isSelected() && incompatibleTypes.contains(type)) {
+            if (checkBox.isSelected()) {
+                // Already selected checkboxes remain enabled
+                checkBox.setEnabled(true);
+                checkBox.setToolTipText(null);
+            } else if (maxTypesReached) {
+                // Disable if max types (2) already selected
+                checkBox.setEnabled(false);
+                checkBox.setToolTipText("Máximo 2 tipos permitidos");
+            } else if (incompatibleTypes.contains(type)) {
+                // Disable if incompatible with selected types
                 checkBox.setEnabled(false);
                 checkBox.setToolTipText("Incompatible con tipos seleccionados");
             } else {
+                // Enable otherwise
                 checkBox.setEnabled(true);
                 checkBox.setToolTipText(null);
             }
@@ -382,7 +395,7 @@ public class EntityPanel extends JPanel {
         // Remove all dynamic type-specific fields
         entityRows.removeIf(row -> {
             String label = row.getLabel().getText().toLowerCase();
-            return label.contains("ataque") || label.contains("cura") || label.contains("rango") || label.contains("cantidad") || label.contains("velocidad");
+            return label.contains("ataque") || label.contains("cura") || label.contains("cantidad") || label.contains("velocidad");
         });
         
         // Add fields based on current entity type
@@ -404,14 +417,12 @@ public class EntityPanel extends JPanel {
         speedRow.setDecimalOnly(); // Velocidad puede tener decimales
         entityRows.add(speedRow);
         
-        // Show attack/range if NOT purely a healer (or if has multiple types)
+        // Show attack if NOT purely a healer (or if has multiple types)
+        // Range is now auto-calculated based on types, no need for manual input
         if (!currentZombie.hasType(ZombieType.HEALER) || currentZombie.getTypes().size() > 1) {
             EntityRow attackRow = new EntityRow("Ataque: ");
-            EntityRow rangeRow = new EntityRow("Rango: ");
             attackRow.setNumericOnly();
-            rangeRow.setDecimalOnly(); // Rango puede tener decimales
             entityRows.add(attackRow);
-            entityRows.add(rangeRow);
         }
         
         // Show heal power if has HEALER type
@@ -431,6 +442,7 @@ public class EntityPanel extends JPanel {
         }
         
         // Show attack if NOT BLOCKS and (NOT HEALER or has multiple types)
+        // Range is now auto-calculated based on types, no need for manual input
         if (!currentDefense.hasType(DefenseType.BLOCKS) && 
             (!currentDefense.hasType(DefenseType.HEALER) || currentDefense.getTypes().size() > 1)) {
             EntityRow attackRow = new EntityRow("Ataque:");
@@ -441,12 +453,6 @@ public class EntityPanel extends JPanel {
                 EntityRow multipleAttackRow = new EntityRow("Cantidad de ataques:");
                 multipleAttackRow.setNumericOnly();
                 entityRows.add(multipleAttackRow);
-            }
-            
-            if (!currentDefense.hasType(DefenseType.MEDIUMRANGE)) {
-                EntityRow rangeRow = new EntityRow("Rango:");
-                rangeRow.setDecimalOnly(); // Rango puede tener decimales
-                entityRows.add(rangeRow);
             }
         }
     }
@@ -589,17 +595,13 @@ public class EntityPanel extends JPanel {
             entityRows.get(fieldIndex++).getTextField().setText(String.valueOf(currentZombie.getMovementSpeed()));
         
         // Populate type-specific fields
-        // Attack and Range (if not purely healer or has multiple types)
+        // Attack (if not purely healer or has multiple types)
+        // Range is auto-calculated, no field needed
         if (!currentZombie.hasType(ZombieType.HEALER) || currentZombie.getTypes().size() > 1) {
             if (currentZombie instanceof ZombieAttacker attacker) {
                 if (fieldIndex < entityRows.size()) 
                     entityRows.get(fieldIndex++).getTextField().setText(String.valueOf(attacker.getDamage()));
-                if (fieldIndex < entityRows.size()) 
-                    entityRows.get(fieldIndex++).getTextField().setText(String.valueOf(attacker.getRange()));
             } else {
-                if (fieldIndex < entityRows.size()) {
-                    entityRows.get(fieldIndex++).getTextField().setText("0");
-                }
                 if (fieldIndex < entityRows.size()) {
                     entityRows.get(fieldIndex++).getTextField().setText("0");
                 }
@@ -647,23 +649,19 @@ public class EntityPanel extends JPanel {
             }
         }
         
-        // Attack and Range (if not BLOCKS and (not HEALER or has multiple types))
+        // Attack and MultipleAttack amount (if not BLOCKS and (not HEALER or has multiple types))
+        // Range is auto-calculated, no field needed
         if (!currentDefense.hasType(DefenseType.BLOCKS) && 
             (!currentDefense.hasType(DefenseType.HEALER) || currentDefense.getTypes().size() > 1)) {
             if (currentDefense instanceof DefenseAttacker attacker) {
                 if (fieldIndex < entityRows.size()) 
                     entityRows.get(fieldIndex++).getTextField().setText(String.valueOf(attacker.getAttack()));
-                if (!currentDefense.hasType(DefenseType.MEDIUMRANGE) && fieldIndex < entityRows.size()) 
-                    entityRows.get(fieldIndex++).getTextField().setText(String.valueOf(attacker.getRange()));
                 
                 if (currentDefense.hasType(DefenseType.MULTIPLEATTACK) && fieldIndex < entityRows.size() && currentDefense instanceof DefenseMultipleAttack multiAttack) {
                     entityRows.get(fieldIndex++).getTextField().setText(String.valueOf(multiAttack.getAmtOfAttacks()));
                 }
             } else {
                 if (fieldIndex < entityRows.size()) {
-                    entityRows.get(fieldIndex++).getTextField().setText("0");
-                }
-                if (!currentDefense.hasType(DefenseType.MEDIUMRANGE) && fieldIndex < entityRows.size()) {
                     entityRows.get(fieldIndex++).getTextField().setText("0");
                 }
                 if (currentDefense.hasType(DefenseType.MULTIPLEATTACK) && fieldIndex < entityRows.size()) {
@@ -679,20 +677,6 @@ public class EntityPanel extends JPanel {
 
     public File getSelectedImageFile() {
         return selectedImageFile;
-    }
-    
-    public ZombieType getZombieType() {
-        if (currentZombie != null) {
-            return currentZombie.getType();
-        }
-        return ZombieType.CONTACT;
-    }
-    
-    public DefenseType getDefenseType() {
-        if (currentDefense != null) {
-            return currentDefense.getType();
-        }
-        return DefenseType.CONTACT;
     }
     
     public boolean allFieldsFilled() {
@@ -797,10 +781,6 @@ public class EntityPanel extends JPanel {
             if (!attackValue.isEmpty()) {
                 attacker.setDamage(Integer.parseInt(attackValue));
             }
-            String rangeValue = getRowValue("Rango");
-            if (!rangeValue.isEmpty()) {
-                attacker.setRange(Integer.parseInt(rangeValue));
-            }
         }
 
         currentZombie = zombie;
@@ -839,14 +819,6 @@ public class EntityPanel extends JPanel {
             String attackValue = getRowValue("Ataque");
             if (!attackValue.isEmpty()) {
                 attacker.setAttack(Integer.parseInt(attackValue));
-            }
-
-            EntityRow rangeRow = findRowByLabel("Rango");
-            if (rangeRow != null) {
-                String rangeValue = rangeRow.getTextField().getText().trim();
-                if (!rangeValue.isEmpty()) {
-                    attacker.setRange(Integer.parseInt(rangeValue));
-                }
             }
 
             EntityRow amountRow = findRowByLabel("Cantidad de ataques");

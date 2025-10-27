@@ -25,6 +25,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import javax.imageio.ImageIO;
 import javax.swing.Timer;
 
@@ -45,12 +46,15 @@ public class GameManager {
     private final ArrayList<Zombie> waveZombies;
     private final ArrayList<Defense> waveDefense;
     
+    private CombatLog combatLog; // Combat statistics tracker
+    
     private javax.swing.JFrame parentFrame; // Para mostrar diálogos
 
     private Timer gameTimer;
     private Timer zombieSpawnTimer;
     private Timer combatTimer;
     private int nextZombieIndexToSpawn;
+    private int totalZombiesInWave; // Total zombies generated for this wave (doesn't change)
     private boolean isPaused;
     private int level;
     private int baseHealth;
@@ -63,6 +67,7 @@ public class GameManager {
     private boolean waveGenerated;
     private boolean victoryProcessed; // Flag to prevent multiple victory dialogs
     private boolean lossProcessed; // Flag to prevent multiple game over dialogs
+    private boolean summaryShown; // Flag to prevent showing summary multiple times
     private Defense lifeTree;
     private PlacedDefense lifeTreePlaced;
     private int lifeTreeRow;
@@ -95,7 +100,9 @@ public class GameManager {
         this.waveGenerated = false;
         this.victoryProcessed = false;
         this.lossProcessed = false;
+        this.summaryShown = false;
         this.nextZombieIndexToSpawn = 0;
+        this.totalZombiesInWave = 0;
         this.lifeTree = null;
         this.lifeTreePlaced = null;
         this.lifeTreeRow = -1;
@@ -272,6 +279,11 @@ public class GameManager {
         placedDefinition.setCurrentRow(row);
         placedDefinition.setCurrentColumn(column);
         
+        // Apply level scaling to the defense
+        if (!isLifeTreeSelection) {
+            applyDefenseScaling(placedDefinition);
+        }
+        
         Image img = loadAndScale(placedDefinition.getImagePath());
         PlacedDefense placed = new PlacedDefense(placedDefinition, row, column, img);
         board.addDefense(placed);
@@ -351,6 +363,12 @@ public class GameManager {
         lifeTree.setHealthPoints(newLifeTreeHealth);
 
         zombie.setAlive(false);
+        
+        // Log zombie death (killed by Life Tree)
+        if (combatLog != null) {
+            combatLog.logDeath(zombie, lifeTree);
+        }
+        
         registerZombieDefeat(zombie);
 
         log("Zombie attacked the Life Tree! Damage: " + damage
@@ -426,7 +444,7 @@ public class GameManager {
         int endIndex = Math.min(nextZombieIndexToSpawn + ZOMBIES_PER_SPAWN_BATCH, waveZombies.size());
         int spawnedInBatch = 0;
         
-        log("Spawning batch: indices " + nextZombieIndexToSpawn + " to " + (endIndex-1) + " (total: " + waveZombies.size() + ")");
+        log("Spawning batch: indices " + nextZombieIndexToSpawn + " to " + (endIndex-1) + " (total: " + totalZombiesInWave + ")");
         
         for (int i = nextZombieIndexToSpawn; i < endIndex; i++) {
             Zombie zombie = waveZombies.get(i);
@@ -446,7 +464,7 @@ public class GameManager {
         }
         
         nextZombieIndexToSpawn = endIndex;
-        log("Spawned batch of " + spawnedInBatch + " zombies (" + nextZombieIndexToSpawn + "/" + waveZombies.size() + ")");
+        log("Spawned batch of " + spawnedInBatch + " zombies (" + nextZombieIndexToSpawn + "/" + totalZombiesInWave + ")");
         
         // Update UI after spawning
         if (sidePanel != null) {
@@ -527,8 +545,65 @@ public class GameManager {
             // Mark victory as processed to prevent multiple dialogs
             victoryProcessed = true;
             
+            // End combat log tracking
+            if (combatLog != null) {
+                combatLog.markRemainingEntitiesDead(true); // Mark all remaining zombies as dead
+                combatLog.endBattle();
+            }
+            
             stopGame();
-            showVictoryDialog();
+            showBattleSummary(true); // Show battle summary before victory dialog
+        }
+    }
+    
+    private void showBattleSummary(boolean hasWon) {
+        // Prevent showing summary multiple times with synchronized block
+        synchronized(this) {
+            if (summaryShown) {
+                log("⚠ Summary already shown, skipping duplicate call");
+                return;
+            }
+            summaryShown = true;
+            log("✓ Setting summaryShown = true, proceeding to show summary");
+        }
+        
+        if (parentFrame == null || combatLog == null) {
+            log("No parent frame or combat log, showing dialog directly");
+            // Si no hay frame padre o combat log, mostrar directamente el diálogo
+            if (hasWon) {
+                showVictoryDialogDirect();
+            } else {
+                showGameOverDialogDirect(false);
+            }
+            return;
+        }
+        
+        // Ensure we're on EDT before showing dialogs
+        boolean isEDT = javax.swing.SwingUtilities.isEventDispatchThread();
+        log("Current thread is EDT: " + isEDT);
+        
+        if (!isEDT) {
+            log("Not on EDT, scheduling showBattleSummaryInternal via invokeLater");
+            javax.swing.SwingUtilities.invokeLater(() -> showBattleSummaryInternal(hasWon));
+        } else {
+            log("Already on EDT, calling showBattleSummaryInternal directly");
+            showBattleSummaryInternal(hasWon);
+        }
+    }
+    
+    private void showBattleSummaryInternal(boolean hasWon) {
+        log(">>> showBattleSummaryInternal called, hasWon=" + hasWon);
+        
+        // Mostrar resumen de batalla (esto es MODAL, espera a que se cierre)
+        Table.BattleSummaryDialog.showSummary(parentFrame, combatLog, hasWon);
+        
+        log(">>> BattleSummaryDialog closed, showing " + (hasWon ? "victory" : "defeat") + " dialog");
+        
+        // Después del resumen, mostrar el diálogo de victoria/derrota
+        if (hasWon) {
+            showVictoryDialogDirect();
+        } else {
+            showGameOverDialogDirect(false);
         }
     }
     
@@ -540,11 +615,20 @@ public class GameManager {
         }
         
         javax.swing.SwingUtilities.invokeLater(() -> {
-            Table.GameOverDialog.PlayerChoice choice = 
-                Table.GameOverDialog.showGameOverDialog(parentFrame, true); // true = victoria
-            
-            handleVictoryChoice(choice);
+            showVictoryDialogDirect();
         });
+    }
+    
+    private void showVictoryDialogDirect() {
+        if (parentFrame == null) {
+            advanceToNextRound();
+            return;
+        }
+        
+        Table.GameOverDialog.PlayerChoice choice = 
+            Table.GameOverDialog.showGameOverDialog(parentFrame, true); // true = victoria
+        
+        handleVictoryChoice(choice);
     }
     
     private void handleVictoryChoice(Table.GameOverDialog.PlayerChoice choice) {
@@ -605,6 +689,7 @@ public class GameManager {
         waveGenerated = false;
         victoryProcessed = false; // Reset victory flag for new round
         lossProcessed = false; // Reset loss flag for new round
+        summaryShown = false; // Reset summary flag for new round
         nextZombieIndexToSpawn = 0;
         zombiesRemaining = 0;
         isPaused = true; // Importante: marcar como pausado para permitir colocar defensas
@@ -649,10 +734,16 @@ public class GameManager {
             // Mark loss as processed to prevent multiple dialogs
             lossProcessed = true;
             
+            // End combat log tracking
+            if (combatLog != null) {
+                combatLog.markRemainingEntitiesDead(false); // Mark all remaining defenses as dead
+                combatLog.endBattle();
+            }
+            
             stopGame();
             
-            // Mostrar diálogo de Game Over
-            showGameOverDialog(false);
+            // Show battle summary before game over dialog
+            showBattleSummary(false);
         }
     }
     
@@ -665,11 +756,20 @@ public class GameManager {
         
         // Mostrar el diálogo en el hilo de eventos de Swing
         javax.swing.SwingUtilities.invokeLater(() -> {
-            Table.GameOverDialog.PlayerChoice choice = 
-                Table.GameOverDialog.showGameOverDialog(parentFrame, hasWon);
-            
-            handlePlayerChoice(choice);
+            showGameOverDialogDirect(hasWon);
         });
+    }
+    
+    private void showGameOverDialogDirect(boolean hasWon) {
+        if (parentFrame == null) {
+            resetGame();
+            return;
+        }
+        
+        Table.GameOverDialog.PlayerChoice choice = 
+            Table.GameOverDialog.showGameOverDialog(parentFrame, hasWon);
+        
+        handlePlayerChoice(choice);
     }
     
     private void handlePlayerChoice(Table.GameOverDialog.PlayerChoice choice) {
@@ -687,6 +787,7 @@ public class GameManager {
                 coinsThisLevel = WaveManager.coinsForLevel(level);
                 defenseCostLimit = coinsThisLevel;
                 if (sidePanel != null) {
+                    sidePanel.showLifeTreeInCatalog(); // Mostrar Life Tree para el nuevo nivel
                     sidePanel.updateAllLabels();
                 }
                 log("Advancing to level " + level);
@@ -747,6 +848,7 @@ public class GameManager {
         waveGenerated = false;
         victoryProcessed = false; // Reset victory flag for retry
         lossProcessed = false; // Reset loss flag for retry
+        summaryShown = false; // Reset summary flag for retry
         nextZombieIndexToSpawn = 0;
 
         // DON'T change level or coins - keep the same level
@@ -790,6 +892,59 @@ public class GameManager {
 
     public void setLevel(int level) {
         this.level = level;
+        // Update coins and defense limit for the new level
+        this.coinsThisLevel = WaveManager.coinsForLevel(level);
+        this.defenseCostLimit = coinsThisLevel;
+        
+        // Initialize new combat log for this level
+        this.combatLog = new CombatLog(level);
+        
+        // Update UI if available
+        if (sidePanel != null) {
+            sidePanel.updateAllLabels();
+        }
+        
+        log("Level set to " + level + " - Coins: " + coinsThisLevel);
+    }
+    
+    /**
+     * Initialize a new combat log for the current round
+     * Called at the start of each round to reset statistics
+     */
+    public void initializeCombatLog() {
+        this.combatLog = new CombatLog(level);
+        log("=== Combat Log Initialized for Level " + level + " ===");
+        
+        // Pre-register all existing defenses in the combat log
+        int defensesRegistered = 0;
+        for (Defense defense : waveDefense) {
+            if (defense != null && combatLog != null) {
+                // Create stats entry for each defense
+                combatLog.getStats(defense);
+                defensesRegistered++;
+            }
+        }
+        log("Combat log: Registered " + defensesRegistered + " defenses");
+    }
+    
+    /**
+     * Register all zombies in combat log
+     * Called after wave generation to ensure all zombies appear in stats
+     */
+    public void registerZombiesInCombatLog() {
+        if (combatLog == null) {
+            return;
+        }
+        
+        int zombiesRegistered = 0;
+        for (Zombie zombie : waveZombies) {
+            if (zombie != null) {
+                // Create stats entry for each zombie
+                combatLog.getStats(zombie);
+                zombiesRegistered++;
+            }
+        }
+        log("Combat log: Registered " + zombiesRegistered + " zombies");
     }
     
     public void setParentFrame(javax.swing.JFrame frame) {
@@ -863,6 +1018,14 @@ public class GameManager {
         // This method is kept for compatibility but the counter is now calculated dynamically
         // The zombiesRemaining field is no longer the source of truth
         this.zombiesRemaining = zombiesRemaining;
+    }
+    
+    public int getTotalZombiesInWave() {
+        return totalZombiesInWave;
+    }
+    
+    public void setTotalZombiesInWave(int total) {
+        this.totalZombiesInWave = total;
     }
 
     public void registerZombieDefeat(Zombie zombie) {
@@ -943,6 +1106,7 @@ public class GameManager {
         waveGenerated = false;
         victoryProcessed = false; // Reset victory flag
         lossProcessed = false; // Reset loss flag
+        summaryShown = false; // Reset summary flag
         nextZombieIndexToSpawn = 0;
         selectedDefense = null;
 
@@ -952,6 +1116,7 @@ public class GameManager {
         lifeTreeColumn = -1;
 
         if (sidePanel != null) {
+            sidePanel.showLifeTreeInCatalog(); // Asegurar que el Life Tree esté visible
             sidePanel.updateAllLabels();
             sidePanel.enableStartButton(); // Reactivar el botón de Start
         }
@@ -1002,6 +1167,10 @@ public class GameManager {
     public Random getRandomGenerator() {
         return rnd;
     }
+    
+    public CombatLog getCombatLog() {
+        return combatLog;
+    }
 
     public MatrixManager getMatrixManager() {
         return matrixManager;
@@ -1027,21 +1196,26 @@ public class GameManager {
         Defense cloned = null;
         
         try {
+            // Use the types-based constructor for proper hybrid type support
+            Set<DefenseType> types = original.getTypes();
+            
             // Check specific defense types first
             if (original instanceof DefenseMultipleAttack) {
                 DefenseMultipleAttack origMulti = (DefenseMultipleAttack) original;
                 cloned = new DefenseMultipleAttack(
+                    types,
                     original.getEntityName(),
                     original.getHealthPoints(),
                     original.getShowUpLevel(),
                     original.getCost(),
                     origMulti.getAttack(),
-                    origMulti.getRange(),
+                    0, // range is auto-calculated
                     origMulti.getAmtOfAttacks()
                 );
             } else if (original instanceof DefenseHealer) {
                 DefenseHealer origHealer = (DefenseHealer) original;
                 cloned = new DefenseHealer(
+                    types,
                     original.getEntityName(),
                     original.getHealthPoints(),
                     original.getShowUpLevel(),
@@ -1049,27 +1223,29 @@ public class GameManager {
                     origHealer.getHealPower()
                 );
             } else if (original instanceof DefenseExplosive) {
-                DefenseExplosive origExplosive = (DefenseExplosive) original;
                 cloned = new DefenseExplosive(
+                    types,
                     original.getEntityName(),
                     original.getHealthPoints(),
                     original.getShowUpLevel(),
                     original.getCost(),
-                    origExplosive.getRange()
+                    0 // range is auto-calculated
                 );
             } else if (original instanceof DefenseFlying) {
                 DefenseFlying origFlying = (DefenseFlying) original;
                 cloned = new DefenseFlying(
+                    types,
                     original.getEntityName(),
                     original.getHealthPoints(),
                     original.getShowUpLevel(),
                     original.getCost(),
                     origFlying.getAttack(),
-                    origFlying.getRange()
+                    0 // range is auto-calculated
                 );
             } else if (original instanceof DefenseContact) {
                 DefenseContact origContact = (DefenseContact) original;
                 cloned = new DefenseContact(
+                    types,
                     original.getEntityName(),
                     original.getHealthPoints(),
                     original.getShowUpLevel(),
@@ -1079,29 +1255,30 @@ public class GameManager {
             } else if (original instanceof DefenseMediumRange) {
                 DefenseMediumRange origMedium = (DefenseMediumRange) original;
                 cloned = new DefenseMediumRange(
+                    types,
                     original.getEntityName(),
                     original.getHealthPoints(),
                     original.getShowUpLevel(),
                     original.getCost(),
                     origMedium.getAttack(),
-                    origMedium.getRange()
+                    0 // range is auto-calculated
                 );
             } else if (original instanceof DefenseAttacker) {
                 // Generic attacker
                 DefenseAttacker origAttacker = (DefenseAttacker) original;
                 cloned = new DefenseAttacker(
-                    original.getType(),
+                    types,
                     original.getEntityName(),
                     original.getHealthPoints(),
                     original.getShowUpLevel(),
                     original.getCost(),
                     origAttacker.getAttack(),
-                    origAttacker.getRange()
+                    0 // range is auto-calculated
                 );
             } else {
                 // Generic defense or BLOCKS
                 cloned = new Defense(
-                    original.getType(),
+                    types,
                     original.getEntityName(),
                     original.getHealthPoints(),
                     original.getShowUpLevel(),
@@ -1120,6 +1297,106 @@ public class GameManager {
         }
         
         return cloned;
+    }
+    
+    // ==================== LEVEL SCALING SYSTEM ====================
+    
+    /**
+     * Applies level scaling to a defense (increases HP and damage by 5-20% per level)
+     */
+    private void applyDefenseScaling(Defense defense) {
+        if (defense == null || level <= 1) {
+            return; // No scaling for level 1
+        }
+        
+        // Each level adds a random 5-20% increase
+        double totalMultiplier = 1.0;
+        for (int i = 1; i < level; i++) {
+            double increase = 0.05 + (rnd.nextDouble() * 0.15); // 5-20%
+            totalMultiplier *= (1.0 + increase);
+        }
+        
+        // Scale HP
+        int originalHP = defense.getHealthPoints();
+        int scaledHP = (int) Math.round(originalHP * totalMultiplier);
+        defense.setHealthPoints(scaledHP);
+        
+        // Scale damage for attacker types
+        if (defense instanceof DefenseAttacker) {
+            DefenseAttacker attacker = (DefenseAttacker) defense;
+            int originalDamage = attacker.getAttack();
+            int scaledDamage = (int) Math.round(originalDamage * totalMultiplier);
+            attacker.setAttack(scaledDamage);
+            
+            log("Defense scaled (Lvl " + level + "): " + defense.getEntityName() + 
+                " | HP: " + originalHP + " → " + scaledHP + 
+                " | Damage: " + originalDamage + " → " + scaledDamage +
+                " (×" + String.format("%.2f", totalMultiplier) + ")");
+        } else if (defense instanceof DefenseHealer) {
+            // Scale heal power for healers
+            DefenseHealer healer = (DefenseHealer) defense;
+            int originalHeal = healer.getHealPower();
+            int scaledHeal = (int) Math.round(originalHeal * totalMultiplier);
+            healer.setHealPower(scaledHeal);
+            
+            log("Defense scaled (Lvl " + level + "): " + defense.getEntityName() + 
+                " | HP: " + originalHP + " → " + scaledHP + 
+                " | Heal: " + originalHeal + " → " + scaledHeal +
+                " (×" + String.format("%.2f", totalMultiplier) + ")");
+        } else {
+            log("Defense scaled (Lvl " + level + "): " + defense.getEntityName() + 
+                " | HP: " + originalHP + " → " + scaledHP +
+                " (×" + String.format("%.2f", totalMultiplier) + ")");
+        }
+    }
+    
+    /**
+     * Applies level scaling to a zombie (increases HP and damage by 5-20% per level)
+     */
+    void applyZombieScaling(Zombie zombie) {
+        if (zombie == null || level <= 1) {
+            return; // No scaling for level 1
+        }
+        
+        // Each level adds a random 5-20% increase
+        double totalMultiplier = 1.0;
+        for (int i = 1; i < level; i++) {
+            double increase = 0.05 + (rnd.nextDouble() * 0.15); // 5-20%
+            totalMultiplier *= (1.0 + increase);
+        }
+        
+        // Scale HP
+        int originalHP = zombie.getHealthPoints();
+        int scaledHP = (int) Math.round(originalHP * totalMultiplier);
+        zombie.setHealthPoints(scaledHP);
+        
+        // Scale damage for attacker types
+        if (zombie instanceof ZombieAttacker) {
+            ZombieAttacker attacker = (ZombieAttacker) zombie;
+            int originalDamage = attacker.getDamage();
+            int scaledDamage = (int) Math.round(originalDamage * totalMultiplier);
+            attacker.setDamage(scaledDamage);
+            
+            log("Zombie scaled (Lvl " + level + "): " + zombie.getEntityName() + 
+                " | HP: " + originalHP + " → " + scaledHP + 
+                " | Damage: " + originalDamage + " → " + scaledDamage +
+                " (×" + String.format("%.2f", totalMultiplier) + ")");
+        } else if (zombie instanceof ZombieHealer) {
+            // Scale heal power for healers
+            ZombieHealer healer = (ZombieHealer) zombie;
+            int originalHeal = healer.getHealPower();
+            int scaledHeal = (int) Math.round(originalHeal * totalMultiplier);
+            healer.setHealPower(scaledHeal);
+            
+            log("Zombie scaled (Lvl " + level + "): " + zombie.getEntityName() + 
+                " | HP: " + originalHP + " → " + scaledHP + 
+                " | Heal: " + originalHeal + " → " + scaledHeal +
+                " (×" + String.format("%.2f", totalMultiplier) + ")");
+        } else {
+            log("Zombie scaled (Lvl " + level + "): " + zombie.getEntityName() + 
+                " | HP: " + originalHP + " → " + scaledHP +
+                " (×" + String.format("%.2f", totalMultiplier) + ")");
+        }
     }
     
     // ==================== COMBAT SYSTEM ====================
@@ -1180,7 +1457,7 @@ public class GameManager {
      */
     private void processDefenseAttack(Defense defense) {
         // Blocks don't attack
-        if (defense.getType() == DefenseType.BLOCKS) {
+        if (defense.hasType(DefenseType.BLOCKS)) {
             return;
         }
         
@@ -1198,7 +1475,7 @@ public class GameManager {
             return; // No targets in range
         }
         
-        // Check if explosive defense should explode
+        // Check if explosive defense should explode (when in contact)
         if (defense.isExplosive()) {
             for (Entity target : validTargets) {
                 if (CombatRules.shouldExplode(defense, target)) {
@@ -1210,31 +1487,58 @@ public class GameManager {
         
         // Get attack damage
         int damage = getEntityDamage(defense);
+        boolean attackPerformed = false;
         
-        // Handle multiple attacks
+        // Handle multiple attacks (MULTIPLEATTACK type)
         if (defense.hasMultipleAttacks()) {
             DefenseMultipleAttack multiDef = (DefenseMultipleAttack) defense;
             int attackCount = multiDef.getAmtOfAttacks();
             
-            // Distribute attacks among targets
-            for (int i = 0; i < attackCount && !validTargets.isEmpty(); i++) {
-                Entity target = validTargets.get(i % validTargets.size());
+            // Attack up to 2 different targets, but attackCount times each
+            int maxTargets = Math.min(2, validTargets.size());
+            List<Entity> closestTargets = findClosestEntities(defense, validTargets, maxTargets);
+            
+            // Distribute attacks among the closest targets
+            for (int i = 0; i < attackCount; i++) {
+                Entity target = closestTargets.get(i % closestTargets.size());
+                int distance = CombatRules.calculateDistance(defense, target);
+                log(defense.getEntityName() + " (range:" + defense.getAttackRange() + 
+                    ") multi-attacks [" + (i+1) + "/" + attackCount + "] " + target.getEntityName() + 
+                    " at distance " + distance + " for " + damage + " damage");
+                
+                // Log the attack in combat log
+                if (combatLog != null) {
+                    combatLog.logAttack(defense, target, damage);
+                }
+                
+                applyDamage(target, damage, defense);
+                attackPerformed = true;
+            }
+        } else {
+            // Normal attack: attack up to 2 closest targets
+            int maxTargets = Math.min(2, validTargets.size());
+            List<Entity> closestTargets = findClosestEntities(defense, validTargets, maxTargets);
+            
+            for (Entity target : closestTargets) {
                 int distance = CombatRules.calculateDistance(defense, target);
                 log(defense.getEntityName() + " (range:" + defense.getAttackRange() + 
                     ") attacks " + target.getEntityName() + " at distance " + distance + 
                     " for " + damage + " damage");
-                applyDamage(target, damage);
+                
+                // Log the attack in combat log
+                if (combatLog != null) {
+                    combatLog.logAttack(defense, target, damage);
+                }
+                
+                applyDamage(target, damage, defense);
+                attackPerformed = true;
             }
-        } else {
-            // Single attack to closest target
-            Entity closestTarget = findClosestEntity(defense, validTargets);
-            if (closestTarget != null) {
-                int distance = CombatRules.calculateDistance(defense, closestTarget);
-                log(defense.getEntityName() + " (range:" + defense.getAttackRange() + 
-                    ") attacks " + closestTarget.getEntityName() + " at distance " + distance + 
-                    " for " + damage + " damage");
-                applyDamage(closestTarget, damage);
-            }
+        }
+        
+        // If explosive defense attacked successfully, it explodes
+        if (defense.isExplosive() && attackPerformed) {
+            log(defense.getEntityName() + " is explosive and attacked - triggering explosion!");
+            explodeDefense(defense, validTargets);
         }
     }
     
@@ -1261,7 +1565,7 @@ public class GameManager {
             return; // No targets in range, zombie keeps moving
         }
         
-        // Check if explosive zombie should explode
+        // Check if explosive zombie should explode (when in contact)
         if (zombie.isExplosive()) {
             for (Entity target : validTargets) {
                 if (CombatRules.shouldExplode(zombie, target)) {
@@ -1274,14 +1578,29 @@ public class GameManager {
         // Get attack damage
         int damage = getEntityDamage(zombie);
         
-        // Attack closest target
-        Entity closestTarget = findClosestEntity(zombie, validTargets);
-        if (closestTarget != null) {
-            int distance = CombatRules.calculateDistance(zombie, closestTarget);
+        // Zombies attack up to 2 closest targets
+        int maxTargets = Math.min(2, validTargets.size());
+        List<Entity> closestTargets = findClosestEntities(zombie, validTargets, maxTargets);
+        
+        for (Entity target : closestTargets) {
+            int distance = CombatRules.calculateDistance(zombie, target);
             log(zombie.getEntityName() + " (range:" + zombie.getAttackRange() + 
-                ") attacks " + closestTarget.getEntityName() + " at distance " + distance + 
+                ") attacks " + target.getEntityName() + " at distance " + distance + 
                 " for " + damage + " damage");
-            applyDamage(closestTarget, damage);
+            
+            // Log the attack in combat log
+            if (combatLog != null) {
+                combatLog.logAttack(zombie, target, damage);
+            }
+            
+            applyDamage(target, damage, zombie);
+            
+            // If explosive zombie attacked successfully, it explodes (after first hit)
+            if (zombie.isExplosive()) {
+                log(zombie.getEntityName() + " is explosive and attacked - triggering explosion!");
+                explodeZombie(zombie, validTargets);
+                return; // Zombie dies after exploding
+            }
         }
     }
     
@@ -1322,6 +1641,12 @@ public class GameManager {
         Entity mostDamaged = findMostDamagedEntity(validTargets);
         if (mostDamaged != null) {
             int healAmount = getEntityHealPower(healer);
+            
+            // Log the healing in combat log
+            if (combatLog != null) {
+                combatLog.logHeal(healer, mostDamaged, healAmount);
+            }
+            
             applyHealing(mostDamaged, healAmount);
         }
     }
@@ -1351,12 +1676,20 @@ public class GameManager {
         log("=== EXPLOSION === Defense " + defense.getEntityName() + 
             " exploded at (" + defRow + "," + defCol + ")! Zombies in 3x3 area: " + zombiesInExplosionArea.size());
         
-        // Matar a todos los zombies en el área
+        // Convert to Entity list for logging
+        List<Entity> explosionTargets = new ArrayList<>(zombiesInExplosionArea);
+        
+        // Matar a todos los zombies en el área PRIMERO
         for (Zombie zombie : zombiesInExplosionArea) {
             log("  - Exploding on zombie: " + zombie.getEntityName() + 
                 " at (" + zombie.getCurrentRow() + "," + zombie.getCurrentColumn() + ")" +
                 " (HP: " + zombie.getHealthPoints() + ", Alive: " + zombie.isAlive() + ")");
-            applyDamage(zombie, 999999); // Instant kill
+            applyDamage(zombie, 999999, defense); // Instant kill
+        }
+        
+        // Log explosion event DESPUÉS de aplicar el daño
+        if (combatLog != null) {
+            combatLog.logExplosion(defense, explosionTargets, 999999);
         }
         
         // Defense is destroyed
@@ -1376,14 +1709,24 @@ public class GameManager {
         int zombieRow = zombie.getCurrentRow();
         int zombieCol = zombie.getCurrentColumn();
         
+        log("=== EXPLOSION START === Zombie " + zombie.getEntityName() + 
+            " at (" + zombieRow + "," + zombieCol + ") | Flying: " + zombie.isFlying());
+        
         for (Defense d : waveDefense) {
             if (d == null || d.getHealthPoints() <= 0) {
                 continue;
             }
             
             int distance = CombatRules.calculateDistance(zombie, d);
+            log("  - Checking defense: " + d.getEntityName() + 
+                " at (" + d.getCurrentRow() + "," + d.getCurrentColumn() + ")" +
+                " | Flying: " + d.isFlying() +
+                " | Distance: " + distance +
+                " | HP: " + d.getHealthPoints());
+            
             if (distance <= EXPLOSION_RADIUS) {
                 defensesInExplosionArea.add(d);
+                log("    ✓ ADDED to explosion targets");
             }
         }
         
@@ -1392,23 +1735,37 @@ public class GameManager {
             int distance = CombatRules.calculateDistance(zombie, lifeTree);
             if (distance <= EXPLOSION_RADIUS) {
                 defensesInExplosionArea.add(lifeTree);
+                log("  - Life Tree in range, added to targets");
             }
         }
         
-        log("=== EXPLOSION === Zombie " + zombie.getEntityName() + 
-            " exploded at (" + zombieRow + "," + zombieCol + ")! Defenses in 3x3 area: " + defensesInExplosionArea.size());
+        log("=== EXPLOSION === Total defenses in 3x3 area: " + defensesInExplosionArea.size());
         
-        // Destruir todas las defensas en el área
+        // Convert to Entity list for logging
+        List<Entity> explosionTargets = new ArrayList<>(defensesInExplosionArea);
+        
+        // Destruir todas las defensas en el área PRIMERO
         for (Defense defense : defensesInExplosionArea) {
             log("  - Exploding on defense: " + defense.getEntityName() + 
                 " at (" + defense.getCurrentRow() + "," + defense.getCurrentColumn() + ")" +
                 " (HP: " + defense.getHealthPoints() + ")");
-            applyDamage(defense, 999999); // Instant kill
+            applyDamage(defense, 999999, zombie); // Instant kill
+        }
+        
+        // Log explosion event DESPUÉS de aplicar el daño
+        if (combatLog != null) {
+            combatLog.logExplosion(zombie, explosionTargets, 999999);
         }
         
         // Zombie dies
         zombie.setHealthPoints(0);
         zombie.setAlive(false);
+        
+        // Log zombie's own death (suicide by explosion)
+        if (combatLog != null) {
+            combatLog.logDeath(zombie, zombie); // Killed by itself
+        }
+        
         registerZombieDefeat(zombie);
         log("=== EXPLOSION END === " + zombie.getEntityName() + " died from explosion");
     }
@@ -1416,10 +1773,15 @@ public class GameManager {
     /**
      * Applies damage to an entity
      */
-    private void applyDamage(Entity target, int damage) {
+    private void applyDamage(Entity target, int damage, Entity attacker) {
         int currentHealth = target.getHealthPoints();
         int newHealth = Math.max(0, currentHealth - damage);
         target.setHealthPoints(newHealth);
+        
+        // Update combat log with new health
+        if (combatLog != null) {
+            combatLog.updateEntityHealth(target);
+        }
         
         log(target.getEntityName() + " took " + damage + " damage! HP: " + currentHealth + " -> " + newHealth);
         
@@ -1429,9 +1791,20 @@ public class GameManager {
             if (target instanceof Zombie) {
                 Zombie z = (Zombie) target;
                 z.setAlive(false);
+                
+                // Log zombie death
+                if (combatLog != null && attacker != null) {
+                    combatLog.logDeath(z, attacker);
+                }
+                
                 registerZombieDefeat(z);
             } else if (target instanceof Defense) {
                 Defense d = (Defense) target;
+                // Log defense death
+                if (combatLog != null && attacker != null) {
+                    combatLog.logDeath(d, attacker);
+                }
+                
                 if (d == lifeTree) {
                     destroyLifeTree();
                 } else {
@@ -1500,6 +1873,46 @@ public class GameManager {
     }
     
     /**
+     * Finds the N closest entities to the source
+     */
+    private List<Entity> findClosestEntities(Entity source, List<Entity> candidates, int maxCount) {
+        if (candidates == null || candidates.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        // Create list with distances
+        List<EntityDistance> distances = new ArrayList<>();
+        for (Entity candidate : candidates) {
+            int distance = CombatRules.calculateDistance(source, candidate);
+            distances.add(new EntityDistance(candidate, distance));
+        }
+        
+        // Sort by distance
+        distances.sort((a, b) -> Integer.compare(a.distance, b.distance));
+        
+        // Return up to maxCount closest entities
+        List<Entity> result = new ArrayList<>();
+        for (int i = 0; i < Math.min(maxCount, distances.size()); i++) {
+            result.add(distances.get(i).entity);
+        }
+        
+        return result;
+    }
+    
+    /**
+     * Helper class to store entity with distance
+     */
+    private static class EntityDistance {
+        Entity entity;
+        int distance;
+        
+        EntityDistance(Entity entity, int distance) {
+            this.entity = entity;
+            this.distance = distance;
+        }
+    }
+    
+    /**
      * Finds the most damaged entity from a list (for healing priority)
      */
     private Entity findMostDamagedEntity(List<Entity> candidates) {
@@ -1554,12 +1967,22 @@ public class GameManager {
             // Remove if dead or no health
             if (!zombie.isAlive() || zombie.getHealthPoints() <= 0) {
                 zombiesToRemove.add(zombie);
+                
+                // Log death event only if not already logged
+                // (Check if stats exist and if died flag is not set)
+                if (combatLog != null) {
+                    GameLogic.CombatLog.EntityCombatStats stats = combatLog.getStats(zombie);
+                    if (stats != null && !stats.died) {
+                        combatLog.logDeath(zombie, null);
+                    }
+                }
             }
         }
         
         if (!zombiesToRemove.isEmpty()) {
             waveZombies.removeAll(zombiesToRemove);
-            log("Removed " + zombiesToRemove.size() + " dead zombies from wave list");
+            // Silently remove - don't spam logs
+            // log("Removed " + zombiesToRemove.size() + " dead zombies from wave list");
         }
         
         // Remove dead defenses
@@ -1568,12 +1991,21 @@ public class GameManager {
         for (Defense defense : waveDefense) {
             if (defense == null || defense.getHealthPoints() <= 0) {
                 defensesToRemove.add(defense);
+                
+                // Log death event only if not already logged
+                if (combatLog != null) {
+                    GameLogic.CombatLog.EntityCombatStats stats = combatLog.getStats(defense);
+                    if (stats != null && !stats.died) {
+                        combatLog.logDeath(defense, null);
+                    }
+                }
             }
         }
         
         if (!defensesToRemove.isEmpty()) {
             waveDefense.removeAll(defensesToRemove);
-            log("Removed " + defensesToRemove.size() + " dead defenses from wave list");
+            // Silently remove - don't spam logs
+            // log("Removed " + defensesToRemove.size() + " dead defenses from wave list");
         }
     }
 }

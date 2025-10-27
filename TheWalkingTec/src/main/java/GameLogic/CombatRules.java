@@ -4,6 +4,7 @@ import Entity.Entity;
 import Defense.Defense;
 import Defense.DefenseType;
 import Zombie.Zombie;
+import Zombie.ZombieType;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -47,24 +48,56 @@ public class CombatRules {
         // Blocks can't attack
         if (attacker instanceof Defense) {
             Defense def = (Defense) attacker;
-            if (def.getType() == DefenseType.BLOCKS) {
+            if (def.hasType(DefenseType.BLOCKS)) {
                 return false;
             }
         }
         
         // FLYING RULES:
-        // - Flying units CAN attack both flying and ground targets
-        // - Ground units can ONLY attack ground targets (cannot attack flying)
+        // FLYING + MEDIUMRANGE = ground unit (can attack and be attacked by anyone)
+        // Pure FLYING = can only be attacked by other FLYING units
+        // Ground units = cannot attack pure FLYING units
         
-        // Ground units cannot attack flying targets
-        if (!attacker.isFlying() && target.isFlying()) {
+        boolean targetIsGroundUnit = isGroundUnit(target);
+        boolean attackerIsGroundUnit = isGroundUnit(attacker);
+        
+        // Ground units cannot attack pure flying targets
+        if (attackerIsGroundUnit && !targetIsGroundUnit) {
             return false;
         }
         
-        // Flying can attack anyone (no additional restrictions)
+        // Pure flying targets can only be attacked by flying attackers
+        if (!targetIsGroundUnit && attackerIsGroundUnit) {
+            return false;
+        }
         
         // Check if target is in range
         return isInRange(attacker, target);
+    }
+    
+    /**
+     * Determines if an entity is a ground unit
+     * FLYING + MEDIUMRANGE combination is considered ground
+     * Non-flying entities are ground
+     * @param entity The entity to check
+     * @return true if entity is ground unit
+     */
+    private static boolean isGroundUnit(Entity entity) {
+        // FLYING + MEDIUMRANGE = ground unit
+        if (entity instanceof Defense) {
+            Defense def = (Defense) entity;
+            if (def.hasType(DefenseType.FLYING) && def.hasType(DefenseType.MEDIUMRANGE)) {
+                return true; // This combination is ground
+            }
+            return !def.hasType(DefenseType.FLYING); // Otherwise, flying = not ground
+        } else if (entity instanceof Zombie) {
+            Zombie zom = (Zombie) entity;
+            if (zom.hasType(ZombieType.FLYING) && zom.hasType(ZombieType.MEDIUMRANGE)) {
+                return true; // This combination is ground
+            }
+            return !zom.hasType(ZombieType.FLYING); // Otherwise, flying = not ground
+        }
+        return true; // Default to ground
     }
     
     /**

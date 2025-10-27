@@ -8,12 +8,11 @@ import java.util.Arrays;
 public class DefenseAttacker extends Defense implements EntityAttacker {
     
     protected int attack;
-    protected int range; 
 
     public DefenseAttacker(String name, int healthPoints, int showUpLevel, int cost, int damage, int range) {
         super(name, healthPoints, showUpLevel, cost);
         this.attack = damage;
-        this.range = range;
+        // range parameter ignored - range is now auto-calculated based on types
     }
     
     public DefenseAttacker(DefenseType type, String name, int healthPoints, int showUpLevel, int cost, int damage, int range) {
@@ -25,6 +24,7 @@ public class DefenseAttacker extends Defense implements EntityAttacker {
         this(name, healthPoints, showUpLevel, cost, damage, range);
         this.types = new HashSet<>(types);
     }
+    
     @Override
     public void attack() {
     
@@ -37,22 +37,7 @@ public class DefenseAttacker extends Defense implements EntityAttacker {
     public void setAttack(int attack) {
         this.attack = attack;
     }
-
-    public int getRange() {
-        return range;
-    }
-
-    public void setRange(int range) {
-        this.range = range;
-    }
     
-    @Override
-    public int getAttackRange() {
-        // Special case: EXPLOSIVE defenses always have range 1 (contact)
-        if (types.contains(DefenseType.EXPLOSIVE)) {
-            return 1;
-        }
-        // Otherwise use configured range
-        return range;
-    }
+    // getAttackRange() is inherited from Defense class which calculates based on types
+    // No override needed - use parent implementation for type-based auto-calculation
 }

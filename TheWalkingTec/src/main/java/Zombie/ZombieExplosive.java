@@ -9,12 +9,12 @@ public class ZombieExplosive extends ZombieAttacker implements EntityExplosive {
 
     
     public ZombieExplosive(String name, int healthPoints, int showUpLevel, int cost, int range, double movementSpeed) {
-        super(name, healthPoints, showUpLevel, cost, 10000, range, movementSpeed);
+        super(name, healthPoints, showUpLevel, cost, 10000, 0, movementSpeed); // high damage, range auto-calculated
         this.types = new HashSet<>(Arrays.asList(ZombieType.EXPLOSIVE));
     }
     
     public ZombieExplosive(Set<ZombieType> types, String name, int healthPoints, int showUpLevel, int cost, int range, double movementSpeed) {
-        super(name, healthPoints, showUpLevel, cost, 10000, range, movementSpeed);
+        super(name, healthPoints, showUpLevel, cost, 10000, 0, movementSpeed); // high damage, range auto-calculated
         this.types = new HashSet<>(types);
         this.types.add(ZombieType.EXPLOSIVE);
     }
