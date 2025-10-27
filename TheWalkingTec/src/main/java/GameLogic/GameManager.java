@@ -170,6 +170,73 @@ public class GameManager {
         board.setSelectedDefense(defenseName != null ? defenseName.getEntityName() : null);
         log("Selected Defense: " + (defenseName != null ? defenseName.getEntityName() : "null"));
     }
+    
+    /**
+     * Sells a defense at the given position, refunding its cost
+     * If it's the Life Tree, it will be returned to the catalog
+     */
+    public boolean sellDefenseAt(int row, int column) {
+        // No permitir vender defensas si la ronda está activa
+        if (roundActive) {
+            log("Cannot sell defenses while a round is in progress!");
+            return false;
+        }
+        
+        // Get the defense at this position
+        PlacedDefense placed = board.getDefenseAt(row, column);
+        if (placed == null || placed.definition == null) {
+            log("No defense at this position to sell");
+            return false;
+        }
+        
+        Defense defense = placed.definition;
+        String defenseName = defense.getEntityName();
+        boolean isLifeTree = LIFE_TREE_NAME.equalsIgnoreCase(defenseName);
+        
+        // Remove from board visually
+        board.removePlacedDefense(row, column);
+        
+        // Free the matrix position
+        matrixManager.free(row, column);
+        
+        // Remove from combat list if it's not the Life Tree
+        if (!isLifeTree) {
+            waveDefense.remove(defense);
+            
+            // Refund the cost
+            int refund = Math.max(1, defense.getCost());
+            defenseCostUsed -= refund;
+            if (defenseCostUsed < 0) {
+                defenseCostUsed = 0;
+            }
+            log("Sold " + defenseName + " for " + refund + " coins");
+        } else {
+            // It's the Life Tree - return it to the catalog
+            lifeTree = null;
+            lifeTreePlaced = null;
+            lifeTreeRow = -1;
+            lifeTreeColumn = -1;
+            
+            // Restore base health to initial value or default
+            baseHealth = 100;
+            
+            log("Life Tree returned to catalog");
+            
+            // Show Life Tree in catalog again
+            if (sidePanel != null) {
+                sidePanel.showLifeTreeInCatalog();
+            }
+        }
+        
+        // Update UI
+        if (sidePanel != null) {
+            sidePanel.refreshStatusCounters();
+        }
+        
+        board.repaint();
+        return true;
+    }
+    
     public boolean placeDefences(int row, int column) {
         // No permitir colocar defensas si la ronda está activa (jugando)
         if (roundActive) {

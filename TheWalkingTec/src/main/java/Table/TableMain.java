@@ -16,6 +16,7 @@ public class TableMain extends JFrame {
     private GraphicsDevice gd = null;
     JFrame parent;
     private GameManager gameManager;
+    private GameBoard gameBoard;
     
     public TableMain() {
         this(null, 1);
@@ -35,19 +36,19 @@ public class TableMain extends JFrame {
         gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
         gd.setFullScreenWindow(this);
         
-        GameBoard background = new GameBoard();
+        gameBoard = new GameBoard();
         SidePanel sidepanel = new SidePanel(this);
         
-        gameManager = new GameManager(background, sidepanel);
+        gameManager = new GameManager(gameBoard, sidepanel);
         gameManager.setParentFrame(this); // Establecer el frame padre para diálogos
         gameManager.setLevel(startingLevel); // Set the starting level
-        background.setGameManger(gameManager);
+        gameBoard.setGameManger(gameManager);
         sidepanel.setGameManager(gameManager);
        // sidepanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
 
         
         
-        this.add(background, BorderLayout.CENTER);
+        this.add(gameBoard, BorderLayout.CENTER);
         this.add(sidepanel, BorderLayout.EAST);
         
         
@@ -55,6 +56,10 @@ public class TableMain extends JFrame {
         this.setVisible(true);
         
         
+    }
+    
+    public GameBoard getGameBoard() {
+        return gameBoard;
     }
     
     public void goMenu() {

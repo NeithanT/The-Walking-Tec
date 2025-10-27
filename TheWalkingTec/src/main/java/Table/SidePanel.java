@@ -54,6 +54,7 @@ public class SidePanel extends JPanel {
     private GameManager gameManager;
     private JPanel pnlSelected;
     private final ConfigManager configManager;
+    private boolean sellModeActive = false;
 
     private static final String ASSETS_BASE_PATH = "src/main/resources/assets/";
     private static final String COIN_ICON = ASSETS_BASE_PATH + "Coin.png";
@@ -105,6 +106,7 @@ public class SidePanel extends JPanel {
 
         btnStart.addActionListener(evt -> onStartClicked());
         btnPause.addActionListener(evt -> onPauseClicked());
+        btnSell.addActionListener(evt -> onSellClicked());
 
         this.addComponentListener(new ComponentAdapter() {
             @Override
@@ -151,6 +153,10 @@ public class SidePanel extends JPanel {
         }
 
         appendLog("Start requested.");
+        
+        // Deactivate sell mode when starting the round
+        deactivateSellMode();
+        
         boolean gameStarted = gameManager.startGame();
         
         // Solo desactivar el botón si el juego realmente inició
@@ -182,6 +188,47 @@ public class SidePanel extends JPanel {
         gameManager.pauseGame();
         appendLog(gameManager.isGamePaused() ? "Game paused." : "Game resumed.");
     }
+    
+    private void onSellClicked(){
+        if (gameManager == null){
+            appendLog("Game manager not ready.");
+            return;
+        }
+        
+        // No permitir vender durante una ronda activa
+        if (gameManager.isRoundActive()) {
+            appendLog("Cannot sell defenses during active round.");
+            return;
+        }
+        
+        // Toggle sell mode
+        sellModeActive = !sellModeActive;
+        
+        if (sellModeActive) {
+            // Activate sell mode
+            if (table != null && table.getGameBoard() != null) {
+                table.getGameBoard().setSellMode(true);
+            }
+            
+            // Deselect any selected defense
+            deselectDefense();
+            
+            // Update button appearance
+            btnSell.setBackground(new Color(255, 193, 7)); // Amber color for active state
+            
+            appendLog("Sell mode activated. Click on a tower to sell it.");
+        } else {
+            // Deactivate sell mode
+            if (table != null && table.getGameBoard() != null) {
+                table.getGameBoard().setSellMode(false);
+            }
+            
+            // Restore button appearance
+            btnSell.setBackground(new Color(244, 67, 54)); // Red
+            
+            appendLog("Sell mode deactivated.");
+        }
+    }
 
     public void appendLog(String message){
         if (txaLogs == null){
@@ -189,6 +236,19 @@ public class SidePanel extends JPanel {
         }
         txaLogs.append(message + "\n");
         txaLogs.setCaretPosition(txaLogs.getDocument().getLength());
+    }
+    
+    /**
+     * Deactivates sell mode
+     */
+    public void deactivateSellMode() {
+        if (sellModeActive) {
+            sellModeActive = false;
+            if (table != null && table.getGameBoard() != null) {
+                table.getGameBoard().setSellMode(false);
+            }
+            btnSell.setBackground(new Color(244, 67, 54)); // Red
+        }
     }
 
     private JPanel createButtonPanel(){

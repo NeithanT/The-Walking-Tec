@@ -27,6 +27,7 @@ public class GameBoard extends JPanel {
     private int columnPreview = -1;
     private boolean showPreview = false;
     private String selectedDefenseString = null;
+    private boolean sellMode = false;
     
     private GameManager gameManager;
     
@@ -75,16 +76,33 @@ public class GameBoard extends JPanel {
     
     private void handleClick (MouseEvent event){
         
-        if (gameManager == null || selectedDefenseString == null){
+        if (gameManager == null){
             return;
         }
+        
         int column = pixelToCellColumn(event.getX());
         int row = pixelToCellRow(event.getY());
         
-        gameManager.placeDefences(row, column);
+        // If in sell mode, try to sell the defense at this position
+        if (sellMode) {
+            gameManager.sellDefenseAt(row, column);
+            return;
+        }
+        
+        // Otherwise, place a new defense if one is selected
+        if (selectedDefenseString != null) {
+            gameManager.placeDefences(row, column);
+        }
     }
     
     private void handleMouseMove(MouseEvent event){
+        
+        if (sellMode) {
+            // In sell mode, don't show preview
+            showPreview = false;
+            repaint();
+            return;
+        }
         
         if (selectedDefenseString == null){
             showPreview = false;
@@ -130,6 +148,14 @@ public class GameBoard extends JPanel {
                 int w = (int) cellWidth;
                 int h = (int) cellHeight;
                 g.drawImage(defense.image, x, y, w, h, this);
+                
+                // If in sell mode, draw a red overlay to indicate towers can be sold
+                if (sellMode) {
+                    g.setColor(new Color(255, 0, 0, 80)); // Semi-transparent red
+                    g.fillRect(x, y, w, h);
+                    g.setColor(new Color(255, 0, 0, 200)); // Brighter red border
+                    g.drawRect(x, y, w, h);
+                }
             }
         }
        
@@ -251,7 +277,22 @@ public class GameBoard extends JPanel {
         this.showPreview = false;
         this.rowPreview = -1;
         this.columnPreview = -1;
+        this.sellMode = false;
         repaint();
+    }
+    
+    public void setSellMode(boolean enabled) {
+        this.sellMode = enabled;
+        if (enabled) {
+            // Clear defense selection when entering sell mode
+            this.selectedDefenseString = null;
+            this.showPreview = false;
+        }
+        repaint();
+    }
+    
+    public boolean isSellMode() {
+        return sellMode;
     }
         
     public void setGameManger(GameManager manager){
