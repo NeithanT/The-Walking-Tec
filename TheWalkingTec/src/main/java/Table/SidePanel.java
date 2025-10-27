@@ -32,6 +32,7 @@ import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import Defense.DefenseAttacker;
 import Defense.DefenseHealer;
+import Defense.DefenseType;
 import Vanity.RoundedButton;
 
 public class SidePanel extends JPanel {
@@ -103,6 +104,7 @@ public class SidePanel extends JPanel {
     this.add(scpScrollLog);
 
         btnStart.addActionListener(evt -> onStartClicked());
+        btnPause.addActionListener(evt -> onPauseClicked());
 
         this.addComponentListener(new ComponentAdapter() {
             @Override
@@ -129,6 +131,13 @@ public class SidePanel extends JPanel {
         refreshStatusCounters();
     }
     
+    public void returnToMenu() {
+        if (table != null) {
+            table.goMenu();
+            table.dispose();
+        }
+    }
+    
     private void onStartClicked(){
         if (gameManager == null){
             appendLog("Game manager not ready.");
@@ -136,7 +145,36 @@ public class SidePanel extends JPanel {
         }
 
         appendLog("Start requested.");
-        gameManager.startGame();
+        boolean gameStarted = gameManager.startGame();
+        
+        // Solo desactivar el botón si el juego realmente inició
+        if (gameStarted) {
+            btnStart.setEnabled(false);
+        } else {
+            appendLog("Could not start game. Check requirements.");
+        }
+    }
+    
+    public void enableStartButton() {
+        if (btnStart != null) {
+            btnStart.setEnabled(true);
+        }
+    }
+    
+    public void disableStartButton() {
+        if (btnStart != null) {
+            btnStart.setEnabled(false);
+        }
+    }
+    
+    private void onPauseClicked(){
+        if (gameManager == null){
+            appendLog("Game manager not ready.");
+            return;
+        }
+
+        gameManager.pauseGame();
+        appendLog(gameManager.isGamePaused() ? "Game paused." : "Game resumed.");
     }
 
     private void appendLog(String message){
@@ -342,11 +380,21 @@ public class SidePanel extends JPanel {
 
             @Override
             public void mouseClicked(MouseEvent event){
+                // No permitir seleccionar defensas si la ronda está activa
+                if (gameManager != null && gameManager.isRoundActive()) {
+                    appendLog("Cannot select defenses during active round.");
+                    return;
+                }
                 selectDefense(itemPanel);
             }
             
             @Override
             public void mouseEntered(MouseEvent e) {
+                // No mostrar hover si la ronda está activa
+                if (gameManager != null && gameManager.isRoundActive()) {
+                    return;
+                }
+                
                 if (itemPanel != pnlSelected) {
                     itemPanel.setBackground(new Color(75, 80, 85));
                     itemPanel.setBorder(BorderFactory.createCompoundBorder(
@@ -375,6 +423,13 @@ public class SidePanel extends JPanel {
     
     private void selectDefense(JPanel panel){
         
+        // Si el panel ya está seleccionado, deseleccionarlo (toggle)
+        if (pnlSelected == panel) {
+            deselectDefense();
+            return;
+        }
+        
+        // Deseleccionar el panel anterior
         if (pnlSelected != null){
             pnlSelected.setBackground(new Color(60, 63, 65));
             pnlSelected.setBorder(BorderFactory.createCompoundBorder(
@@ -383,6 +438,7 @@ public class SidePanel extends JPanel {
             ));
         }
         
+        // Seleccionar el nuevo panel
         panel.setBackground(new Color(70, 90, 110));
         panel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(76, 175, 80), 3),
@@ -511,6 +567,54 @@ public class SidePanel extends JPanel {
             updateDefenseCapacity(0);
             updateZombiesRemaining(0);
         }
+    }
+    
+    public void hideLifeTreeFromCatalog() {
+        if (pnlDefenses == null) {
+            return;
+        }
+        
+        for (int i = 0; i < pnlDefenses.getComponentCount(); i++) {
+            java.awt.Component comp = pnlDefenses.getComponent(i);
+            if (comp instanceof JPanel) {
+                JPanel panel = (JPanel) comp;
+                Object property = panel.getClientProperty("defenseDef");
+                if (property instanceof Defense) {
+                    Defense def = (Defense) property;
+                    if (def.getType() == DefenseType.BLOCKS) {
+                        panel.setVisible(false);
+                        break;
+                    }
+                }
+            }
+        }
+        
+        pnlDefenses.revalidate();
+        pnlDefenses.repaint();
+    }
+    
+    public void showLifeTreeInCatalog() {
+        if (pnlDefenses == null) {
+            return;
+        }
+        
+        for (int i = 0; i < pnlDefenses.getComponentCount(); i++) {
+            java.awt.Component comp = pnlDefenses.getComponent(i);
+            if (comp instanceof JPanel) {
+                JPanel panel = (JPanel) comp;
+                Object property = panel.getClientProperty("defenseDef");
+                if (property instanceof Defense) {
+                    Defense def = (Defense) property;
+                    if (def.getType() == DefenseType.BLOCKS) {
+                        panel.setVisible(true);
+                        break;
+                    }
+                }
+            }
+        }
+        
+        pnlDefenses.revalidate();
+        pnlDefenses.repaint();
     }
 
     private void updateSectionSizes(){

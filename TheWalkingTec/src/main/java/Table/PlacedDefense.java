@@ -10,11 +10,13 @@ public class PlacedDefense {
     public final int row;
     public final int column;
     public final Image image;
+    public final int maxHealth;
     
     public PlacedDefense(Defense definition, int row, int column, Image image){
         this.definition = definition;
         this.row = row;
         this.column = column;
         this.image = image;
+        this.maxHealth = definition != null ? definition.getHealthPoints() : 0;
     }
 }

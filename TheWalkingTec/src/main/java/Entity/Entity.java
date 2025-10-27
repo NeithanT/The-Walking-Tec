@@ -77,4 +77,60 @@ public abstract class Entity extends Thread implements Serializable {
         this.currentColumn = currentColumn;
     }
     
+    // ==================== COMBAT CAPABILITIES ====================
+    // These methods determine combat behavior based on entity type
+    
+    /**
+     * Determines if this entity can fly (aerial unit)
+     * Flying units can only be attacked by other flying units
+     */
+    public abstract boolean isFlying();
+    
+    /**
+     * Determines if this entity is terrestrial (ground unit)
+     */
+    public boolean isTerrestrial() {
+        return !isFlying();
+    }
+    
+    /**
+     * Determines if this entity is explosive (kamikaze)
+     * Explosive entities deal instant kill in their explosion range
+     */
+    public abstract boolean isExplosive();
+    
+    /**
+     * Determines if this entity is a healer
+     * Healers cannot attack but can heal allies
+     */
+    public abstract boolean isHealer();
+    
+    /**
+     * Determines if this entity can attack flying targets
+     */
+    public boolean canTargetFlying() {
+        return isFlying(); // Only flying units can attack flying units
+    }
+    
+    /**
+     * Determines if this entity can attack ground targets
+     */
+    public boolean canTargetGround() {
+        return isTerrestrial(); // Terrestrial units attack ground targets
+    }
+    
+    /**
+     * Gets the attack/heal range of this entity in cells
+     * Returns the radius from the entity's position
+     */
+    public abstract int getAttackRange();
+    
+    /**
+     * Determines if this entity has multiple attacks per action
+     * Only applicable to MULTIPLEATTACK defense type
+     */
+    public boolean hasMultipleAttacks() {
+        return false; // Override in subclasses if needed
+    }
+    
 }

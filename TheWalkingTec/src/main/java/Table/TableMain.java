@@ -35,6 +35,7 @@ public class TableMain extends JFrame {
         SidePanel sidepanel = new SidePanel(this);
         
         gameManager = new GameManager(background, sidepanel);
+        gameManager.setParentFrame(this); // Establecer el frame padre para diálogos
         background.setGameManger(gameManager);
         sidepanel.setGameManager(gameManager);
        // sidepanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));

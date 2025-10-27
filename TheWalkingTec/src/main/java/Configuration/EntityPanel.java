@@ -9,8 +9,10 @@ import Defense.DefenseHealer;
 import Defense.DefenseMediumRange;
 import Defense.DefenseMultipleAttack;
 import Defense.DefenseType;
+import Defense.DefenseTypeValidator;
 import Zombie.Zombie;
 import Zombie.ZombieType;
+import Zombie.ZombieTypeValidator;
 import Vanity.RoundedButton;
 import Zombie.ZombieAttacker;
 import Zombie.ZombieContact;
@@ -18,6 +20,16 @@ import Zombie.ZombieExplosive;
 import Zombie.ZombieFlying;
 import Zombie.ZombieHealer;
 import Zombie.ZombieMediumRange;
+import javax.swing.*;
+import javax.swing.event.DocumentListener;
+import java.awt.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.HashMap;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Image;
@@ -100,10 +112,20 @@ public class EntityPanel extends JPanel {
     }
     
     private void createLabels() {
-        entityRows.add(new EntityRow("Nombre: "));
-        entityRows.add(new EntityRow("Vida:"));
-        entityRows.add(new EntityRow("Ronda de Aparicion:"));
-        entityRows.add(new EntityRow("Costo:"));
+        EntityRow nameRow = new EntityRow("Nombre: ");
+        EntityRow healthRow = new EntityRow("Vida:");
+        EntityRow levelRow = new EntityRow("Ronda de Aparicion:");
+        EntityRow costRow = new EntityRow("Costo:");
+        
+        // Aplicar validación numérica a campos que deben ser números
+        healthRow.setNumericOnly();
+        levelRow.setNumericOnly();
+        costRow.setNumericOnly();
+        
+        entityRows.add(nameRow);
+        entityRows.add(healthRow);
+        entityRows.add(levelRow);
+        entityRows.add(costRow);
     }
     
     private void setupLayout() {
@@ -168,11 +190,11 @@ public class EntityPanel extends JPanel {
     
     private void createTypeSelectButton() {
         if (typeSelectButton == null) {
-            String typeLabel = "Tipo: ";
+            String typeLabel = "Tipos: ";
             if (currentZombie != null) {
-                typeLabel += currentZombie.getType();
+                typeLabel += formatTypes(currentZombie.getTypes());
             } else if (currentDefense != null) {
-                typeLabel += currentDefense.getType();
+                typeLabel += formatTypes(currentDefense.getTypes());
             }
             Color normalColor = new Color(0, 123, 255);
             Color hoverColor = new Color(0, 102, 204);
@@ -181,54 +203,171 @@ public class EntityPanel extends JPanel {
         }
     }
     
+    private String formatTypes(java.util.Set<?> types) {
+        if (types == null || types.isEmpty()) {
+            return "NONE";
+        }
+        return types.stream()
+                   .map(Object::toString)
+                   .collect(java.util.stream.Collectors.joining(", "));
+    }
+    
     private void showTypeSelector() {
         if (currentZombie != null) {
-            showGenericTypeSelector(ZombieType.class, currentZombie::getType, this::changeZombieType);
+            showMultipleTypeSelector(ZombieType.class, currentZombie.getTypes(), this::changeZombieTypes);
         } else if (currentDefense != null) {
-            showGenericTypeSelector(DefenseType.class, currentDefense::getType, this::changeDefenseType);
+            showMultipleTypeSelector(DefenseType.class, currentDefense.getTypes(), this::changeDefenseTypes);
         }
     }
     
-    private <T extends Enum<?>> void showGenericTypeSelector(Class<T> enumClass, java.util.function.Supplier<T> getCurrentType, java.util.function.Consumer<T> onSelect) {
-        DefaultListModel<T> model = new DefaultListModel<>();
+    private <T extends Enum<?>> void showMultipleTypeSelector(Class<T> enumClass, java.util.Set<T> currentTypes, java.util.function.Consumer<java.util.Set<T>> onConfirm) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(Color.WHITE);
+        
+        java.util.Map<T, JCheckBox> checkBoxes = new java.util.HashMap<>();
+        
+        // Create checkbox for each type
         for (T type : enumClass.getEnumConstants()) {
-            model.addElement(type);
+            JCheckBox checkBox = new JCheckBox(type.toString());
+            checkBox.setSelected(currentTypes != null && currentTypes.contains(type));
+            checkBox.setBackground(Color.WHITE);
+            checkBox.setFont(new Font("Arial", Font.PLAIN, 12));
+            
+            // Add listener to update incompatible checkboxes dynamically
+            checkBox.addItemListener(e -> updateCheckBoxStates(checkBoxes, enumClass));
+            
+            checkBoxes.put(type, checkBox);
+            panel.add(checkBox);
         }
         
-        JList<T> typeList = new JList<>(model);
-        typeList.setSelectedValue(getCurrentType.get(), true);
-        typeList.addListSelectionListener(evt -> {
-            if (!evt.getValueIsAdjusting()) {
-                T selectedType = typeList.getSelectedValue();
-                if (selectedType != null) {
-                    onSelect.accept(selectedType);
+        // Initial update of checkbox states
+        updateCheckBoxStates(checkBoxes, enumClass);
+        
+        // Add validation label
+        JLabel validationLabel = new JLabel(" ");
+        validationLabel.setFont(new Font("Arial", Font.ITALIC, 11));
+        validationLabel.setForeground(Color.RED);
+        panel.add(Box.createVerticalStrut(5));
+        panel.add(validationLabel);
+        
+        // Add confirm button
+        JButton confirmButton = new JButton("Confirmar");
+        confirmButton.addActionListener(e -> {
+            java.util.Set<T> selectedTypes = new java.util.HashSet<>();
+            for (java.util.Map.Entry<T, JCheckBox> entry : checkBoxes.entrySet()) {
+                if (entry.getValue().isSelected()) {
+                    selectedTypes.add(entry.getKey());
                 }
             }
+            
+            // Validate the combination
+            String validationError = validateTypeCombination(selectedTypes, enumClass);
+            if (validationError != null) {
+                validationLabel.setText(validationError);
+                return;
+            }
+            
+            onConfirm.accept(selectedTypes);
+            SwingUtilities.getWindowAncestor(confirmButton).dispose();
         });
+        panel.add(Box.createVerticalStrut(10));
+        panel.add(confirmButton);
         
-        JPopupMenu popup = new JPopupMenu();
-        popup.add(typeList);
-        popup.show(typeSelectButton, 0, typeSelectButton.getHeight());
+        // Show in dialog
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Seleccionar Tipos", true);
+        dialog.add(new JScrollPane(panel));
+        dialog.pack();
+        dialog.setLocationRelativeTo(typeSelectButton);
+        dialog.setVisible(true);
     }
     
-    private void changeZombieType(ZombieType newType) {
-        if (currentZombie == null || currentZombie.getType() == newType) {
+    private <T extends Enum<?>> void updateCheckBoxStates(java.util.Map<T, JCheckBox> checkBoxes, Class<T> enumClass) {
+        // Get currently selected types
+        java.util.Set<T> selectedTypes = new java.util.HashSet<>();
+        for (java.util.Map.Entry<T, JCheckBox> entry : checkBoxes.entrySet()) {
+            if (entry.getValue().isSelected()) {
+                selectedTypes.add(entry.getKey());
+            }
+        }
+        
+        // Get all incompatible types for the selected types
+        java.util.Set<T> incompatibleTypes = new java.util.HashSet<>();
+        for (T selectedType : selectedTypes) {
+            java.util.Set<?> incompatible = getIncompatibleTypesForType(selectedType);
+            for (Object type : incompatible) {
+                if (enumClass.isInstance(type)) {
+                    incompatibleTypes.add((T) type);
+                }
+            }
+        }
+        
+        // Enable/disable checkboxes based on incompatibility
+        for (java.util.Map.Entry<T, JCheckBox> entry : checkBoxes.entrySet()) {
+            JCheckBox checkBox = entry.getValue();
+            T type = entry.getKey();
+            
+            if (!checkBox.isSelected() && incompatibleTypes.contains(type)) {
+                checkBox.setEnabled(false);
+                checkBox.setToolTipText("Incompatible con tipos seleccionados");
+            } else {
+                checkBox.setEnabled(true);
+                checkBox.setToolTipText(null);
+            }
+        }
+    }
+    
+    private <T> java.util.Set<?> getIncompatibleTypesForType(T type) {
+        if (type instanceof DefenseType) {
+            return DefenseTypeValidator.getIncompatibleTypes((DefenseType) type);
+        } else if (type instanceof ZombieType) {
+            return ZombieTypeValidator.getIncompatibleTypes((ZombieType) type);
+        }
+        return new java.util.HashSet<>();
+    }
+    
+    private <T> String validateTypeCombination(java.util.Set<T> types, Class<T> enumClass) {
+        if (types == null || types.isEmpty()) {
+            return "Debe seleccionar al menos un tipo";
+        }
+        
+        if (enumClass == DefenseType.class) {
+            java.util.Set<DefenseType> defenseTypes = new java.util.HashSet<>();
+            for (T type : types) {
+                defenseTypes.add((DefenseType) type);
+            }
+            DefenseTypeValidator.ValidationResult result = DefenseTypeValidator.validate(defenseTypes);
+            return result.isValid() ? null : result.getMessage();
+        } else if (enumClass == ZombieType.class) {
+            java.util.Set<ZombieType> zombieTypes = new java.util.HashSet<>();
+            for (T type : types) {
+                zombieTypes.add((ZombieType) type);
+            }
+            ZombieTypeValidator.ValidationResult result = ZombieTypeValidator.validate(zombieTypes);
+            return result.isValid() ? null : result.getMessage();
+        }
+        
+        return null;
+    }
+    
+    private void changeZombieTypes(java.util.Set<ZombieType> newTypes) {
+        if (currentZombie == null) {
             return;
         }
         
-        currentZombie.setType(newType);
-        typeSelectButton.setText("Tipo: " + newType);
+        currentZombie.setTypes(newTypes);
+        typeSelectButton.setText("Tipos: " + formatTypes(newTypes));
         updateTypeSpecificFields();
         updateLayoutWithRows();
     }
     
-    private void changeDefenseType(DefenseType newType) {
-        if (currentDefense == null || currentDefense.getType() == newType) {
+    private void changeDefenseTypes(java.util.Set<DefenseType> newTypes) {
+        if (currentDefense == null) {
             return;
         }
         
-        currentDefense.setType(newType);
-        typeSelectButton.setText("Tipo: " + newType);
+        currentDefense.setTypes(newTypes);
+        typeSelectButton.setText("Tipos: " + formatTypes(newTypes));
         updateTypeSpecificFields();
         updateLayoutWithRows();
     }
@@ -261,26 +400,53 @@ public class EntityPanel extends JPanel {
     }
     
     private void addZombieSpecificFields() {
-        entityRows.add(new EntityRow("Velocidad: "));
+        EntityRow speedRow = new EntityRow("Velocidad: ");
+        speedRow.setDecimalOnly(); // Velocidad puede tener decimales
+        entityRows.add(speedRow);
         
-        if (currentZombie.getType() != ZombieType.HEALER) {
-            entityRows.add(new EntityRow("Ataque: "));
-            entityRows.add(new EntityRow("Rango: "));
-        } else {
-            entityRows.add(new EntityRow("Cura: "));
+        // Show attack/range if NOT purely a healer (or if has multiple types)
+        if (!currentZombie.hasType(ZombieType.HEALER) || currentZombie.getTypes().size() > 1) {
+            EntityRow attackRow = new EntityRow("Ataque: ");
+            EntityRow rangeRow = new EntityRow("Rango: ");
+            attackRow.setNumericOnly();
+            rangeRow.setDecimalOnly(); // Rango puede tener decimales
+            entityRows.add(attackRow);
+            entityRows.add(rangeRow);
+        }
+        
+        // Show heal power if has HEALER type
+        if (currentZombie.hasType(ZombieType.HEALER)) {
+            EntityRow healRow = new EntityRow("Cura: ");
+            healRow.setNumericOnly();
+            entityRows.add(healRow);
         }
     }
     
     private void addDefenseSpecificFields() {
-        if (currentDefense.getType() == DefenseType.HEALER) {
-            entityRows.add(new EntityRow("Cura:"));
-        } else if (currentDefense.getType() != DefenseType.BLOCKS) {
-            entityRows.add(new EntityRow("Ataque:"));
-            if (currentDefense.getType() == DefenseType.MULTIPLEATTACK) {
-                entityRows.add(new EntityRow("Cantidad de ataques:"));
+        // Show heal power if has HEALER type
+        if (currentDefense.hasType(DefenseType.HEALER)) {
+            EntityRow healRow = new EntityRow("Cura:");
+            healRow.setNumericOnly();
+            entityRows.add(healRow);
+        }
+        
+        // Show attack if NOT BLOCKS and (NOT HEALER or has multiple types)
+        if (!currentDefense.hasType(DefenseType.BLOCKS) && 
+            (!currentDefense.hasType(DefenseType.HEALER) || currentDefense.getTypes().size() > 1)) {
+            EntityRow attackRow = new EntityRow("Ataque:");
+            attackRow.setNumericOnly();
+            entityRows.add(attackRow);
+            
+            if (currentDefense.hasType(DefenseType.MULTIPLEATTACK)) {
+                EntityRow multipleAttackRow = new EntityRow("Cantidad de ataques:");
+                multipleAttackRow.setNumericOnly();
+                entityRows.add(multipleAttackRow);
             }
-            if (currentDefense.getType() != DefenseType.MEDIUMRANGE) {
-                entityRows.add(new EntityRow("Rango:"));
+            
+            if (!currentDefense.hasType(DefenseType.MEDIUMRANGE)) {
+                EntityRow rangeRow = new EntityRow("Rango:");
+                rangeRow.setDecimalOnly(); // Rango puede tener decimales
+                entityRows.add(rangeRow);
             }
         }
     }
@@ -423,14 +589,8 @@ public class EntityPanel extends JPanel {
             entityRows.get(fieldIndex++).getTextField().setText(String.valueOf(currentZombie.getMovementSpeed()));
         
         // Populate type-specific fields
-        if (currentZombie.getType() == ZombieType.HEALER) {
-            if (currentZombie instanceof ZombieHealer healer) {
-                if (fieldIndex < entityRows.size()) 
-                    entityRows.get(fieldIndex++).getTextField().setText(String.valueOf(healer.getHealPower()));
-            } else if (fieldIndex < entityRows.size()) {
-                entityRows.get(fieldIndex++).getTextField().setText("0");
-            }
-        } else {
+        // Attack and Range (if not purely healer or has multiple types)
+        if (!currentZombie.hasType(ZombieType.HEALER) || currentZombie.getTypes().size() > 1) {
             if (currentZombie instanceof ZombieAttacker attacker) {
                 if (fieldIndex < entityRows.size()) 
                     entityRows.get(fieldIndex++).getTextField().setText(String.valueOf(attacker.getDamage()));
@@ -443,6 +603,16 @@ public class EntityPanel extends JPanel {
                 if (fieldIndex < entityRows.size()) {
                     entityRows.get(fieldIndex++).getTextField().setText("0");
                 }
+            }
+        }
+        
+        // Heal power (if has HEALER type)
+        if (currentZombie.hasType(ZombieType.HEALER)) {
+            if (currentZombie instanceof ZombieHealer healer) {
+                if (fieldIndex < entityRows.size()) 
+                    entityRows.get(fieldIndex++).getTextField().setText(String.valueOf(healer.getHealPower()));
+            } else if (fieldIndex < entityRows.size()) {
+                entityRows.get(fieldIndex++).getTextField().setText("0");
             }
         }
         
@@ -467,31 +637,36 @@ public class EntityPanel extends JPanel {
             entityRows.get(fieldIndex++).getTextField().setText(String.valueOf(currentDefense.getCost()));
         
         // Populate type-specific fields
-        if (currentDefense.getType() == DefenseType.HEALER) {
+        // Heal power (if has HEALER type)
+        if (currentDefense.hasType(DefenseType.HEALER)) {
             if (currentDefense instanceof DefenseHealer healer) {
                 if (fieldIndex < entityRows.size()) 
                     entityRows.get(fieldIndex++).getTextField().setText(String.valueOf(healer.getHealPower()));
             } else if (fieldIndex < entityRows.size()) {
                 entityRows.get(fieldIndex++).getTextField().setText("0");
             }
-        } else if (currentDefense.getType() != DefenseType.BLOCKS) {
+        }
+        
+        // Attack and Range (if not BLOCKS and (not HEALER or has multiple types))
+        if (!currentDefense.hasType(DefenseType.BLOCKS) && 
+            (!currentDefense.hasType(DefenseType.HEALER) || currentDefense.getTypes().size() > 1)) {
             if (currentDefense instanceof DefenseAttacker attacker) {
                 if (fieldIndex < entityRows.size()) 
                     entityRows.get(fieldIndex++).getTextField().setText(String.valueOf(attacker.getAttack()));
-                if (currentDefense.getType() != DefenseType.MEDIUMRANGE && fieldIndex < entityRows.size()) 
+                if (!currentDefense.hasType(DefenseType.MEDIUMRANGE) && fieldIndex < entityRows.size()) 
                     entityRows.get(fieldIndex++).getTextField().setText(String.valueOf(attacker.getRange()));
                 
-                if (currentDefense.getType() == DefenseType.MULTIPLEATTACK && fieldIndex < entityRows.size() && currentDefense instanceof DefenseMultipleAttack multiAttack) {
+                if (currentDefense.hasType(DefenseType.MULTIPLEATTACK) && fieldIndex < entityRows.size() && currentDefense instanceof DefenseMultipleAttack multiAttack) {
                     entityRows.get(fieldIndex++).getTextField().setText(String.valueOf(multiAttack.getAmtOfAttacks()));
                 }
             } else {
                 if (fieldIndex < entityRows.size()) {
                     entityRows.get(fieldIndex++).getTextField().setText("0");
                 }
-                if (currentDefense.getType() != DefenseType.MEDIUMRANGE && fieldIndex < entityRows.size()) {
+                if (!currentDefense.hasType(DefenseType.MEDIUMRANGE) && fieldIndex < entityRows.size()) {
                     entityRows.get(fieldIndex++).getTextField().setText("0");
                 }
-                if (currentDefense.getType() == DefenseType.MULTIPLEATTACK && fieldIndex < entityRows.size()) {
+                if (currentDefense.hasType(DefenseType.MULTIPLEATTACK) && fieldIndex < entityRows.size()) {
                     entityRows.get(fieldIndex++).getTextField().setText("0");
                 }
             }
@@ -586,9 +761,9 @@ public class EntityPanel extends JPanel {
     }
 
     public Zombie buildZombieFromFields() throws NumberFormatException {
-        ZombieType type = currentZombie != null && currentZombie.getType() != null ? currentZombie.getType() : getZombieType();
-        if (type == null) {
-            type = ZombieType.CONTACT;
+        java.util.Set<ZombieType> types = currentZombie != null && currentZombie.getTypes() != null ? currentZombie.getTypes() : new java.util.HashSet<>(java.util.Arrays.asList(ZombieType.CONTACT));
+        if (types.isEmpty()) {
+            types = new java.util.HashSet<>(java.util.Arrays.asList(ZombieType.CONTACT));
         }
 
         String name = getRowValue("Nombre");
@@ -596,8 +771,8 @@ public class EntityPanel extends JPanel {
         int showUp = Integer.parseInt(getRowValue("Ronda de Aparicion"));
         int cost = Integer.parseInt(getRowValue("Costo"));
 
-        Zombie zombie = instantiateZombie(type);
-        zombie.setType(type);
+        Zombie zombie = instantiateZombie(types);
+        zombie.setTypes(types);
         zombie.setEntityName(name);
         zombie.setHealthPoints(health);
         zombie.setShowUpLevel(showUp);
@@ -610,12 +785,14 @@ public class EntityPanel extends JPanel {
         String imagePath = selectedImageFile != null ? selectedImageFile.getAbsolutePath() : currentZombie != null ? currentZombie.getImagePath() : null;
         zombie.setImagePath(imagePath);
 
-        if (type == ZombieType.HEALER && zombie instanceof ZombieHealer healer) {
+        if (zombie.hasType(ZombieType.HEALER) && zombie instanceof ZombieHealer healer) {
             String healValue = getRowValue("Cura");
             if (!healValue.isEmpty()) {
                 healer.setHealPower(Integer.parseInt(healValue));
             }
-        } else if (zombie instanceof ZombieAttacker attacker) {
+        }
+
+        if ((!zombie.hasType(ZombieType.HEALER) || zombie.getTypes().size() > 1) && zombie instanceof ZombieAttacker attacker) {
             String attackValue = getRowValue("Ataque");
             if (!attackValue.isEmpty()) {
                 attacker.setDamage(Integer.parseInt(attackValue));
@@ -631,9 +808,9 @@ public class EntityPanel extends JPanel {
     }
 
     public Defense buildDefenseFromFields() throws NumberFormatException {
-        DefenseType type = currentDefense != null && currentDefense.getType() != null ? currentDefense.getType() : getDefenseType();
-        if (type == null) {
-            type = DefenseType.BLOCKS;
+        java.util.Set<DefenseType> types = currentDefense != null && currentDefense.getTypes() != null ? currentDefense.getTypes() : new java.util.HashSet<>(java.util.Arrays.asList(DefenseType.BLOCKS));
+        if (types.isEmpty()) {
+            types = new java.util.HashSet<>(java.util.Arrays.asList(DefenseType.BLOCKS));
         }
 
         String name = getRowValue("Nombre");
@@ -641,8 +818,8 @@ public class EntityPanel extends JPanel {
         int showUp = Integer.parseInt(getRowValue("Ronda de Aparicion"));
         int cost = Integer.parseInt(getRowValue("Costo"));
 
-        Defense defense = instantiateDefense(type);
-        defense.setType(type);
+        Defense defense = instantiateDefense(types);
+        defense.setTypes(types);
         defense.setEntityName(name);
         defense.setHealthPoints(health);
         defense.setShowUpLevel(showUp);
@@ -651,12 +828,14 @@ public class EntityPanel extends JPanel {
         String imagePath = selectedImageFile != null ? selectedImageFile.getAbsolutePath() : currentDefense != null ? currentDefense.getImagePath() : null;
         defense.setImagePath(imagePath);
 
-        if (type == DefenseType.HEALER && defense instanceof DefenseHealer healer) {
+        if (defense.hasType(DefenseType.HEALER) && defense instanceof DefenseHealer healer) {
             String healValue = getRowValue("Cura");
             if (!healValue.isEmpty()) {
                 healer.setHealPower(Integer.parseInt(healValue));
             }
-        } else if (defense instanceof DefenseAttacker attacker) {
+        }
+        
+        if ((!defense.hasType(DefenseType.BLOCKS) && (!defense.hasType(DefenseType.HEALER) || defense.getTypes().size() > 1)) && defense instanceof DefenseAttacker attacker) {
             String attackValue = getRowValue("Ataque");
             if (!attackValue.isEmpty()) {
                 attacker.setAttack(Integer.parseInt(attackValue));
@@ -683,45 +862,56 @@ public class EntityPanel extends JPanel {
         return defense;
     }
 
-    private Zombie instantiateZombie(ZombieType type) {
-        if (type == null) {
-            return new ZombieAttacker("zombie", 1, 1, 1, 1, 1, 1);
+    private Zombie instantiateZombie(java.util.Set<ZombieType> types) {
+        if (types == null || types.isEmpty()) {
+            types = new java.util.HashSet<>(java.util.Arrays.asList(ZombieType.CONTACT));
         }
-        switch (type) {
-            case FLYING:
-                return new ZombieFlying("zombie", 1, 1, 1, 1, 1, 1);
-            case MEDIUMRANGE:
-                return new ZombieMediumRange("zombie", 1, 1, 1, 1, 1);
-            case EXPLOSIVE:
-                return new ZombieExplosive("zombie", 1, 1, 1, 1, 1);
-            case HEALER:
-                return new ZombieHealer("zombie", 1, 1, 1, 1, 1);
-            case CONTACT:
-            default:
-                return new ZombieContact("zombie", 1, 1, 1, 1, 1);
+        
+        // Determine which constructor to use based on types
+        boolean hasHealer = types.contains(ZombieType.HEALER);
+        boolean hasAttack = !hasHealer || types.size() > 1;
+        
+        if (hasHealer && hasAttack) {
+            // Hybrid healer - needs both heal and attack capabilities
+            ZombieHealer zombie = new ZombieHealer(types, "zombie", 1, 1, 1, 1, 1);
+            return zombie;
+        } else if (hasHealer) {
+            // Pure healer
+            return new ZombieHealer(types, "zombie", 1, 1, 1, 1, 1);
+        } else {
+            // Attacker (can be hybrid like FLYING + EXPLOSIVE)
+            return new ZombieAttacker(types, "zombie", 1, 1, 1, 1, 1, 1);
         }
     }
 
-    private Defense instantiateDefense(DefenseType type) {
-        if (type == null) {
-            return new Defense();
+    private Defense instantiateDefense(java.util.Set<DefenseType> types) {
+        if (types == null || types.isEmpty()) {
+            types = new java.util.HashSet<>(java.util.Arrays.asList(DefenseType.BLOCKS));
         }
-        switch (type) {
-            case CONTACT:
-                return new DefenseContact("defense", 1, 1, 1, 1);
-            case MEDIUMRANGE:
-                return new DefenseMediumRange("defense", 1, 1, 1, 1, 1);
-            case FLYING:
-                return new DefenseFlying("defense", 1, 1, 1, 1, 1);
-            case EXPLOSIVE:
-                return new DefenseExplosive("defense", 1, 1, 1, 1);
-            case MULTIPLEATTACK:
-                return new DefenseMultipleAttack("defense", 1, 1, 1, 1, 1, 1);
-            case HEALER:
-                return new DefenseHealer("defense", 1, 1, 1, 1);
-            case BLOCKS:
-            default:
-                return new Defense("defense", 1, 1, 1);
+        
+        // Determine which constructor to use based on types
+        boolean hasHealer = types.contains(DefenseType.HEALER);
+        boolean hasAttack = !types.contains(DefenseType.BLOCKS) && (!hasHealer || types.size() > 1);
+        
+        if (hasHealer && hasAttack) {
+            // Hybrid healer - needs both heal and attack capabilities
+            DefenseHealer defense = new DefenseHealer(types, "defense", 1, 1, 1, 1);
+            return defense;
+        } else if (hasHealer) {
+            // Pure healer
+            return new DefenseHealer(types, "defense", 1, 1, 1, 1);
+        } else if (hasAttack) {
+            // Attacker (can be hybrid like FLYING + EXPLOSIVE or MULTIPLEATTACK)
+            if (types.contains(DefenseType.EXPLOSIVE)) {
+                return new DefenseExplosive(types, "defense", 1, 1, 1, 1);
+            } else if (types.contains(DefenseType.MULTIPLEATTACK)) {
+                return new DefenseMultipleAttack(types, "defense", 1, 1, 1, 1, 1, 1);
+            } else {
+                return new DefenseAttacker(types, "defense", 1, 1, 1, 1, 1);
+            }
+        } else {
+            // Blocks or default
+            return new Defense(types, "defense", 1, 1, 1);
         }
     }
 

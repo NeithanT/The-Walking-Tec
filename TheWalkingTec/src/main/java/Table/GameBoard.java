@@ -209,6 +209,13 @@ public class GameBoard extends JPanel {
         }
         repaint();
     }
+    
+    public void removePlacedDefense(int row, int col) {
+        synchronized(defenses) {
+            defenses.removeIf(pd -> pd.row == row && pd.column == col);
+        }
+        repaint();
+    }
 
     public void deleteZombie(Object zombie){
         synchronized(zombies) {

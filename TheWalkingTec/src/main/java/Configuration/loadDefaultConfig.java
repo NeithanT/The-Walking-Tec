@@ -6,6 +6,7 @@ import Zombie.ZombieExplosive;
 import Zombie.ZombieFlying;
 import Zombie.ZombieHealer;
 import Zombie.ZombieAttacker;
+import Zombie.ZombieType;
 import Defense.Defense;
 import Defense.DefenseAttacker;
 import Defense.DefenseContact;
@@ -16,6 +17,9 @@ import Defense.DefenseMediumRange;
 import Defense.DefenseMultipleAttack;
 import Defense.DefenseType;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Arrays;
 
 
 public class loadDefaultConfig {
@@ -48,6 +52,11 @@ public class loadDefaultConfig {
         Zombie z10 = new ZombieFlying("Dragona del End", 70, 7, 8, 12, 3, 1.5);
         z10.setImagePath("src/main/resources/assets/DragonaDelEnd.png");
         
+        // HYBRID ZOMBIE: EXPLOSIVE + FLYING (Kamikaze usando Set)
+        Set<ZombieType> kamikazeTypes = new HashSet<>(Arrays.asList(ZombieType.EXPLOSIVE, ZombieType.FLYING));
+        Zombie z11 = new ZombieExplosive(kamikazeTypes, "Sky Bomber", 15, 2, 2, 5, 2.5);
+        z11.setImagePath("src/main/resources/assets/SkyBomber.png");
+        
         ArrayList<Zombie> zombies = new ArrayList<>();
         
         zombies.add(z1);
@@ -60,6 +69,7 @@ public class loadDefaultConfig {
         zombies.add(z8);
         zombies.add(z9);
         zombies.add(z10);
+        zombies.add(z11); // Hybrid zombie
         
         manager.saveZombies(zombies);
         
@@ -137,6 +147,12 @@ public class loadDefaultConfig {
         Defense d11 = new DefenseHealer(names.get(11), 50, 1, 1, 5);
         d11.setImagePath("src/main/resources/assets/Lebron_James.jpg");
         defenses.add(d11);
+        
+        // HYBRID DEFENSE: FLYING + HEALER (Medic Drone usando Set)
+        Set<DefenseType> medicTypes = new HashSet<>(Arrays.asList(DefenseType.FLYING, DefenseType.HEALER));
+        Defense d12 = new DefenseHealer(medicTypes, "Medic Drone", 40, 2, 3, 8);
+        d12.setImagePath("src/main/resources/assets/MedicDrone.png");
+        defenses.add(d12);
         
         manager.saveDefenses(defenses);
         
