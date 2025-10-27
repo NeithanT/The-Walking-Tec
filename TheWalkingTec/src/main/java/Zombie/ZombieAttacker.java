@@ -7,8 +7,8 @@ public class ZombieAttacker extends Zombie implements EntityAttacker {
     protected int damage;
     protected int range;
     
-    public ZombieAttacker(String name, int healthPoints, int showUpLevel, int cost, int damage, int range) {
-        super(name, healthPoints, showUpLevel, cost);
+    public ZombieAttacker(String name, int healthPoints, int showUpLevel, int cost, int damage, int range, double movementSpeed) {
+        super(name, healthPoints, showUpLevel, cost, movementSpeed);
         this.damage = damage;
         this.range = range;
     }

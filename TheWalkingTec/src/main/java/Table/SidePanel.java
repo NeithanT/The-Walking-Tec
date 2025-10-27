@@ -4,8 +4,10 @@ package Table;
 import Configuration.ConfigManager;
 import Defense.Defense;
 import GameLogic.GameManager;
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -23,10 +25,11 @@ import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 import Defense.DefenseAttacker;
 import Defense.DefenseHealer;
 
@@ -41,11 +44,18 @@ public class SidePanel extends JPanel {
     private JTextArea txaLogs;
     private JPanel pnlButtons;
     private JPanel pnlDefenses;
+    private JPanel pnlStatus;
+    private JLabel lblDefenseCapacity;
+    private JLabel lblZombiesRemaining;
 
     private TableMain table;
     private GameManager gameManager;
     private JPanel pnlSelected;
     private final ConfigManager configManager;
+
+    private static final String ASSETS_BASE_PATH = "src/main/resources/assets/";
+    private static final String COIN_ICON = ASSETS_BASE_PATH + "Coin.png";
+    private static final String ZOMBIE_ICON = ASSETS_BASE_PATH + "ZombieHead.png";
     
     public SidePanel(TableMain parentTable) {
     
@@ -54,8 +64,10 @@ public class SidePanel extends JPanel {
         this.configManager = new ConfigManager();
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         
-        
-        
+        pnlStatus = createStatusPanel();
+        pnlStatus.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+        this.add(pnlStatus);
+
         scpScrollText = createDefensesPane();
         scpScrollText.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
         this.add(scpScrollText);
@@ -67,7 +79,8 @@ public class SidePanel extends JPanel {
         
         scpScrollLog = createLogArea();
         scpScrollLog.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
-        this.add(createLogArea());
+
+    this.add(scpScrollLog);
 
         btnStart.setBackground(Color.WHITE);
         btnPause.setBackground(Color.WHITE); 
@@ -78,6 +91,8 @@ public class SidePanel extends JPanel {
         selection(btnPause);
         selection(btnMenu);
         selection(btnSell);
+
+        btnStart.addActionListener(evt -> onStartClicked());
 
         this.addComponentListener(new ComponentAdapter() {
             @Override
@@ -101,8 +116,27 @@ public class SidePanel extends JPanel {
     public void setGameManager(GameManager manager){
         
         this.gameManager = manager;
+        refreshStatusCounters();
     }
     
+    private void onStartClicked(){
+        if (gameManager == null){
+            appendLog("Game manager not ready.");
+            return;
+        }
+
+        appendLog("Start requested.");
+        gameManager.startGame();
+    }
+
+    private void appendLog(String message){
+        if (txaLogs == null){
+            return;
+        }
+        txaLogs.append(message + "\n");
+        txaLogs.setCaretPosition(txaLogs.getDocument().getLength());
+    }
+
     private JPanel createButtonPanel(){
         
         pnlButtons = new JPanel();
@@ -278,15 +312,117 @@ public class SidePanel extends JPanel {
     
     
     
+    private JPanel createStatusPanel(){
+
+        JPanel statusPanel = new JPanel();
+        statusPanel.setLayout(new GridLayout(1, 2, 10, 0));
+        statusPanel.setOpaque(false);
+
+        lblDefenseCapacity = createCounterLabel("0");
+        lblZombiesRemaining = createCounterLabel("0");
+
+        statusPanel.add(buildCounterPanel(COIN_ICON, "Towers Left", lblDefenseCapacity));
+        statusPanel.add(buildCounterPanel(ZOMBIE_ICON, "Zombies", lblZombiesRemaining));
+
+        return statusPanel;
+    }
+
+    private JLabel createCounterLabel(String initialText){
+        JLabel label = new JLabel(initialText);
+        label.setFont(label.getFont().deriveFont(Font.BOLD, 18f));
+        label.setHorizontalAlignment(SwingConstants.LEFT);
+        return label;
+    }
+
+    private JPanel buildCounterPanel(String iconPath, String title, JLabel valueLabel){
+
+        JPanel container = new JPanel(new BorderLayout(8, 0));
+        container.setOpaque(false);
+        container.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+
+        JLabel iconLabel = new JLabel();
+        ImageIcon icon = loadIcon(iconPath, 36, 36);
+        if (icon != null){
+            iconLabel.setIcon(icon);
+        } else {
+            iconLabel.setText(title);
+        }
+        container.add(iconLabel, BorderLayout.WEST);
+
+        JPanel textPanel = new JPanel(new GridLayout(2, 1));
+        textPanel.setOpaque(false);
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setFont(titleLabel.getFont().deriveFont(Font.PLAIN, 12f));
+        textPanel.add(titleLabel);
+        textPanel.add(valueLabel);
+
+        container.add(textPanel, BorderLayout.CENTER);
+
+        return container;
+    }
+
+    private ImageIcon loadIcon(String path, int width, int height){
+        try {
+            Image image = ImageIO.read(new File(path));
+            if (image != null){
+                Image scaled = image.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+                return new ImageIcon(scaled);
+            }
+        } catch (IOException ex) {
+            return null;
+        }
+        return null;
+    }
+
+    public void updateDefenseCapacity(int remaining){
+        if (lblDefenseCapacity != null){
+            lblDefenseCapacity.setText(String.valueOf(Math.max(0, remaining)));
+        }
+    }
+
+    public void updateZombiesRemaining(int remaining){
+        if (lblZombiesRemaining != null){
+            lblZombiesRemaining.setText(String.valueOf(Math.max(0, remaining)));
+        }
+    }
+
+    public void refreshStatusCounters(){
+        if (gameManager != null){
+            int remainingCapacity = Math.max(0, gameManager.getDefenseCostLimit() - gameManager.getDefenseCostUsed());
+            updateDefenseCapacity(remainingCapacity);
+            updateZombiesRemaining(gameManager.getZombiesRemaining());
+        }
+    }
+    
+    /**
+     * Updates all labels to reflect the current game state
+     */
+    public void updateAllLabels() {
+        if (gameManager != null) {
+            int remainingCapacity = Math.max(0, gameManager.getDefenseCostLimit() - gameManager.getDefenseCostUsed());
+            updateDefenseCapacity(remainingCapacity);
+            updateZombiesRemaining(0); // Reset to 0 when game resets
+        } else {
+            // Reset to default values when no game manager
+            updateDefenseCapacity(0);
+            updateZombiesRemaining(0);
+        }
+    }
+
     private void updateSectionSizes(){
         
         int width = this.getWidth();
         int height = this.getHeight();
        
-        int defencesHeight = (int)(height * 0.50);
+        int statusHeight = (int)(height * 0.15);
+        int defencesHeight = (int)(height * 0.45);
         int buttonsHeight = (int)(height * 0.20);
-        int logsHeight = (int)(height * 0.30);
+        int logsHeight = (int)(height * 0.20);
         
+        if (pnlStatus != null){
+            pnlStatus.setPreferredSize(new Dimension(width, statusHeight));
+        }
         if (scpScrollText != null){
         scpScrollText.setPreferredSize(new Dimension(width, defencesHeight));
         }

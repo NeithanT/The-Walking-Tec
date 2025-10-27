@@ -10,6 +10,8 @@ public abstract class Entity extends Thread implements Serializable {
     protected int healthPoints;
     protected int cost;
     protected int showUpLevel;
+    protected int currentRow;
+    protected int currentColumn;
     
     public String getEntityName() {
         return entityName;
@@ -57,6 +59,22 @@ public abstract class Entity extends Thread implements Serializable {
     
     public void setShowUpLevel(int showUpLevel) {
         this.showUpLevel = showUpLevel;
+    }
+    
+    public int getCurrentRow() {
+        return currentRow;
+    }
+    
+    public void setCurrentRow(int currentRow) {
+        this.currentRow = currentRow;
+    }
+    
+    public int getCurrentColumn() {
+        return currentColumn;
+    }
+    
+    public void setCurrentColumn(int currentColumn) {
+        this.currentColumn = currentColumn;
     }
     
 }

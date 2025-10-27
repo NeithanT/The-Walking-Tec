@@ -243,7 +243,7 @@ public class EntityPanel extends JPanel {
         // Remove all dynamic type-specific fields
         entityRows.removeIf(row -> {
             String label = row.getLabel().getText().toLowerCase();
-            return label.contains("ataque") || label.contains("cura") || label.contains("rango") || label.contains("cantidad");
+            return label.contains("ataque") || label.contains("cura") || label.contains("rango") || label.contains("cantidad") || label.contains("velocidad");
         });
         
         // Add fields based on current entity type
@@ -261,6 +261,8 @@ public class EntityPanel extends JPanel {
     }
     
     private void addZombieSpecificFields() {
+        entityRows.add(new EntityRow("Velocidad: "));
+        
         if (currentZombie.getType() != ZombieType.HEALER) {
             entityRows.add(new EntityRow("Ataque: "));
             entityRows.add(new EntityRow("Rango: "));
@@ -415,6 +417,10 @@ public class EntityPanel extends JPanel {
             entityRows.get(fieldIndex++).getTextField().setText(String.valueOf(currentZombie.getShowUpLevel()));
         if (fieldIndex < entityRows.size()) 
             entityRows.get(fieldIndex++).getTextField().setText(String.valueOf(currentZombie.getCost()));
+        
+        // Populate movement speed
+        if (fieldIndex < entityRows.size()) 
+            entityRows.get(fieldIndex++).getTextField().setText(String.valueOf(currentZombie.getMovementSpeed()));
         
         // Populate type-specific fields
         if (currentZombie.getType() == ZombieType.HEALER) {
@@ -596,6 +602,10 @@ public class EntityPanel extends JPanel {
         zombie.setHealthPoints(health);
         zombie.setShowUpLevel(showUp);
         zombie.setCost(cost);
+        String movementSpeedValue = getRowValue("Velocidad de Movimiento");
+        if (!movementSpeedValue.isEmpty()) {
+            zombie.setMovementSpeed(Double.parseDouble(movementSpeedValue));
+        }
 
         String imagePath = selectedImageFile != null ? selectedImageFile.getAbsolutePath() : currentZombie != null ? currentZombie.getImagePath() : null;
         zombie.setImagePath(imagePath);
@@ -675,20 +685,20 @@ public class EntityPanel extends JPanel {
 
     private Zombie instantiateZombie(ZombieType type) {
         if (type == null) {
-            return new ZombieAttacker("zombie", 1, 1, 1, 1, 1);
+            return new ZombieAttacker("zombie", 1, 1, 1, 1, 1, 1);
         }
         switch (type) {
             case FLYING:
-                return new ZombieFlying("zombie", 1, 1, 1, 1, 1);
+                return new ZombieFlying("zombie", 1, 1, 1, 1, 1, 1);
             case MEDIUMRANGE:
-                return new ZombieMediumRange("zombie", 1, 1, 1, 1);
+                return new ZombieMediumRange("zombie", 1, 1, 1, 1, 1);
             case EXPLOSIVE:
-                return new ZombieExplosive("zombie", 1, 1, 1, 1);
+                return new ZombieExplosive("zombie", 1, 1, 1, 1, 1);
             case HEALER:
-                return new ZombieHealer("zombie", 1, 1, 1, 1);
+                return new ZombieHealer("zombie", 1, 1, 1, 1, 1);
             case CONTACT:
             default:
-                return new ZombieContact("zombie", 1, 1, 1, 1);
+                return new ZombieContact("zombie", 1, 1, 1, 1, 1);
         }
     }
 

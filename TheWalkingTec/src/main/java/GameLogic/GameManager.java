@@ -9,9 +9,17 @@ import Table.PlacedDefense;
 import java.awt.event.ActionEvent;
 import Table.SidePanel;
 import Zombie.Zombie;
+import Zombie.ZombieAttacker;
+import Zombie.ZombieContact;
+import Zombie.ZombieExplosive;
+import Zombie.ZombieFlying;
+import Zombie.ZombieHealer;
+import Zombie.ZombieMediumRange;
+import Zombie.ZombieType;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import javax.imageio.ImageIO;
@@ -29,32 +37,50 @@ public class GameManager {
     private int baseHealth;
     
     private Defense selectedDefense;
-    private int actualSpace;
     private int coinsThisLevel;
     private Defense lifeTree;
     private PlacedDefense lifeTreePlaced;
     private int lifeTreeRow = -1;
     private int lifeTreeColumn = -1;
     
+    private final ConfigManager configMg;
     private final Random rnd = new Random();
+
+    private int defenseCostLimit;
+    private int defenseCostUsed;
+    private int zombiesRemaining;
+    private boolean roundActive;
+    private boolean waveGenerated;
+    
+    private ArrayList<Zombie> waveZombies;
+    private ArrayList<Defense> waveDefense;
     
     public GameManager(GameBoard board, SidePanel sidePanel){
         
         this.board = board;
         this.sidePanel = sidePanel;
         this.matrixManager = new MatrixManager();
+        this.configMg = new ConfigManager();
         this.isPaused = true;
         this.level = 1;
         this.baseHealth = 100;
         this.selectedDefense = null;
         this.coinsThisLevel = coinsForLevel(level);
-      //  this.actualSpace = 0;
+        this.defenseCostLimit = coinsThisLevel;
+        this.defenseCostUsed = 0;
+        this.roundActive = false;
+        this.waveGenerated = false;
+        this.waveZombies = new ArrayList<>();
+        this.waveDefense = new ArrayList<>();
     }
     
     public void startGame(){
         
         if (lifeTreePlaced == null){
-            System.out.println("Place the life tree first");
+            System.out.println("===========================================");
+            System.out.println("  ERROR: You must place the Life Tree     ");
+            System.out.println("         before starting the game!        ");
+            System.out.println("===========================================");
             return;
         }
         if (gameTimer == null){
@@ -68,9 +94,10 @@ public class GameManager {
         }
         isPaused = false;
         
-        coinsThisLevel = coinsForLevel(level);
+        if (!roundActive) {
+            startRound();
+        }
 
-        generateWave();
         System.out.println("Juego iniciado");    
     }
         
@@ -86,6 +113,7 @@ public class GameManager {
             gameTimer.stop();
         }
         isPaused = true;
+        stopZombieThreads();
     }
     
     public void setSelectedDefense(Defense defenseName){
@@ -102,6 +130,11 @@ public class GameManager {
         }
         
         final boolean isLifeTree = "LIFE TREE".equalsIgnoreCase(selectedDefense.getEntityName());
+
+        if (!canAffordDefense(selectedDefense)){
+            System.out.println("Not enough defense capacity for this placement");
+            return false;
+        }
         if (isLifeTree && lifeTreePlaced != null){
             System.out.println("Life Tree already exists");
             return false;
@@ -111,20 +144,33 @@ public class GameManager {
             return false;
         }
         
-        Image img = loadAndScale(selectedDefense.getImagePath());
-        PlacedDefense placed = new PlacedDefense(selectedDefense, row, column, img);
-        board.addDefense(placed);    
+        Defense placedDefinition = selectedDefense;
+        Image img = loadAndScale(placedDefinition.getImagePath());
+        PlacedDefense placed = new PlacedDefense(placedDefinition, row, column, img);
+        board.addDefense(placed);
+
+        if (waveDefense != null && placedDefinition != null){
+            waveDefense.add(placedDefinition);
+        }
         
         
         if (isLifeTree){
-            lifeTree = selectedDefense;
-            lifeTreePlaced = placed;   
+            lifeTree = placedDefinition;
+            lifeTreePlaced = placed;
+            lifeTreeRow = row;
+            lifeTreeColumn = column;
+            // Synchronize Life Tree health with base health
+            baseHealth = lifeTree.getHealthPoints();
+            System.out.println("Life Tree placed! Health: " + baseHealth);
         }
 
-        System.out.println("Defensa [" + selectedDefense.getEntityName() + "] colocada en [" + row + "][" + column + "]"); 
+        defenseCostUsed += Math.max(1, placedDefinition.getCost());
+
+        System.out.println("Defensa [" + placedDefinition.getEntityName() + "] colocada en [" + row + "][" + column + "]"); 
         selectedDefense = null;
         board.clearSelectedDefense();
         sidePanel.deselectDefense();
+        sidePanel.refreshStatusCounters();
         
         return true;
     }
@@ -132,36 +178,129 @@ public class GameManager {
     public boolean removeDefences(int row, int column){
         
         if (lifeTreePlaced != null && row == lifeTreeRow && column == lifeTreeColumn){
-            System.out.println("Life Tree cannot be removed");
+            System.out.println("===========================================");
+            System.out.println("  The Life Tree cannot be removed!        ");
+            System.out.println("  It must be protected at all costs!      ");
+            System.out.println("===========================================");
             return false;
         }
-        
+
+        PlacedDefense target = board.getDefenseAt(row, column);
+        if (target == null){
+            System.out.println("No defense on selected cell");
+            return false;
+        }
+
         matrixManager.free(row, column);
-        
+        board.removeDefenseAt(row, column);
+        if (waveDefense != null && target.definition != null){
+            waveDefense.remove(target.definition);
+        }
+        defenseCostUsed = Math.max(0, defenseCostUsed - Math.max(1, target.definition.getCost()));
+
+        if (target == lifeTreePlaced){
+            lifeTreePlaced = null;
+            lifeTree = null;
+            lifeTreeRow = -1;
+            lifeTreeColumn = -1;
+        }
+
         board.repaint();
+        sidePanel.refreshStatusCounters();
         return true;
     }
     
     public void generateWave(){
-        
-        ConfigManager cfg = new ConfigManager();
-        List<Zombie> pool = cfg.getZombies();
+        if (waveGenerated) {
+            return;
+        }
+
+        List<Zombie> pool = configMg.getZombies();
         if (pool == null || pool.isEmpty()) {
+            System.out.println("No zombies configured. Cannot generate wave.");
+            waveGenerated = true;
             return;
         }
         
-        int spawnCount = Math.max(1, coinsThisLevel);
-        for (int i = 0; i < spawnCount; i++){
-            Zombie z = pool.get(rnd.nextInt(pool.size()));
-            
-         //   matrixManager.isZombieSpawnZone(row, column);
-            
-        
-            System.out.println("Spawn zombie: " + (z.getEntityName() != null ? z.getEntityName() : "Zombie") + " #" + (i + 1));
+        ArrayList<Zombie> availableZombies = new ArrayList<>();
+        for (Zombie zombie : pool){
+            if (zombie != null && zombie.getShowUpLevel() <= level){
+                availableZombies.add(zombie);
+            }
         }
+
+        if (availableZombies.isEmpty()){
+            for (Zombie zombie : pool){
+                if (zombie != null){
+                    availableZombies.add(zombie);
+                }
+            }
+        }
+
+        if (availableZombies.isEmpty()){
+            System.out.println("No valid zombies found for the current round.");
+            waveGenerated = true;
+            return;
+        }
+
+        if (waveZombies == null){
+            waveZombies = new ArrayList<>();
+        }
+        waveZombies.clear();
+
+        int budget = coinsThisLevel;
+        int attemptsWithoutFit = 0;
+        int spawned = 0;
+        int maxAttempts = Math.max(availableZombies.size() * 3, 15);
+        zombiesRemaining = 0;
+        if (board != null){
+            board.clearZombies();
+        }
+
+        while (budget > 0 && attemptsWithoutFit < maxAttempts){
+            Zombie prototype = availableZombies.get(rnd.nextInt(availableZombies.size()));
+            int cost = Math.max(1, prototype.getCost());
+            if (cost > budget){
+                attemptsWithoutFit++;
+                continue;
+            }
+
+            Zombie spawnedZombie = cloneZombie(prototype);
+            if (spawnedZombie == null){
+                attemptsWithoutFit++;
+                continue;
+            }
+
+            // Initialize zombie with GameManager reference
+            spawnedZombie.setGameManager(this);
+            spawnedZombie.setAlive(true);
+            
+            spawned++;
+            budget -= cost;
+            attemptsWithoutFit = 0;
+            zombiesRemaining++;
+            waveZombies.add(spawnedZombie);
+            if (board != null){
+                board.addZombie(spawnedZombie);
+            }
+            System.out.println("Spawn zombie: " + (spawnedZombie.getEntityName() != null ? spawnedZombie.getEntityName() : "Zombie") + " (#" + spawned + ")");
+        }
+
+        zombiesRemaining = waveZombies.size();
+
+        if (spawned == 0){
+            System.out.println("No zombies could be spawned with the current round budget");
+        } else {
+            System.out.println("Wave level [" + level + "] generated with cost " + (coinsThisLevel - budget) + "/" + coinsThisLevel);
+        }
+
+        waveGenerated = true;
         
+        // Start zombie threads after wave generation
+        startZombieThreads();
         
-        System.out.println("Wave level [" + level + "] generated");
+        // Update UI to show zombie count
+        sidePanel.refreshStatusCounters();
     }
     
     public void update(){
@@ -176,9 +315,269 @@ public class GameManager {
         verifyLoss();
     }
     
-    private int coinsForLevel (int lvl){
+    public synchronized void moveZombieTowardsLifeTree(Zombie zombie) {
+        if (zombie == null || !zombie.isAlive() || isPaused) {
+            return;
+        }
         
-        return 20 + 5 * (lvl - 1);
+        // Check if lifeTree exists - if destroyed, stop zombie
+        if (lifeTreeRow < 0 || lifeTreeColumn < 0 || lifeTree == null || lifeTree.getHealthPoints() <= 0) {
+            zombie.setAlive(false);
+            return;
+        }
+        
+        // Initialize zombie position if not set
+        if (zombie.getCurrentRow() < 0 || zombie.getCurrentColumn() < 0) {
+            spawnZombieAtEdge(zombie);
+        }
+        
+        // Calculate next target cell if zombie reached current target
+        int currentRow = zombie.getCurrentRow();
+        int currentColumn = zombie.getCurrentColumn();
+        int targetRow = zombie.getTargetRow();
+        int targetColumn = zombie.getTargetColumn();
+        
+        // Check if zombie needs a new target cell
+        boolean needsNewTarget = (targetRow == currentRow && targetColumn == currentColumn) ||
+                                  (targetRow < 0 || targetColumn < 0);
+        
+        if (needsNewTarget) {
+            // Calculate next cell towards lifeTree
+            int[] nextCell = calculateNextCellTowardsLifeTree(currentRow, currentColumn);
+            zombie.setTargetRow(nextCell[0]);
+            zombie.setTargetColumn(nextCell[1]);
+        }
+        
+        // Calculate target pixel position
+        double targetPixelX = board.cellToPixelX(zombie.getTargetColumn());
+        double targetPixelY = board.cellToPixelY(zombie.getTargetRow());
+        
+        // Move zombie smoothly towards target
+        double deltaTime = 0.016; // Approximately 60 FPS
+        zombie.moveTowardsTarget(targetPixelX, targetPixelY, deltaTime);
+        
+        // Check if zombie reached lifeTree
+        if (currentRow == lifeTreeRow && currentColumn == lifeTreeColumn) {
+            zombieReachedLifeTree(zombie);
+        }
+    }
+    
+    /**
+     * Spawns a zombie at a random edge position
+     */
+    private void spawnZombieAtEdge(Zombie zombie) {
+        int row, column;
+        
+        // Choose random edge (0=top, 1=right, 2=bottom, 3=left)
+        int edge = rnd.nextInt(4);
+        
+        switch (edge) {
+            case 0: // Top edge
+                row = rnd.nextInt(2); // 0 or 1
+                column = rnd.nextInt(25);
+                break;
+            case 1: // Right edge
+                row = rnd.nextInt(25);
+                column = 23 + rnd.nextInt(2); // 23 or 24
+                break;
+            case 2: // Bottom edge
+                row = 23 + rnd.nextInt(2); // 23 or 24
+                column = rnd.nextInt(25);
+                break;
+            default: // Left edge
+                row = rnd.nextInt(25);
+                column = rnd.nextInt(2); // 0 or 1
+                break;
+        }
+        
+        double pixelX = board.cellToPixelX(column);
+        double pixelY = board.cellToPixelY(row);
+        
+        zombie.setSpawnPosition(row, column, pixelX, pixelY);
+    }
+    
+    /**
+     * Calculates the next cell to move towards the lifeTree using simple pathfinding
+     * @param currentRow Current row position
+     * @param currentColumn Current column position
+     * @return Array with [nextRow, nextColumn]
+     */
+    private int[] calculateNextCellTowardsLifeTree(int currentRow, int currentColumn) {
+        int targetRow = lifeTreeRow;
+        int targetColumn = lifeTreeColumn;
+        
+        // Calculate direction to lifeTree
+        int rowDiff = targetRow - currentRow;
+        int colDiff = targetColumn - currentColumn;
+        
+        // If already at lifeTree
+        if (rowDiff == 0 && colDiff == 0) {
+            return new int[]{currentRow, currentColumn};
+        }
+        
+        // Determine movement priorities based on distance
+        int nextRow = currentRow;
+        int nextColumn = currentColumn;
+        
+        // Try to move in the direction with larger distance first
+        if (Math.abs(rowDiff) > Math.abs(colDiff)) {
+            // Prioritize vertical movement
+            if (rowDiff > 0) {
+                nextRow = currentRow + 1;
+            } else if (rowDiff < 0) {
+                nextRow = currentRow - 1;
+            }
+            
+            // If vertical movement is blocked, try horizontal
+            if (!isValidZombieMove(nextRow, nextColumn)) {
+                nextRow = currentRow;
+                if (colDiff > 0) {
+                    nextColumn = currentColumn + 1;
+                } else if (colDiff < 0) {
+                    nextColumn = currentColumn - 1;
+                }
+            }
+        } else {
+            // Prioritize horizontal movement
+            if (colDiff > 0) {
+                nextColumn = currentColumn + 1;
+            } else if (colDiff < 0) {
+                nextColumn = currentColumn - 1;
+            }
+            
+            // If horizontal movement is blocked, try vertical
+            if (!isValidZombieMove(nextRow, nextColumn)) {
+                nextColumn = currentColumn;
+                if (rowDiff > 0) {
+                    nextRow = currentRow + 1;
+                } else if (rowDiff < 0) {
+                    nextRow = currentRow - 1;
+                }
+            }
+        }
+        
+        // If still blocked, try diagonal movement
+        if (!isValidZombieMove(nextRow, nextColumn)) {
+            nextRow = currentRow + (rowDiff > 0 ? 1 : rowDiff < 0 ? -1 : 0);
+            nextColumn = currentColumn + (colDiff > 0 ? 1 : colDiff < 0 ? -1 : 0);
+        }
+        
+        // Final validation - if still invalid, stay in place
+        if (!isValidZombieMove(nextRow, nextColumn)) {
+            nextRow = currentRow;
+            nextColumn = currentColumn;
+        }
+        
+        return new int[]{nextRow, nextColumn};
+    }
+    
+    /**
+     * Checks if a zombie can move to a specific cell
+     */
+    private boolean isValidZombieMove(int row, int column) {
+        // Check if within bounds
+        if (!matrixManager.isValidPosition(row, column)) {
+            return false;
+        }
+        
+        // Zombies can move through spawn zones and playable area
+        // They can also move through cells with defenses (to attack them)
+        return true;
+    }
+    
+    /**
+     * Handles when a zombie reaches the lifeTree
+     */
+    private void zombieReachedLifeTree(Zombie zombie) {
+        if (zombie == null) {
+            return;
+        }
+        
+        // Check if Life Tree still exists
+        if (lifeTree == null || lifeTree.getHealthPoints() <= 0) {
+            zombie.setAlive(false);
+            return;
+        }
+        
+        // Deal damage to base and Life Tree
+        int damage = Math.max(1, zombie.getHealthPoints() / 10); // Damage based on zombie health
+        baseHealth -= damage;
+        
+        // Update Life Tree health
+        int newLifeTreeHealth = Math.max(0, lifeTree.getHealthPoints() - damage);
+        lifeTree.setHealthPoints(newLifeTreeHealth);
+        
+        // Remove zombie
+        zombie.setAlive(false);
+        registerZombieDefeat(zombie);
+        
+        System.out.println("Zombie attacked the Life Tree! Damage: " + damage + " | Life Tree health: " + lifeTree.getHealthPoints() + " | Base health: " + baseHealth);
+        
+        // Check if Life Tree is destroyed
+        if (lifeTree.getHealthPoints() <= 0) {
+            System.out.println("The Life Tree has been destroyed!");
+            destroyLifeTree();
+        }
+        
+        board.repaint();
+    }
+    
+    /**
+     * Starts all zombie threads for the current wave
+     */
+    public void startZombieThreads() {
+        if (waveZombies != null) {
+            for (Zombie zombie : waveZombies) {
+                if (zombie != null && !zombie.isAlive()) {
+                    zombie.setAlive(true);
+                    zombie.setGameManager(this);
+                    zombie.start();
+                }
+            }
+        }
+    }
+    
+    /**
+     * Stops all zombie threads
+     */
+    public void stopZombieThreads() {
+        if (waveZombies != null) {
+            for (Zombie zombie : waveZombies) {
+                if (zombie != null) {
+                    zombie.setAlive(false);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Handles the destruction of the Life Tree
+     */
+    private void destroyLifeTree() {
+        if (lifeTreePlaced != null) {
+            // Remove Life Tree from board visually
+            board.deleteDefense(lifeTreePlaced);
+        }
+        
+        // Set health to 0
+        baseHealth = 0;
+        if (lifeTree != null) {
+            lifeTree.setHealthPoints(0);
+        }
+        
+        // Stop all zombie threads immediately to prevent exceptions
+        stopZombieThreads();
+        
+        // Clear references
+        lifeTreeRow = -1;
+        lifeTreeColumn = -1;
+        
+        // Trigger game over
+        verifyLoss();
+    }
+    
+    private int coinsForLevel (int lvl){
+        return 25 + 5 * (lvl - 1);
     }
     
     public boolean isValidPlacement(int row, int column){
@@ -187,23 +586,29 @@ public class GameManager {
     }
     
     public boolean isThereSpaceLeft (int totalSpace){
-        
-        return actualSpace < totalSpace;
+        return defenseCostUsed < totalSpace;
     }
     
     public void verifyVictory(){
-        
-        if (board.getZombies().isEmpty()){
-            System.out.println("Mission Completed!");
+        if (!roundActive) {
+            return;
         }
-        level++;        
+
+        if (zombiesRemaining <= 0 && board.getZombies().isEmpty() && waveGenerated){
+            System.out.println("Mission Completed!");
+            advanceRound();
+        }
     }
     
     public void verifyLoss(){
         
-        if (baseHealth <= 0){
-            System.out.println("U bad as fuck");
+        if (baseHealth <= 0 || (lifeTree != null && lifeTree.getHealthPoints() <= 0)){
+            System.out.println("===========================================");
+            System.out.println("         GAME OVER - YOU LOST!            ");
+            System.out.println("   The Life Tree has been destroyed!      ");
+            System.out.println("===========================================");
             stopGame();
+            resetGame();
         }
     }
     
@@ -237,12 +642,179 @@ public class GameManager {
     public int getBaseHealth() {
         return baseHealth;
     }
+    
+    public Defense getLifeTree() {
+        return lifeTree;
+    }
+    
+    public boolean isLifeTreePlaced() {
+        return lifeTreePlaced != null;
+    }
+    
+    public int getLifeTreeHealth() {
+        return lifeTree != null ? lifeTree.getHealthPoints() : 0;
+    }
 
     public Defense getSelectedDefense() {
         return selectedDefense;
     }
     public int getCoinsThisLevel(){
         return coinsThisLevel;
+    }
+    
+    public int getDefenseCostLimit() {
+        return defenseCostLimit;
+    }
+    
+    public int getDefenseCostUsed() {
+        return defenseCostUsed;
+    }
+
+    public void registerZombieDefeat(Zombie zombie){
+        if (zombie != null){
+            board.deleteZombie(zombie);
+        }
+        zombiesRemaining = Math.max(0, zombiesRemaining - 1);
+        sidePanel.refreshStatusCounters();
+    }
+
+    private boolean canAffordDefense(Defense defense){
+        if (defense == null){
+            return false;
+        }
+        int cost = Math.max(1, defense.getCost());
+        return defenseCostUsed + cost <= defenseCostLimit;
+    }
+
+    private void startRound(){
+        waveGenerated = false;
+        roundActive = true;
+        coinsThisLevel = coinsForLevel(level);
+        defenseCostLimit = coinsThisLevel;
+        waveZombies.clear();
+        syncWaveDefenseWithBoard();
+        generateWave();
+        sidePanel.refreshStatusCounters();
+    }
+
+    private void advanceRound(){
+        roundActive = false;
+        waveGenerated = false;
+        level++;
+        coinsThisLevel = coinsForLevel(level);
+        defenseCostLimit = coinsThisLevel;
+        zombiesRemaining = 0;
+        board.clearZombies();
+        waveZombies.clear();
+        syncWaveDefenseWithBoard();
+        System.out.println("Starting round " + level);
+        generateWave();
+        roundActive = true;
+        sidePanel.refreshStatusCounters();
+    }
+
+    private void syncWaveDefenseWithBoard(){
+        if (waveDefense == null){
+            waveDefense = new ArrayList<>();
+        }
+
+        waveDefense.clear();
+        if (board != null){
+            for (PlacedDefense placedDefense : board.getDefenses()){
+                if (placedDefense != null && placedDefense.definition != null){
+                    waveDefense.add(placedDefense.definition);
+                }
+            }
+        }
+    }
+    
+    public int getZombiesRemaining() {
+        return waveZombies.size();
+    }
+
+    private Zombie cloneZombie(Zombie source){
+        if (source == null){
+            return null;
+        }
+
+        Zombie clone;
+        if (source instanceof ZombieExplosive explosive){
+            clone = new ZombieExplosive(explosive.getEntityName(), explosive.getHealthPoints(), explosive.getShowUpLevel(), explosive.getCost(), explosive.getRange(), explosive.getMovementSpeed());
+        } else if (source instanceof ZombieFlying flying){
+            clone = new ZombieFlying(flying.getEntityName(), flying.getHealthPoints(), flying.getShowUpLevel(), flying.getCost(), flying.getDamage(), flying.getRange(), flying.getMovementSpeed());
+        } else if (source instanceof ZombieMediumRange medium){
+            clone = new ZombieMediumRange(medium.getEntityName(), medium.getHealthPoints(), medium.getShowUpLevel(), medium.getCost(), medium.getDamage(), medium.getMovementSpeed());
+        } else if (source instanceof ZombieContact contact){
+            clone = new ZombieContact(contact.getEntityName(), contact.getHealthPoints(), contact.getShowUpLevel(), contact.getCost(), contact.getDamage(), contact.getMovementSpeed());
+        } else if (source instanceof ZombieHealer healer){
+            clone = new ZombieHealer(healer.getEntityName(), healer.getHealthPoints(), healer.getShowUpLevel(), healer.getCost(), healer.getHealPower(), healer.getMovementSpeed());
+        } else if (source instanceof ZombieAttacker attacker){
+            clone = new ZombieAttacker(attacker.getEntityName(), attacker.getHealthPoints(), attacker.getShowUpLevel(), attacker.getCost(), attacker.getDamage(), attacker.getRange(), attacker.getMovementSpeed());
+        } else {
+            ZombieType type = source.getType();
+            clone = new Zombie(type, source.getEntityName(), source.getHealthPoints(), source.getShowUpLevel(), source.getCost(), source.getMovementSpeed());
+        }
+
+        clone.setActions(source.getActions());
+        clone.setImagePath(source.getImagePath());
+        clone.setType(source.getType());
+        return clone;
+    }
+    
+    /**
+     * Resets the game to initial state after losing
+     */
+    public void resetGame() {
+        System.out.println("===========================================");
+        System.out.println("         RESETTING GAME...                ");
+        System.out.println("===========================================");
+        
+        // Stop all active threads and timers
+        stopGame();
+        
+        // Clear all zombies from the board
+        if (board != null) {
+            board.clearZombies();
+            board.clearDefenses();
+            board.clearSelectedDefense();
+        }
+        
+        // Clear zombie and defense lists
+        if (waveZombies != null) {
+            waveZombies.clear();
+        }
+        if (waveDefense != null) {
+            waveDefense.clear();
+        }
+        
+        // Reset matrix
+        if (matrixManager != null) {
+            matrixManager.restartMatrix();
+        }
+        
+        // Reset game state variables
+        level = 1;
+        baseHealth = 100;
+        coinsThisLevel = coinsForLevel(level);
+        defenseCostLimit = coinsThisLevel;
+        defenseCostUsed = 0;
+        zombiesRemaining = 0;
+        roundActive = false;
+        waveGenerated = false;
+        selectedDefense = null;
+        
+        // Reset Life Tree references
+        lifeTree = null;
+        lifeTreePlaced = null;
+        lifeTreeRow = -1;
+        lifeTreeColumn = -1;
+        
+        // Update UI labels
+        if (sidePanel != null) {
+            sidePanel.updateAllLabels();
+        }
+        
+        System.out.println("Game reset complete. Place the Life Tree to start again.");
     }
     
 }
