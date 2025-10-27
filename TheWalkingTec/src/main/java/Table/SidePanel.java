@@ -32,13 +32,14 @@ import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
 import Defense.DefenseAttacker;
 import Defense.DefenseHealer;
+import Vanity.RoundedButton;
 
 public class SidePanel extends JPanel {
     
-    private JButton btnStart;
-    private JButton btnPause;
-    private JButton btnMenu;
-    private JButton btnSell;
+    private RoundedButton btnStart;
+    private RoundedButton btnPause;
+    private RoundedButton btnMenu;
+    private RoundedButton btnSell;
     private JScrollPane scpScrollLog;
     private JScrollPane scpScrollText;
     private JTextArea txaLogs;
@@ -64,33 +65,42 @@ public class SidePanel extends JPanel {
         this.configManager = new ConfigManager();
         this.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         
+        // Modern dark theme background
+        this.setBackground(new Color(45, 45, 48));
+        
         pnlStatus = createStatusPanel();
-        pnlStatus.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+        pnlStatus.setBackground(new Color(60, 63, 65));
+        pnlStatus.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(80, 80, 80)),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
         this.add(pnlStatus);
 
         scpScrollText = createDefensesPane();
-        scpScrollText.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+        scpScrollText.setBackground(new Color(45, 45, 48));
+        scpScrollText.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(80, 80, 80)),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        ));
         this.add(scpScrollText);
         
         pnlButtons = createButtonPanel();
-        pnlButtons.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+        pnlButtons.setBackground(new Color(60, 63, 65));
+        pnlButtons.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 2, 0, new Color(80, 80, 80)),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
         this.add(pnlButtons);
         
         
         scpScrollLog = createLogArea();
-        scpScrollLog.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+        scpScrollLog.setBackground(new Color(45, 45, 48));
+        scpScrollLog.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createMatteBorder(0, 0, 0, 0, new Color(80, 80, 80)),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        ));
 
     this.add(scpScrollLog);
-
-        btnStart.setBackground(Color.WHITE);
-        btnPause.setBackground(Color.WHITE); 
-        btnMenu.setBackground(Color.WHITE);
-        btnSell.setBackground(Color.WHITE);
-        
-        selection(btnStart);
-        selection(btnPause);
-        selection(btnMenu);
-        selection(btnSell);
 
         btnStart.addActionListener(evt -> onStartClicked());
 
@@ -140,13 +150,34 @@ public class SidePanel extends JPanel {
     private JPanel createButtonPanel(){
         
         pnlButtons = new JPanel();
+        pnlButtons.setLayout(new GridLayout(3,5, 8, 8));
+        pnlButtons.setBackground(new Color(60, 63, 65));
         
-        pnlButtons.setLayout(new GridLayout(3,5));
+        // Modern button colors
+        Color startColor = new Color(76, 175, 80);      // Green
+        Color startHover = new Color(56, 142, 60);
+        Color pauseColor = new Color(255, 152, 0);      // Orange
+        Color pauseHover = new Color(245, 124, 0);
+        Color menuColor = new Color(33, 150, 243);      // Blue
+        Color menuHover = new Color(25, 118, 210);
+        Color sellColor = new Color(244, 67, 54);       // Red
+        Color sellHover = new Color(211, 47, 47);
         
-        btnStart = new JButton("Start");
-        btnPause = new JButton("Pause");
-        btnMenu = new JButton("Menu");
-        btnSell = new JButton("Sell");
+        btnStart = new RoundedButton("Start", startColor, startHover, 15);
+        btnStart.setForeground(Color.WHITE);
+        btnStart.setFont(btnStart.getFont().deriveFont(Font.BOLD, 14f));
+        
+        btnPause = new RoundedButton("Pause", pauseColor, pauseHover, 15);
+        btnPause.setForeground(Color.WHITE);
+        btnPause.setFont(btnPause.getFont().deriveFont(Font.BOLD, 14f));
+        
+        btnMenu = new RoundedButton("Menu", menuColor, menuHover, 15);
+        btnMenu.setForeground(Color.WHITE);
+        btnMenu.setFont(btnMenu.getFont().deriveFont(Font.BOLD, 14f));
+        
+        btnSell = new RoundedButton("Sell", sellColor, sellHover, 15);
+        btnSell.setForeground(Color.WHITE);
+        btnSell.setFont(btnSell.getFont().deriveFont(Font.BOLD, 14f));
         
         pnlButtons.add(new JLabel());
         pnlButtons.add(btnStart);
@@ -169,16 +200,24 @@ public class SidePanel extends JPanel {
  
         txaLogs = new JTextArea();
         txaLogs.setEditable(false);
+        txaLogs.setBackground(new Color(30, 30, 30));
+        txaLogs.setForeground(new Color(204, 204, 204));
+        txaLogs.setCaretColor(Color.WHITE);
+        txaLogs.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        txaLogs.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         
         scpScrollLog = new JScrollPane(txaLogs);
+        scpScrollLog.setBackground(new Color(30, 30, 30));
+        scpScrollLog.getViewport().setBackground(new Color(30, 30, 30));
         
         return scpScrollLog;
     }
     
-    private JScrollPane createDefensesPane(){
+    private JScrollPane createDefensesPane() {
         
         pnlDefenses = new JPanel();
         pnlDefenses.setLayout(new BoxLayout(pnlDefenses, BoxLayout.Y_AXIS));
+        pnlDefenses.setBackground(new Color(45, 45, 48));
         
         for (Defense d : configManager.getDefenses()){
             
@@ -188,14 +227,21 @@ public class SidePanel extends JPanel {
         
         JScrollPane scroll = new JScrollPane(pnlDefenses);
         scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+        scroll.setBackground(new Color(45, 45, 48));
+        scroll.getViewport().setBackground(new Color(45, 45, 48));
+        scroll.setBorder(null);
         
         return scroll;   
     }
     
-    private JPanel createDefenseItem(Defense def){
+    private JPanel createDefenseItem(Defense def) {
         
         JPanel itemPanel = new JPanel();
-        itemPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+        itemPanel.setBackground(new Color(60, 63, 65));
+        itemPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(80, 80, 80), 1),
+            BorderFactory.createEmptyBorder(8, 8, 8, 8)
+        ));
         itemPanel.setPreferredSize(new Dimension(300, 120));
         itemPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
         itemPanel.setLayout(new GridBagLayout());
@@ -209,10 +255,11 @@ public class SidePanel extends JPanel {
  
         
         JPanel imgPanel = new JPanel();
+        imgPanel.setBackground(new Color(45, 45, 48));
         imgPanel.setPreferredSize(new Dimension(110, 110));
         imgPanel.setMinimumSize(new Dimension(110, 110));
         imgPanel.setMaximumSize(new Dimension(110, 110));
-        imgPanel.setBorder(BorderFactory.createLineBorder(Color.DARK_GRAY, 1));
+        imgPanel.setBorder(BorderFactory.createLineBorder(new Color(100, 100, 100), 2));
         imgPanel.setLayout(null); 
         
  
@@ -248,19 +295,37 @@ public class SidePanel extends JPanel {
         
         JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new GridLayout(3, 1));
+        infoPanel.setBackground(new Color(60, 63, 65));
         
         String name = def.getEntityName() != null ? def.getEntityName() : "(Sin nombre)";
-        infoPanel.add(new JLabel("Name" + name));
-        infoPanel.add(new JLabel("Health: " + def.getHealthPoints()));
+        JLabel lblName = new JLabel("Name: " + name);
+        lblName.setForeground(new Color(187, 187, 187));
+        lblName.setFont(lblName.getFont().deriveFont(Font.BOLD, 13f));
+        infoPanel.add(lblName);
+        
+        JLabel lblHealth = new JLabel("Vida: " + def.getHealthPoints());
+        lblHealth.setForeground(new Color(187, 187, 187));
+        infoPanel.add(lblHealth);
+        
         if (def instanceof DefenseAttacker attack){
-            infoPanel.add(new JLabel("Damage: " + attack.getAttack()));    
+            JLabel lblDamage = new JLabel("Ataque: " + attack.getAttack());
+            lblDamage.setForeground(new Color(187, 187, 187));
+            infoPanel.add(lblDamage);    
         }
-        infoPanel.add(new JLabel("Size: " + def.getCost()));
+        
+        JLabel lblSize = new JLabel("Costo: " + def.getCost());
+        lblSize.setForeground(new Color(187, 187, 187));
+        infoPanel.add(lblSize);
+        
         if (def instanceof DefenseHealer heal){
-            infoPanel.add(new JLabel("Healing Power: " + heal.getHealPower()));    
+            JLabel lblHeal = new JLabel("Cura: " + heal.getHealPower());
+            lblHeal.setForeground(new Color(187, 187, 187));
+            infoPanel.add(lblHeal);    
         }
         if (def instanceof DefenseAttacker range){
-            infoPanel.add(new JLabel("Ataque: " + range.getRange()));    
+            JLabel lblRange = new JLabel("Rango: " + range.getRange());
+            lblRange.setForeground(new Color(187, 187, 187));
+            infoPanel.add(lblRange);    
         }
 
         gbc.gridx = 1;
@@ -272,12 +337,36 @@ public class SidePanel extends JPanel {
         
         itemPanel.putClientProperty("defenseDef", def);
         
+        // Add hover effect
         itemPanel.addMouseListener(new MouseAdapter() {
 
             @Override
             public void mouseClicked(MouseEvent event){
-
                 selectDefense(itemPanel);
+            }
+            
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                if (itemPanel != pnlSelected) {
+                    itemPanel.setBackground(new Color(75, 80, 85));
+                    itemPanel.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(100, 150, 200), 2),
+                        BorderFactory.createEmptyBorder(8, 8, 8, 8)
+                    ));
+                    itemPanel.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+                }
+            }
+            
+            @Override
+            public void mouseExited(MouseEvent e) {
+                if (itemPanel != pnlSelected) {
+                    itemPanel.setBackground(new Color(60, 63, 65));
+                    itemPanel.setBorder(BorderFactory.createCompoundBorder(
+                        BorderFactory.createLineBorder(new Color(80, 80, 80), 1),
+                        BorderFactory.createEmptyBorder(8, 8, 8, 8)
+                    ));
+                    itemPanel.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
+                }
             }
         });
 
@@ -287,11 +376,18 @@ public class SidePanel extends JPanel {
     private void selectDefense(JPanel panel){
         
         if (pnlSelected != null){
-            
-            pnlSelected.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+            pnlSelected.setBackground(new Color(60, 63, 65));
+            pnlSelected.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(80, 80, 80), 1),
+                BorderFactory.createEmptyBorder(8, 8, 8, 8)
+            ));
         }
         
-        panel.setBorder(BorderFactory.createLineBorder(Color.GREEN, 3));
+        panel.setBackground(new Color(70, 90, 110));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(76, 175, 80), 3),
+            BorderFactory.createEmptyBorder(8, 8, 8, 8)
+        ));
         pnlSelected = panel;
         
         if (gameManager != null){
@@ -304,7 +400,11 @@ public class SidePanel extends JPanel {
     public void deselectDefense(){
         
         if (pnlSelected != null){
-            pnlSelected.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+            pnlSelected.setBackground(new Color(60, 63, 65));
+            pnlSelected.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(80, 80, 80), 1),
+                BorderFactory.createEmptyBorder(8, 8, 8, 8)
+            ));
             pnlSelected = null;
         }
         
@@ -316,7 +416,7 @@ public class SidePanel extends JPanel {
 
         JPanel statusPanel = new JPanel();
         statusPanel.setLayout(new GridLayout(1, 2, 10, 0));
-        statusPanel.setOpaque(false);
+        statusPanel.setBackground(new Color(60, 63, 65));
 
         lblDefenseCapacity = createCounterLabel("0");
         lblZombiesRemaining = createCounterLabel("0");
@@ -331,13 +431,14 @@ public class SidePanel extends JPanel {
         JLabel label = new JLabel(initialText);
         label.setFont(label.getFont().deriveFont(Font.BOLD, 18f));
         label.setHorizontalAlignment(SwingConstants.LEFT);
+        label.setForeground(new Color(187, 187, 187));
         return label;
     }
 
     private JPanel buildCounterPanel(String iconPath, String title, JLabel valueLabel){
 
         JPanel container = new JPanel(new BorderLayout(8, 0));
-        container.setOpaque(false);
+        container.setBackground(new Color(60, 63, 65));
         container.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
 
         JLabel iconLabel = new JLabel();
@@ -346,14 +447,16 @@ public class SidePanel extends JPanel {
             iconLabel.setIcon(icon);
         } else {
             iconLabel.setText(title);
+            iconLabel.setForeground(new Color(187, 187, 187));
         }
         container.add(iconLabel, BorderLayout.WEST);
 
         JPanel textPanel = new JPanel(new GridLayout(2, 1));
-        textPanel.setOpaque(false);
+        textPanel.setBackground(new Color(60, 63, 65));
 
         JLabel titleLabel = new JLabel(title);
         titleLabel.setFont(titleLabel.getFont().deriveFont(Font.PLAIN, 12f));
+        titleLabel.setForeground(new Color(150, 150, 150));
         textPanel.add(titleLabel);
         textPanel.add(valueLabel);
 
@@ -446,21 +549,6 @@ public class SidePanel extends JPanel {
             
             revalidate();
         }
-    }
-    
-    private void selection(JButton button) {
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setForeground(Color.WHITE); 
-                button.setBackground(Color.BLACK);
-            }
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setForeground(Color.BLACK);
-                button.setBackground(Color.WHITE);
-            }   
-        });    
     }
 }
 
