@@ -116,6 +116,12 @@ public class SidePanel extends JPanel {
         btnMenu.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent evt) {
+                // Save current round before going to menu
+                if (gameManager != null) {
+                    int currentRound = gameManager.getLevel();
+                    configManager.saveCurrentRound(currentRound);
+                }
+                
                 if (table != null) {
                     table.goMenu();
                 }

@@ -316,5 +316,20 @@ public class ConfigManager {
         System.out.println("Default defenses loaded: " + defenses.size());
     }
     
+    public void saveCurrentRound(int round) {
+        if (gameLevels.isEmpty()) {
+            gameLevels.add(round);
+        } else {
+            gameLevels.set(0, round);
+        }
+        writeObject(gameLevels, pathGames);
+    }
+
+    public int getCurrentRound() {
+        if (gameLevels != null && !gameLevels.isEmpty()) {
+            return gameLevels.get(0);
+        }
+        return 1;
+    }
     
 }

@@ -18,10 +18,14 @@ public class TableMain extends JFrame {
     private GameManager gameManager;
     
     public TableMain() {
-        this(null);
+        this(null, 1);
     }
     
     public TableMain(JFrame parentMenu) {
+        this(parentMenu, 1);
+    }
+    
+    public TableMain(JFrame parentMenu, int startingLevel) {
         
         parent = parentMenu;
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);   
@@ -36,6 +40,7 @@ public class TableMain extends JFrame {
         
         gameManager = new GameManager(background, sidepanel);
         gameManager.setParentFrame(this); // Establecer el frame padre para diálogos
+        gameManager.setLevel(startingLevel); // Set the starting level
         background.setGameManger(gameManager);
         sidepanel.setGameManager(gameManager);
        // sidepanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));

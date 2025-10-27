@@ -61,6 +61,7 @@ public class GameManager {
     private int zombiesRemaining;
     private boolean roundActive;
     private boolean waveGenerated;
+    private boolean victoryProcessed; // Flag to prevent multiple victory dialogs
     private Defense lifeTree;
     private PlacedDefense lifeTreePlaced;
     private int lifeTreeRow;
@@ -90,6 +91,7 @@ public class GameManager {
         this.zombiesRemaining = 0;
         this.roundActive = false;
         this.waveGenerated = false;
+        this.victoryProcessed = false;
         this.nextZombieIndexToSpawn = 0;
         this.lifeTree = null;
         this.lifeTreePlaced = null;
@@ -289,6 +291,11 @@ public class GameManager {
             System.out.println("The Life Tree has been destroyed!");
             destroyLifeTree();
         }
+        
+        // Update UI after zombie attack on Life Tree
+        if (sidePanel != null) {
+            sidePanel.refreshStatusCounters();
+        }
 
         board.repaint();
     }
@@ -370,6 +377,11 @@ public class GameManager {
         
         nextZombieIndexToSpawn = endIndex;
         System.out.println("Spawned batch of " + spawnedInBatch + " zombies (" + nextZombieIndexToSpawn + "/" + waveZombies.size() + ")");
+        
+        // Update UI after spawning
+        if (sidePanel != null) {
+            sidePanel.refreshStatusCounters();
+        }
     }
 
     public void stopZombieThreads() {
@@ -407,7 +419,14 @@ public class GameManager {
     }
 
     public void verifyVictory() {
-        if (!roundActive || !waveGenerated) {
+        // Only check if wave was generated - don't check roundActive 
+        // because we want to detect victory even after combat ends
+        if (!waveGenerated) {
+            return;
+        }
+        
+        // Prevent processing victory multiple times
+        if (victoryProcessed) {
             return;
         }
 
@@ -425,18 +444,21 @@ public class GameManager {
             }
         }
         
-        // También verificar zombies en el tablero
-        int zombiesOnBoard = board.getZombies().size();
+        // Note: We don't check board.getZombies().size() because it may have stale references
+        // The waveZombies list is the authoritative source for zombie count
         
         System.out.println("Victory check - Alive: " + aliveZombiesCount + " | Unspawned: " + 
-            unspawnedZombiesCount + " | On board: " + zombiesOnBoard + " | Remaining counter: " + zombiesRemaining);
+            unspawnedZombiesCount + " | Total in waveZombies: " + waveZombies.size());
 
         // Solo hay victoria si NO quedan zombies vivos (ni spawneados ni por spawnear)
-        if (aliveZombiesCount == 0 && unspawnedZombiesCount == 0 && zombiesOnBoard == 0) {
+        if (aliveZombiesCount == 0 && unspawnedZombiesCount == 0) {
             System.out.println("===========================================");
             System.out.println("         VICTORY - LEVEL COMPLETE!        ");
             System.out.println("   All zombies have been defeated!       ");
             System.out.println("===========================================");
+            
+            // Mark victory as processed to prevent multiple dialogs
+            victoryProcessed = true;
             
             stopGame();
             showVictoryDialog();
@@ -445,12 +467,11 @@ public class GameManager {
     
     private void showVictoryDialog() {
         if (parentFrame == null) {
-            // Si no hay frame padre, avanzar automáticamente
+            // ya clickeo el btn de avanzar = frame null
             advanceToNextRound();
             return;
         }
         
-        // Mostrar el diálogo en el hilo de eventos de Swing
         javax.swing.SwingUtilities.invokeLater(() -> {
             Table.GameOverDialog.PlayerChoice choice = 
                 Table.GameOverDialog.showGameOverDialog(parentFrame, true); // true = victoria
@@ -515,6 +536,7 @@ public class GameManager {
         // Resetear estado del juego
         roundActive = false;
         waveGenerated = false;
+        victoryProcessed = false; // Reset victory flag for new round
         nextZombieIndexToSpawn = 0;
         zombiesRemaining = 0;
         isPaused = true; // Importante: marcar como pausado para permitir colocar defensas
@@ -647,6 +669,7 @@ public class GameManager {
         zombiesRemaining = 0;
         roundActive = false;
         waveGenerated = false;
+        victoryProcessed = false; // Reset victory flag for retry
         nextZombieIndexToSpawn = 0;
 
         // DON'T change level or coins - keep the same level
@@ -656,7 +679,6 @@ public class GameManager {
         if (sidePanel != null) {
             sidePanel.updateAllLabels();
             sidePanel.enableStartButton();
-            // Re-show Life Tree in catalog
             sidePanel.showLifeTreeInCatalog();
         }
 
@@ -750,10 +772,19 @@ public class GameManager {
     }
 
     public int getZombiesRemaining() {
-        return zombiesRemaining;
+        // Calculate dynamically to avoid sync issues
+        int count = 0;
+        for (Zombie z : waveZombies) {
+            if (z != null && z.isAlive() && z.getHealthPoints() > 0) {
+                count++;
+            }
+        }
+        return count;
     }
 
     public void setZombiesRemaining(int zombiesRemaining) {
+        // This method is kept for compatibility but the counter is now calculated dynamically
+        // The zombiesRemaining field is no longer the source of truth
         this.zombiesRemaining = zombiesRemaining;
     }
 
@@ -768,19 +799,23 @@ public class GameManager {
             return; // Ya fue contado
         }
         
-        // Marcar como muerto y contar
+        // Marcar como muerto
         zombie.setAlive(false);
         zombie.setHealthPoints(0); // Asegurar HP = 0
         board.deleteZombie(zombie);
-        zombiesRemaining = Math.max(0, zombiesRemaining - 1);
+        
+        // No longer manually decrement counter - getZombiesRemaining() calculates it dynamically
         
         System.out.println("✓ Zombie defeated: " + zombie.getEntityName() + 
-            " | Remaining: " + zombiesRemaining + 
+            " | Remaining: " + getZombiesRemaining() + 
             " | Thread state: " + zombie.getState());
         
         if (sidePanel != null) {
             sidePanel.refreshStatusCounters();
         }
+        
+        // Check for victory immediately after zombie defeat
+        verifyVictory();
     }
 
     private boolean canAffordDefense(Defense defense) {
@@ -829,6 +864,7 @@ public class GameManager {
         zombiesRemaining = 0;
         roundActive = false;
         waveGenerated = false;
+        victoryProcessed = false; // Reset victory flag
         nextZombieIndexToSpawn = 0;
         selectedDefense = null;
 
@@ -1041,6 +1077,15 @@ public class GameManager {
         
         // Remove dead entities
         removeDeadEntities();
+        
+        // Update UI after combat
+        if (sidePanel != null) {
+            sidePanel.refreshStatusCounters();
+        }
+        
+        // Check for victory/loss after combat processing
+        verifyVictory();
+        verifyLoss();
     }
     
     /**

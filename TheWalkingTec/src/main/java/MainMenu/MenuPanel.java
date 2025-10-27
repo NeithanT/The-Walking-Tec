@@ -2,6 +2,7 @@ package MainMenu;
 
 import Configuration.AdminLoginDialog;
 import Configuration.ConfigWindow;
+import Configuration.LoadGameDialog;
 import Table.TableMain;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -93,6 +94,21 @@ public class MenuPanel extends JPanel {
         
                 new TableMain(menuFrame);
                 menuFrame.setVisible(false);
+            }
+        });
+        
+        btnCargarPartida.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evt) {
+                LoadGameDialog dialog = new LoadGameDialog(menuFrame);
+                Integer selectedLevel = dialog.showAndGetSelectedLevel();
+                
+                if (selectedLevel != null) {
+                    // User selected a game to load
+                    new TableMain(menuFrame, selectedLevel);
+                    menuFrame.setVisible(false);
+                }
+                // If null, user cancelled - do nothing
             }
         });
     }  
