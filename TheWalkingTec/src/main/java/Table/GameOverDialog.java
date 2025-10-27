@@ -80,15 +80,13 @@ public class GameOverDialog extends JDialog {
             dispose();
         });
         buttonPanel.add(retryButton);
+        JButton nextButton = createStyledButton("Siguiente Nivel");
+        nextButton.addActionListener(e -> {
+            choice = PlayerChoice.NEXT_LEVEL;
+            dispose();
+        });
+        buttonPanel.add(nextButton);
         
-        if (hasWon) {
-            JButton nextButton = createStyledButton("Siguiente Nivel");
-            nextButton.addActionListener(e -> {
-                choice = PlayerChoice.NEXT_LEVEL;
-                dispose();
-            });
-            buttonPanel.add(nextButton);
-        }
         
         JButton menuButton = createStyledButton("Menú Principal");
         menuButton.addActionListener(e -> {

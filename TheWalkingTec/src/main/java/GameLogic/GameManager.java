@@ -62,6 +62,7 @@ public class GameManager {
     private boolean roundActive;
     private boolean waveGenerated;
     private boolean victoryProcessed; // Flag to prevent multiple victory dialogs
+    private boolean lossProcessed; // Flag to prevent multiple game over dialogs
     private Defense lifeTree;
     private PlacedDefense lifeTreePlaced;
     private int lifeTreeRow;
@@ -93,6 +94,7 @@ public class GameManager {
         this.roundActive = false;
         this.waveGenerated = false;
         this.victoryProcessed = false;
+        this.lossProcessed = false;
         this.nextZombieIndexToSpawn = 0;
         this.lifeTree = null;
         this.lifeTreePlaced = null;
@@ -602,6 +604,7 @@ public class GameManager {
         roundActive = false;
         waveGenerated = false;
         victoryProcessed = false; // Reset victory flag for new round
+        lossProcessed = false; // Reset loss flag for new round
         nextZombieIndexToSpawn = 0;
         zombiesRemaining = 0;
         isPaused = true; // Importante: marcar como pausado para permitir colocar defensas
@@ -632,12 +635,20 @@ public class GameManager {
     }
 
     public void verifyLoss() {
+        // Prevent processing loss multiple times
+        if (lossProcessed) {
+            return;
+        }
 
         if (baseHealth <= 0 || (lifeTree != null && lifeTree.getHealthPoints() <= 0)) {
             log("===========================================");
             log("         GAME OVER - YOU LOST!            ");
             log("   The Life Tree has been destroyed!      ");
             log("===========================================");
+            
+            // Mark loss as processed to prevent multiple dialogs
+            lossProcessed = true;
+            
             stopGame();
             
             // Mostrar diálogo de Game Over
@@ -735,6 +746,7 @@ public class GameManager {
         roundActive = false;
         waveGenerated = false;
         victoryProcessed = false; // Reset victory flag for retry
+        lossProcessed = false; // Reset loss flag for retry
         nextZombieIndexToSpawn = 0;
 
         // DON'T change level or coins - keep the same level
@@ -930,6 +942,7 @@ public class GameManager {
         roundActive = false;
         waveGenerated = false;
         victoryProcessed = false; // Reset victory flag
+        lossProcessed = false; // Reset loss flag
         nextZombieIndexToSpawn = 0;
         selectedDefense = null;
 
