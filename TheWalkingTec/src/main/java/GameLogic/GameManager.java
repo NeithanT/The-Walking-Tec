@@ -210,7 +210,7 @@ public class GameManager {
         return true;
     }
     
-    public void generateWave(){
+    public void generateWave() {
         if (waveGenerated) {
             return;
         }
