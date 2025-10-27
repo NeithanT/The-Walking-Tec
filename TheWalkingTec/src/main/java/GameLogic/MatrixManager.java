@@ -87,7 +87,8 @@ public class MatrixManager {
         }
         return counter;
     }
-//    public void restartMatrix(){     
-//        iniciateMatrix();
-//    }
+    
+    public void restartMatrix(){     
+        iniciateMatrix();
+    }
 }

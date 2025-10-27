@@ -116,7 +116,13 @@ public class GameBoard extends JPanel {
             drawPreview(g);
         }
         
-        for (PlacedDefense defense : defenses){
+        // Create a copy to avoid ConcurrentModificationException
+        ArrayList<PlacedDefense> defensesCopy;
+        synchronized(defenses) {
+            defensesCopy = new ArrayList<>(defenses);
+        }
+        
+        for (PlacedDefense defense : defensesCopy){
             if (defense.image != null){
                 
                 int x = (int)(defense.column * cellWidth);
@@ -128,7 +134,13 @@ public class GameBoard extends JPanel {
         }
        
         // Draw zombies at their pixel positions
-        for (Object obj : zombies) {
+        // Create a copy to avoid ConcurrentModificationException
+        ArrayList<Object> zombiesCopy;
+        synchronized(zombies) {
+            zombiesCopy = new ArrayList<>(zombies);
+        }
+        
+        for (Object obj : zombiesCopy) {
             if (obj instanceof Zombie) {
                 Zombie zombie = (Zombie) obj;
                 drawZombie(g, zombie);
@@ -177,32 +189,45 @@ public class GameBoard extends JPanel {
     }
 
     public void addDefense(PlacedDefense defense){
-
-        defenses.add(defense);
+        synchronized(defenses) {
+            defenses.add(defense);
+        }
         repaint();
     }
 
     public void addZombie(Object zombie){
-
-        zombies.add(zombie);
+        synchronized(zombies) {
+            zombies.add(zombie);
+        }
         repaint();
 
     }
 
     public void deleteDefense(PlacedDefense defense){
-
-        defenses.remove(defense);
+        synchronized(defenses) {
+            defenses.remove(defense);
+        }
         repaint();
     }
 
     public void deleteZombie(Object zombie){
-
-        zombies.remove(zombie);
+        synchronized(zombies) {
+            zombies.remove(zombie);
+        }
         repaint();
     }
 
     public void clearZombies(){
-        zombies.clear();
+        synchronized(zombies) {
+            zombies.clear();
+        }
+        repaint();
+    }
+    
+    public void clearDefenses(){
+        synchronized(defenses) {
+            defenses.clear();
+        }
         repaint();
     }
         
@@ -235,9 +260,11 @@ public class GameBoard extends JPanel {
     }
 
     public PlacedDefense getDefenseAt(int row, int column) {
-        for (PlacedDefense defense : defenses) {
-            if (defense.row == row && defense.column == column) {
-                return defense;
+        synchronized(defenses) {
+            for (PlacedDefense defense : defenses) {
+                if (defense.row == row && defense.column == column) {
+                    return defense;
+                }
             }
         }
         return null;
