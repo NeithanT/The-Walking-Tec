@@ -67,7 +67,9 @@ final class WaveManager {
         gameManager.getWaveZombiesInternal().clear();
         syncWaveDefenseWithBoard();
 
-        System.out.println("Starting round " + gameManager.getLevel());
+        if (gameManager.getSidePanel() != null) {
+            gameManager.getSidePanel().appendLog("Starting round " + gameManager.getLevel());
+        }
         generateWave();
         gameManager.setRoundActive(true);
 
@@ -83,10 +85,14 @@ final class WaveManager {
         }
 
         List<Zombie> pool = gameManager.getConfigManager().getZombies();
-        System.out.println("DEBUG: Zombie pool size: " + (pool != null ? pool.size() : "null"));
+        if (gameManager.getSidePanel() != null) {
+            gameManager.getSidePanel().appendLog("DEBUG: Zombie pool size: " + (pool != null ? pool.size() : "null"));
+        }
         
         if (pool == null || pool.isEmpty()) {
-            System.out.println("No zombies configured. Cannot generate wave.");
+            if (gameManager.getSidePanel() != null) {
+                gameManager.getSidePanel().appendLog("No zombies configured. Cannot generate wave.");
+            }
             gameManager.setWaveGenerated(true);
             return;
         }
@@ -108,7 +114,9 @@ final class WaveManager {
         }
 
         if (availableZombies.isEmpty()) {
-            System.out.println("No valid zombies found for the current round.");
+            if (gameManager.getSidePanel() != null) {
+                gameManager.getSidePanel().appendLog("No valid zombies found for the current round.");
+            }
             gameManager.setWaveGenerated(true);
             return;
         }
@@ -156,15 +164,21 @@ final class WaveManager {
             }
 
             String name = spawnedZombie.getEntityName() != null ? spawnedZombie.getEntityName() : "Zombie";
-            System.out.println("Spawn zombie: " + name + " (#" + spawned + ")");
+            if (gameManager.getSidePanel() != null) {
+                gameManager.getSidePanel().appendLog("Spawn zombie: " + name + " (#" + spawned + ")");
+            }
         }
 
         gameManager.setZombiesRemaining(waveZombies.size());
 
         if (spawned == 0) {
-            System.out.println("No zombies could be spawned with the current round budget");
+            if (gameManager.getSidePanel() != null) {
+                gameManager.getSidePanel().appendLog("No zombies could be spawned with the current round budget");
+            }
         } else {
-            System.out.println("Wave level [" + level + "] generated with cost " + (gameManager.getCoinsThisLevel() - budget) + "/" + gameManager.getCoinsThisLevel());
+            if (gameManager.getSidePanel() != null) {
+                gameManager.getSidePanel().appendLog("Wave level [" + level + "] generated with cost " + (gameManager.getCoinsThisLevel() - budget) + "/" + gameManager.getCoinsThisLevel());
+            }
         }
 
         gameManager.setWaveGenerated(true);

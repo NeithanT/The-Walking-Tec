@@ -74,6 +74,7 @@ public class GameManager {
         this.sidePanel = sidePanel;
         this.parentFrame = null; // Se establecerá después
         this.matrixManager = new MatrixManager();
+        this.matrixManager.setGameManager(this); // Set reference back
         this.configMg = new ConfigManager();
         this.rnd = new Random();
         this.waveManager = new WaveManager(this);
@@ -103,15 +104,15 @@ public class GameManager {
     public boolean startGame() {
         // Evitar que se inicie el juego múltiples veces
         if (gameTimer != null && gameTimer.isRunning()) {
-            System.out.println("Game is already running!");
+            log("Game is already running!");
             return false;
         }
 
         if (lifeTreePlaced == null) {
-            System.out.println("===========================================");
-            System.out.println("  ERROR: You must place the Life Tree     ");
-            System.out.println("         before starting the game!        ");
-            System.out.println("===========================================");
+            log("===========================================");
+            log("  ERROR: You must place the Life Tree     ");
+            log("         before starting the game!        ");
+            log("===========================================");
             return false;
         }
         if (gameTimer == null) {
@@ -130,7 +131,7 @@ public class GameManager {
         int combatDelay = 1000; // 1 segundo
         combatTimer = new Timer(combatDelay, e -> processCombat());
         combatTimer.start();
-        System.out.println("Combat timer (re)created and started");
+        log("Combat timer (re)created and started");
         
         isPaused = false;
 
@@ -138,7 +139,7 @@ public class GameManager {
             startRound();
         }
 
-        System.out.println("Juego iniciado");
+        log("Juego iniciado");
         return true;
     }
 
@@ -146,7 +147,7 @@ public class GameManager {
 
         isPaused = !isPaused;
         String message = isPaused ? "Juego Pausado" : "Juego reanudado";
-        System.out.println(message);
+        log(message);
     }
 
     public void stopGame() {
@@ -167,12 +168,12 @@ public class GameManager {
 
         this.selectedDefense = defenseName;
         board.setSelectedDefense(defenseName != null ? defenseName.getEntityName() : null);
-        System.out.println("Selected Defense: " + (defenseName != null ? defenseName.getEntityName() : "null"));
+        log("Selected Defense: " + (defenseName != null ? defenseName.getEntityName() : "null"));
     }
     public boolean placeDefences(int row, int column) {
         // No permitir colocar defensas si la ronda está activa (jugando)
         if (roundActive) {
-            System.out.println("Cannot place defenses while a round is in progress!");
+            log("Cannot place defenses while a round is in progress!");
             return false;
         }
 
@@ -184,12 +185,12 @@ public class GameManager {
 
         // El Life Tree no consume recursos, así que no verificar capacidad
         if (!isLifeTreeSelection && !canAffordDefense(selectedDefense)) {
-            System.out.println("Not enough defense capacity for this placement");
+            log("Not enough defense capacity for this placement");
             return false;
         }
 
         if (isLifeTreeSelection && lifeTreePlaced != null) {
-            System.out.println("Life Tree already exists");
+            log("Life Tree already exists");
             return false;
         }
 
@@ -209,7 +210,7 @@ public class GameManager {
         // Agregar a la lista de defensas activas para combate (excepto Life Tree)
         if (!isLifeTreeSelection) {
             waveDefense.add(placedDefinition);
-            System.out.println("Defense added to combat list: " + placedDefinition.getEntityName() + " at (" + row + ", " + column + ")");
+            log("Defense added to combat list: " + placedDefinition.getEntityName() + " at (" + row + ", " + column + ")");
         }
 
         // El Life Tree no consume recursos
@@ -224,7 +225,7 @@ public class GameManager {
             lifeTreeColumn = column;
             baseHealth = lifeTree.getHealthPoints();
             lifeTreeInitialHealth = lifeTree.getHealthPoints(); // Guardar salud inicial
-            System.out.println("Life Tree placed! Health: " + baseHealth);
+            log("Life Tree placed! Health: " + baseHealth);
             
             // Notificar al panel lateral para que oculte el Life Tree del catálogo
             if (sidePanel != null) {
@@ -283,12 +284,12 @@ public class GameManager {
         zombie.setAlive(false);
         registerZombieDefeat(zombie);
 
-        System.out.println("Zombie attacked the Life Tree! Damage: " + damage
+        log("Zombie attacked the Life Tree! Damage: " + damage
                 + " | Life Tree health: " + lifeTree.getHealthPoints()
                 + " | Base health: " + baseHealth);
 
         if (lifeTree.getHealthPoints() <= 0) {
-            System.out.println("The Life Tree has been destroyed!");
+            log("The Life Tree has been destroyed!");
             destroyLifeTree();
         }
         
@@ -304,7 +305,7 @@ public class GameManager {
         // Resetear el índice de spawn
         nextZombieIndexToSpawn = 0;
         
-        System.out.println("Starting zombie spawn system. Total zombies: " + waveZombies.size());
+        log("Starting zombie spawn system. Total zombies: " + waveZombies.size());
         
         // Si ya hay un timer de spawn activo, detenerlo
         if (zombieSpawnTimer != null && zombieSpawnTimer.isRunning()) {
@@ -323,22 +324,22 @@ public class GameManager {
                     // Si ya spawneamos todos, detener el timer
                     if (nextZombieIndexToSpawn >= waveZombies.size()) {
                         ((Timer)e.getSource()).stop();
-                        System.out.println("All zombies spawned! Timer stopped.");
+                        log("All zombies spawned! Timer stopped.");
                     }
                 }
             });
             zombieSpawnTimer.setRepeats(true); // Asegurar que se repita
             zombieSpawnTimer.start();
-            System.out.println("Zombie spawn timer started with " + SPAWN_DELAY_MS + "ms delay");
+            log("Zombie spawn timer started with " + SPAWN_DELAY_MS + "ms delay");
         } else {
-            System.out.println("All zombies spawned in first batch");
+            log("All zombies spawned in first batch");
         }
     }
     
     private void spawnNextZombieBatch() {
         // Check if there are zombies to spawn
         if (waveZombies.isEmpty()) {
-            System.out.println("WARNING: waveZombies is empty, cannot spawn");
+            log("WARNING: waveZombies is empty, cannot spawn");
             if (zombieSpawnTimer != null && zombieSpawnTimer.isRunning()) {
                 zombieSpawnTimer.stop();
             }
@@ -346,7 +347,7 @@ public class GameManager {
         }
         
         if (nextZombieIndexToSpawn >= waveZombies.size()) {
-            System.out.println("WARNING: All zombies already spawned (" + nextZombieIndexToSpawn + "/" + waveZombies.size() + "), stopping timer");
+            log("WARNING: All zombies already spawned (" + nextZombieIndexToSpawn + "/" + waveZombies.size() + "), stopping timer");
             if (zombieSpawnTimer != null && zombieSpawnTimer.isRunning()) {
                 zombieSpawnTimer.stop();
             }
@@ -356,7 +357,7 @@ public class GameManager {
         int endIndex = Math.min(nextZombieIndexToSpawn + ZOMBIES_PER_SPAWN_BATCH, waveZombies.size());
         int spawnedInBatch = 0;
         
-        System.out.println("Spawning batch: indices " + nextZombieIndexToSpawn + " to " + (endIndex-1) + " (total: " + waveZombies.size() + ")");
+        log("Spawning batch: indices " + nextZombieIndexToSpawn + " to " + (endIndex-1) + " (total: " + waveZombies.size() + ")");
         
         for (int i = nextZombieIndexToSpawn; i < endIndex; i++) {
             Zombie zombie = waveZombies.get(i);
@@ -368,15 +369,15 @@ public class GameManager {
                     zombie.start();
                     spawnedInBatch++;
                 } else {
-                    System.out.println("Zombie #" + i + " already started (state: " + zombie.getState() + ")");
+                    log("Zombie #" + i + " already started (state: " + zombie.getState() + ")");
                 }
             } else {
-                System.out.println("WARNING: Zombie #" + i + " is null!");
+                log("WARNING: Zombie #" + i + " is null!");
             }
         }
         
         nextZombieIndexToSpawn = endIndex;
-        System.out.println("Spawned batch of " + spawnedInBatch + " zombies (" + nextZombieIndexToSpawn + "/" + waveZombies.size() + ")");
+        log("Spawned batch of " + spawnedInBatch + " zombies (" + nextZombieIndexToSpawn + "/" + waveZombies.size() + ")");
         
         // Update UI after spawning
         if (sidePanel != null) {
@@ -446,16 +447,13 @@ public class GameManager {
         
         // Note: We don't check board.getZombies().size() because it may have stale references
         // The waveZombies list is the authoritative source for zombie count
-        
-        System.out.println("Victory check - Alive: " + aliveZombiesCount + " | Unspawned: " + 
-            unspawnedZombiesCount + " | Total in waveZombies: " + waveZombies.size());
 
         // Solo hay victoria si NO quedan zombies vivos (ni spawneados ni por spawnear)
         if (aliveZombiesCount == 0 && unspawnedZombiesCount == 0) {
-            System.out.println("===========================================");
-            System.out.println("         VICTORY - LEVEL COMPLETE!        ");
-            System.out.println("   All zombies have been defeated!       ");
-            System.out.println("===========================================");
+            log("===========================================");
+            log("         VICTORY - LEVEL COMPLETE!        ");
+            log("   All zombies have been defeated!       ");
+            log("===========================================");
             
             // Mark victory as processed to prevent multiple dialogs
             victoryProcessed = true;
@@ -485,13 +483,13 @@ public class GameManager {
             case RETRY_LEVEL:
                 // Reintentar el nivel actual
                 retryLevel();
-                System.out.println("Restarting level " + level);
+                log("Restarting level " + level);
                 break;
                 
             case NEXT_LEVEL:
                 // Avanzar al siguiente nivel
                 advanceToNextRound();
-                System.out.println("Advancing to level " + (level + 1));
+                log("Advancing to level " + (level + 1));
                 break;
                 
             case RETURN_TO_MENU:
@@ -559,20 +557,20 @@ public class GameManager {
             sidePanel.updateAllLabels();
         }
         
-        System.out.println("===========================================");
-        System.out.println("         LEVEL " + level + " STARTING...        ");
-        System.out.println("   Coins available: " + coinsThisLevel);
-        System.out.println("   Place your defenses and Life Tree!      ");
-        System.out.println("===========================================");
+        log("===========================================");
+        log("         LEVEL " + level + " STARTING...        ");
+        log("   Coins available: " + coinsThisLevel);
+        log("   Place your defenses and Life Tree!      ");
+        log("===========================================");
     }
 
     public void verifyLoss() {
 
         if (baseHealth <= 0 || (lifeTree != null && lifeTree.getHealthPoints() <= 0)) {
-            System.out.println("===========================================");
-            System.out.println("         GAME OVER - YOU LOST!            ");
-            System.out.println("   The Life Tree has been destroyed!      ");
-            System.out.println("===========================================");
+            log("===========================================");
+            log("         GAME OVER - YOU LOST!            ");
+            log("   The Life Tree has been destroyed!      ");
+            log("===========================================");
             stopGame();
             
             // Mostrar diálogo de Game Over
@@ -601,7 +599,7 @@ public class GameManager {
             case RETRY_LEVEL:
                 // Reiniciar el nivel actual manteniendo las defensas
                 retryLevel();
-                System.out.println("Restarting level " + level);
+                log("Restarting level " + level);
                 break;
                 
             case NEXT_LEVEL:
@@ -613,7 +611,7 @@ public class GameManager {
                 if (sidePanel != null) {
                     sidePanel.updateAllLabels();
                 }
-                System.out.println("Advancing to level " + level);
+                log("Advancing to level " + level);
                 break;
                 
             case RETURN_TO_MENU:
@@ -636,9 +634,9 @@ public class GameManager {
      * Retry current level - resets everything to start the same level again
      */
     private void retryLevel() {
-        System.out.println("===========================================");
-        System.out.println("         RETRYING LEVEL...                ");
-        System.out.println("===========================================");
+        log("===========================================");
+        log("         RETRYING LEVEL...                ");
+        log("===========================================");
 
         stopGame();
 
@@ -682,7 +680,7 @@ public class GameManager {
             sidePanel.showLifeTreeInCatalog();
         }
 
-        System.out.println("Level " + level + " ready to retry. Place your defenses again!");
+        log("Level " + level + " ready to retry. Place your defenses again!");
     }
 
     private Image loadAndScale(String path) {
@@ -790,12 +788,12 @@ public class GameManager {
 
     public void registerZombieDefeat(Zombie zombie) {
         if (zombie == null) {
-            System.out.println("WARNING: registerZombieDefeat called with null zombie");
+            log("WARNING: registerZombieDefeat called with null zombie");
             return;
         }
         
         if (!zombie.isAlive()) {
-            System.out.println("WARNING: registerZombieDefeat called for already dead zombie: " + zombie.getEntityName());
+            log("WARNING: registerZombieDefeat called for already dead zombie: " + zombie.getEntityName());
             return; // Ya fue contado
         }
         
@@ -806,7 +804,7 @@ public class GameManager {
         
         // No longer manually decrement counter - getZombiesRemaining() calculates it dynamically
         
-        System.out.println("✓ Zombie defeated: " + zombie.getEntityName() + 
+        log("✓ Zombie defeated: " + zombie.getEntityName() + 
             " | Remaining: " + getZombiesRemaining() + 
             " | Thread state: " + zombie.getState());
         
@@ -840,9 +838,9 @@ public class GameManager {
     }
 
     public void resetGame() {
-        System.out.println("===========================================");
-        System.out.println("         RESETTING GAME...                ");
-        System.out.println("===========================================");
+        log("===========================================");
+        log("         RESETTING GAME...                ");
+        log("===========================================");
 
         stopGame();
 
@@ -878,7 +876,7 @@ public class GameManager {
             sidePanel.enableStartButton(); // Reactivar el botón de Start
         }
 
-        System.out.println("Game reset complete. Place the Life Tree to start again.");
+        log("Game reset complete. Place the Life Tree to start again.");
     }
 
     public boolean isGamePaused() {
@@ -927,6 +925,15 @@ public class GameManager {
 
     public MatrixManager getMatrixManager() {
         return matrixManager;
+    }
+    
+    /**
+     * Logs a message to the side panel
+     */
+    private void log(String message) {
+        if (sidePanel != null) {
+            sidePanel.appendLog(message);
+        }
     }
     
     /**
@@ -1045,7 +1052,7 @@ public class GameManager {
             return;
         }
         
-        System.out.println("=== COMBAT TICK === Defenses: " + waveDefense.size() + " | Zombies: " + waveZombies.size());
+        log("=== COMBAT TICK === Defenses: " + waveDefense.size() + " | Zombies: " + waveZombies.size());
         
         // Process defense attacks - usar una copia para evitar ConcurrentModificationException
         List<Defense> defensesToProcess = new ArrayList<>(waveDefense);
@@ -1133,7 +1140,7 @@ public class GameManager {
             for (int i = 0; i < attackCount && !validTargets.isEmpty(); i++) {
                 Entity target = validTargets.get(i % validTargets.size());
                 int distance = CombatRules.calculateDistance(defense, target);
-                System.out.println(defense.getEntityName() + " (range:" + defense.getAttackRange() + 
+                log(defense.getEntityName() + " (range:" + defense.getAttackRange() + 
                     ") attacks " + target.getEntityName() + " at distance " + distance + 
                     " for " + damage + " damage");
                 applyDamage(target, damage);
@@ -1143,7 +1150,7 @@ public class GameManager {
             Entity closestTarget = findClosestEntity(defense, validTargets);
             if (closestTarget != null) {
                 int distance = CombatRules.calculateDistance(defense, closestTarget);
-                System.out.println(defense.getEntityName() + " (range:" + defense.getAttackRange() + 
+                log(defense.getEntityName() + " (range:" + defense.getAttackRange() + 
                     ") attacks " + closestTarget.getEntityName() + " at distance " + distance + 
                     " for " + damage + " damage");
                 applyDamage(closestTarget, damage);
@@ -1191,7 +1198,7 @@ public class GameManager {
         Entity closestTarget = findClosestEntity(zombie, validTargets);
         if (closestTarget != null) {
             int distance = CombatRules.calculateDistance(zombie, closestTarget);
-            System.out.println(zombie.getEntityName() + " (range:" + zombie.getAttackRange() + 
+            log(zombie.getEntityName() + " (range:" + zombie.getAttackRange() + 
                 ") attacks " + closestTarget.getEntityName() + " at distance " + distance + 
                 " for " + damage + " damage");
             applyDamage(closestTarget, damage);
@@ -1261,12 +1268,12 @@ public class GameManager {
             }
         }
         
-        System.out.println("=== EXPLOSION === Defense " + defense.getEntityName() + 
+        log("=== EXPLOSION === Defense " + defense.getEntityName() + 
             " exploded at (" + defRow + "," + defCol + ")! Zombies in 3x3 area: " + zombiesInExplosionArea.size());
         
         // Matar a todos los zombies en el área
         for (Zombie zombie : zombiesInExplosionArea) {
-            System.out.println("  - Exploding on zombie: " + zombie.getEntityName() + 
+            log("  - Exploding on zombie: " + zombie.getEntityName() + 
                 " at (" + zombie.getCurrentRow() + "," + zombie.getCurrentColumn() + ")" +
                 " (HP: " + zombie.getHealthPoints() + ", Alive: " + zombie.isAlive() + ")");
             applyDamage(zombie, 999999); // Instant kill
@@ -1275,7 +1282,7 @@ public class GameManager {
         // Defense is destroyed
         defense.setHealthPoints(0);
         removeDefenseFromBoard(defense);
-        System.out.println("=== EXPLOSION END === " + defense.getEntityName() + " removed from board");
+        log("=== EXPLOSION END === " + defense.getEntityName() + " removed from board");
     }
     
     /**
@@ -1308,12 +1315,12 @@ public class GameManager {
             }
         }
         
-        System.out.println("=== EXPLOSION === Zombie " + zombie.getEntityName() + 
+        log("=== EXPLOSION === Zombie " + zombie.getEntityName() + 
             " exploded at (" + zombieRow + "," + zombieCol + ")! Defenses in 3x3 area: " + defensesInExplosionArea.size());
         
         // Destruir todas las defensas en el área
         for (Defense defense : defensesInExplosionArea) {
-            System.out.println("  - Exploding on defense: " + defense.getEntityName() + 
+            log("  - Exploding on defense: " + defense.getEntityName() + 
                 " at (" + defense.getCurrentRow() + "," + defense.getCurrentColumn() + ")" +
                 " (HP: " + defense.getHealthPoints() + ")");
             applyDamage(defense, 999999); // Instant kill
@@ -1323,7 +1330,7 @@ public class GameManager {
         zombie.setHealthPoints(0);
         zombie.setAlive(false);
         registerZombieDefeat(zombie);
-        System.out.println("=== EXPLOSION END === " + zombie.getEntityName() + " died from explosion");
+        log("=== EXPLOSION END === " + zombie.getEntityName() + " died from explosion");
     }
     
     /**
@@ -1334,10 +1341,10 @@ public class GameManager {
         int newHealth = Math.max(0, currentHealth - damage);
         target.setHealthPoints(newHealth);
         
-        System.out.println(target.getEntityName() + " took " + damage + " damage! HP: " + currentHealth + " -> " + newHealth);
+        log(target.getEntityName() + " took " + damage + " damage! HP: " + currentHealth + " -> " + newHealth);
         
         if (newHealth <= 0) {
-            System.out.println(target.getEntityName() + " has been defeated!");
+            log(target.getEntityName() + " has been defeated!");
             
             if (target instanceof Zombie) {
                 Zombie z = (Zombie) target;
@@ -1363,7 +1370,7 @@ public class GameManager {
         // Note: In future, cap healing at max health
         target.setHealthPoints(newHealth);
         
-        System.out.println(target.getEntityName() + " was healed for " + healAmount + " HP");
+        log(target.getEntityName() + " was healed for " + healAmount + " HP");
     }
     
     /**
@@ -1472,7 +1479,7 @@ public class GameManager {
         
         if (!zombiesToRemove.isEmpty()) {
             waveZombies.removeAll(zombiesToRemove);
-            System.out.println("Removed " + zombiesToRemove.size() + " dead zombies from wave list");
+            log("Removed " + zombiesToRemove.size() + " dead zombies from wave list");
         }
         
         // Remove dead defenses
@@ -1486,7 +1493,7 @@ public class GameManager {
         
         if (!defensesToRemove.isEmpty()) {
             waveDefense.removeAll(defensesToRemove);
-            System.out.println("Removed " + defensesToRemove.size() + " dead defenses from wave list");
+            log("Removed " + defensesToRemove.size() + " dead defenses from wave list");
         }
     }
 }

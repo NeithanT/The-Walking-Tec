@@ -5,6 +5,7 @@ package GameLogic;
 public class MatrixManager {
     
     private boolean occupied[][];
+    private GameManager gameManager;
     
     
     public MatrixManager(){
@@ -12,6 +13,11 @@ public class MatrixManager {
         occupied = new boolean[25][25];
         iniciateMatrix();
     }
+    
+    public void setGameManager(GameManager gameManager) {
+        this.gameManager = gameManager;
+    }
+    
     public void iniciateMatrix(){
         
         for (int i = 0; i < 25; i++){
@@ -36,23 +42,31 @@ public class MatrixManager {
     public boolean placeDefense(int row,int column){ 
         
         if (!isValidPosition(row, column)){
-            System.out.println("Invalid Position, try again");
+            if (gameManager != null) {
+                gameManager.getSidePanel().appendLog("Invalid Position, try again");
+            }
             return false;
         }
         
         if (occupied[row][column]){
-            System.out.println("This cell is already ocuppied");
+            if (gameManager != null) {
+                gameManager.getSidePanel().appendLog("This cell is already ocuppied");
+            }
             return false;
         }
         
         if (!isValidDefensePosition(row, column)){
-            System.out.println("Cannot place defenses on this cell. Try another");
+            if (gameManager != null) {
+                gameManager.getSidePanel().appendLog("Cannot place defenses on this cell. Try another");
+            }
             return false;
         }
         
         else {
             occupied[row][column] = true;
-            System.out.println("Defense placed");
+            if (gameManager != null) {
+                gameManager.getSidePanel().appendLog("Defense placed");
+            }
             return true;
         }
         

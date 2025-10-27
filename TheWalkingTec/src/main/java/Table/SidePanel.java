@@ -183,7 +183,7 @@ public class SidePanel extends JPanel {
         appendLog(gameManager.isGamePaused() ? "Game paused." : "Game resumed.");
     }
 
-    private void appendLog(String message){
+    public void appendLog(String message){
         if (txaLogs == null){
             return;
         }
@@ -338,38 +338,66 @@ public class SidePanel extends JPanel {
         itemPanel.add(imgPanel, gbc);
         
         JPanel infoPanel = new JPanel();
-        infoPanel.setLayout(new GridLayout(3, 1));
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
         infoPanel.setBackground(new Color(60, 63, 65));
         
         String name = def.getEntityName() != null ? def.getEntityName() : "(Sin nombre)";
         JLabel lblName = new JLabel("Name: " + name);
         lblName.setForeground(new Color(187, 187, 187));
         lblName.setFont(lblName.getFont().deriveFont(Font.BOLD, 13f));
+        lblName.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
         infoPanel.add(lblName);
         
-        JLabel lblHealth = new JLabel("Vida: " + def.getHealthPoints());
-        lblHealth.setForeground(new Color(187, 187, 187));
+        JLabel lblHealth = new JLabel("HP: " + def.getHealthPoints());
+        lblHealth.setForeground(new Color(76, 175, 80));
+        lblHealth.setFont(lblHealth.getFont().deriveFont(Font.BOLD));
+        lblHealth.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
         infoPanel.add(lblHealth);
         
+        JLabel lblCost = new JLabel("Cost: " + def.getCost());
+        lblCost.setForeground(new Color(255, 193, 7));
+        lblCost.setFont(lblCost.getFont().deriveFont(Font.BOLD));
+        lblCost.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+        infoPanel.add(lblCost);
+        
+        // Show attack stats if it's an attacker
         if (def instanceof DefenseAttacker attack){
-            JLabel lblDamage = new JLabel("Ataque: " + attack.getAttack());
-            lblDamage.setForeground(new Color(187, 187, 187));
-            infoPanel.add(lblDamage);    
+            JLabel lblDamage = new JLabel("Attack: " + attack.getAttack());
+            lblDamage.setForeground(new Color(244, 67, 54));
+            lblDamage.setFont(lblDamage.getFont().deriveFont(Font.BOLD));
+            lblDamage.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+            infoPanel.add(lblDamage);
+            
+            JLabel lblRange = new JLabel("Range: " + attack.getRange());
+            lblRange.setForeground(new Color(33, 150, 243));
+            lblRange.setFont(lblRange.getFont().deriveFont(Font.BOLD));
+            lblRange.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+            infoPanel.add(lblRange);
         }
         
-        JLabel lblSize = new JLabel("Costo: " + def.getCost());
-        lblSize.setForeground(new Color(187, 187, 187));
-        infoPanel.add(lblSize);
-        
+        // Show heal power if it's a healer
         if (def instanceof DefenseHealer heal){
-            JLabel lblHeal = new JLabel("Cura: " + heal.getHealPower());
-            lblHeal.setForeground(new Color(187, 187, 187));
-            infoPanel.add(lblHeal);    
+            JLabel lblHeal = new JLabel("Heal: " + heal.getHealPower());
+            lblHeal.setForeground(new Color(156, 39, 176));
+            lblHeal.setFont(lblHeal.getFont().deriveFont(Font.BOLD));
+            lblHeal.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+            infoPanel.add(lblHeal);
         }
-        if (def instanceof DefenseAttacker range){
-            JLabel lblRange = new JLabel("Rango: " + range.getRange());
-            lblRange.setForeground(new Color(187, 187, 187));
-            infoPanel.add(lblRange);    
+        
+        // Show defense types
+        if (def.getTypes() != null && !def.getTypes().isEmpty()) {
+            StringBuilder typesStr = new StringBuilder("Type: ");
+            int count = 0;
+            for (DefenseType type : def.getTypes()) {
+                if (count > 0) typesStr.append(", ");
+                typesStr.append(type.toString());
+                count++;
+            }
+            JLabel lblTypes = new JLabel(typesStr.toString());
+            lblTypes.setForeground(new Color(150, 150, 150));
+            lblTypes.setFont(lblTypes.getFont().deriveFont(Font.PLAIN, 10f));
+            lblTypes.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);
+            infoPanel.add(lblTypes);
         }
 
         gbc.gridx = 1;
@@ -455,7 +483,7 @@ public class SidePanel extends JPanel {
         if (gameManager != null){
             Defense def = (Defense) panel.getClientProperty("defenseDef");
             gameManager.setSelectedDefense(def);
-            System.out.println("Seleccionada: " + (def != null ? def.getEntityName() : "null"));
+            appendLog("Seleccionada: " + (def != null ? def.getEntityName() : "null"));
         }   
     }
     

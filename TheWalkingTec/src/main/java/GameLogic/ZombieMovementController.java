@@ -110,7 +110,9 @@ final class ZombieMovementController {
         // Si no encontramos una posición libre después de varios intentos,
         // usar la última generada (esto es raro pero evita quedarse en loop)
         if (attempts >= maxAttempts) {
-            System.out.println("Warning: Could not find free spawn position after " + maxAttempts + " attempts");
+            if (gameManager.getSidePanel() != null) {
+                gameManager.getSidePanel().appendLog("Warning: Could not find free spawn position after " + maxAttempts + " attempts");
+            }
         }
 
         double pixelX = board.cellToPixelX(column);
@@ -133,9 +135,11 @@ final class ZombieMovementController {
             
             // Log para debugging solo si la ronda está activa
             if (gameManager.isRoundActive() && (zombie.getTargetRow() != targetRow || zombie.getTargetColumn() != targetColumn)) {
-                System.out.println(zombie.getEntityName() + " (flying:" + zombie.isFlying() + 
-                    ") targeting defense " + nearestDefense.getEntityName() + 
-                    " (flying:" + nearestDefense.isFlying() + ") at (" + targetRow + "," + targetColumn + ")");
+                if (gameManager.getSidePanel() != null) {
+                    gameManager.getSidePanel().appendLog(zombie.getEntityName() + " (flying:" + zombie.isFlying() + 
+                        ") targeting defense " + nearestDefense.getEntityName() + 
+                        " (flying:" + nearestDefense.isFlying() + ") at (" + targetRow + "," + targetColumn + ")");
+                }
             }
         } else {
             // Si no, ir hacia el Life Tree
