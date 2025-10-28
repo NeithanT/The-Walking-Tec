@@ -4,7 +4,7 @@ import Entity.Entity;
 import GameLogic.GameManager;
 import java.util.ArrayList;
 
-public class Zombie extends Entity {
+public class Zombie extends Entity implements Runnable {
     
     protected ArrayList<ZombieType> types;
     
@@ -19,6 +19,12 @@ public class Zombie extends Entity {
     protected boolean isAlive;
     protected double movementSpeed; // cells per second
     protected GameManager gameManager;
+    
+    // Thread control
+    private Thread zombieThread;
+    private volatile boolean running = false;
+    private static final long MOVEMENT_DELAY = 50; // 50ms = ~20 FPS
+    private static final long ATTACK_DELAY = 1000; // 1 second between attacks
     
     public Zombie() {
         types = new ArrayList<>();
@@ -127,28 +133,6 @@ public class Zombie extends Entity {
     }
     
     /**
-     * Thread run method - handles zombie movement and behavior
-     */
-    @Override
-    public void run() {
-        while (isAlive && gameManager != null) {
-            try {
-                // Request next move from GameManager
-                if (gameManager != null) {
-                    gameManager.moveZombieTowardsLifeTree(this);
-                }
-                
-                // Sleep to control update rate (60 FPS)
-                Thread.sleep(16);
-                
-            } catch (InterruptedException e) {
-                isAlive = false;
-                break;
-            }
-        }
-    }
-    
-    /**
      * Smoothly moves the zombie towards a target position
      */
     public void moveTowardsTarget(double targetPixelX, double targetPixelY, double deltaTime) {
@@ -230,6 +214,89 @@ public class Zombie extends Entity {
         
         // Default (shouldn't reach here)
         return 1;
+    }
+    
+    // ==================== THREAD METHODS ====================
+    
+    /**
+     * Main thread loop for zombie behavior
+     */
+    @Override
+    public void run() {
+        long lastAttackTime = 0;
+        
+        while (running && isAlive && healthPoints > 0) {
+            try {
+                if (gameManager == null || gameManager.isGamePaused()) {
+                    Thread.sleep(100);
+                    continue;
+                }
+                
+                // 1. Movement phase - move towards CLOSEST TARGET (defense or Life Tree)
+                gameManager.moveZombieTowardsClosestTarget(this);
+                
+                // 2. Attack phase - check if can attack
+                long currentTime = System.currentTimeMillis();
+                if (currentTime - lastAttackTime >= ATTACK_DELAY) {
+                    performAttack();
+                    lastAttackTime = currentTime;
+                }
+                
+                // Sleep to control movement speed
+                Thread.sleep(MOVEMENT_DELAY);
+                
+            } catch (InterruptedException e) {
+                running = false;
+                Thread.currentThread().interrupt();
+            } catch (Exception e) {
+                System.err.println("Error in zombie thread " + getDisplayName() + ": " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+        
+        // Cleanup when thread ends
+        isAlive = false;
+    }
+    
+    /**
+     * Perform attack logic (to be called by the thread)
+     */
+    private void performAttack() {
+        if (gameManager == null) return;
+        
+        // Delegate to GameManager to handle the actual attack
+        // This keeps combat logic centralized and synchronized
+        gameManager.processZombieAttackThreaded(this);
+    }
+    
+    /**
+     * Start the zombie thread
+     */
+    public void startThread() {
+        if (zombieThread == null || !zombieThread.isAlive()) {
+            running = true;
+            zombieThread = new Thread(this, "Zombie-" + getDisplayName());
+            zombieThread.setDaemon(true); // Allow JVM to exit even if thread is running
+            zombieThread.start();
+            System.out.println("▶ Started thread for " + getDisplayName());
+        }
+    }
+    
+    /**
+     * Stop the zombie thread
+     */
+    public void stopThread() {
+        running = false;
+        if (zombieThread != null) {
+            zombieThread.interrupt();
+        }
+    }
+    
+    /**
+     * Check if thread is running
+     */
+    public boolean isThreadRunning() {
+        return running && zombieThread != null && zombieThread.isAlive();
     }
     
 }

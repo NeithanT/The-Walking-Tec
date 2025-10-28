@@ -175,6 +175,9 @@ final class WaveManager {
             if (board != null) {
                 board.addZombie(spawnedZombie);
             }
+            
+            // Start zombie thread
+            spawnedZombie.startThread();
 
             String name = spawnedZombie.getEntityName() != null ? spawnedZombie.getEntityName() : "Zombie";
             if (gameManager.getSidePanel() != null) {

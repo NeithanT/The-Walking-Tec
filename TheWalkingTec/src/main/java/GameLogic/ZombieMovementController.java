@@ -15,6 +15,43 @@ final class ZombieMovementController {
     ZombieMovementController(GameManager gameManager) {
         this.gameManager = gameManager;
     }
+    
+    /**
+     * Move zombie towards a specific target (defense)
+     */
+    void moveZombieTowardsTarget(Zombie zombie, int targetRow, int targetColumn) {
+        if (zombie == null || !zombie.isAlive() || gameManager.isGamePaused()) {
+            return;
+        }
+
+        if (zombie.getCurrentRow() < 0 || zombie.getCurrentColumn() < 0) {
+            spawnZombieAtEdge(zombie);
+        }
+
+        int currentRow = zombie.getCurrentRow();
+        int currentColumn = zombie.getCurrentColumn();
+        int zombieTargetRow = zombie.getTargetRow();
+        int zombieTargetColumn = zombie.getTargetColumn();
+
+        boolean needsNewTarget = (zombieTargetRow == currentRow && zombieTargetColumn == currentColumn)
+                || (zombieTargetRow < 0 || zombieTargetColumn < 0);
+
+        if (needsNewTarget) {
+            int[] nextCell = calculateNextCellTowards(zombie, currentRow, currentColumn, targetRow, targetColumn);
+            zombie.setTargetRow(nextCell[0]);
+            zombie.setTargetColumn(nextCell[1]);
+        }
+
+        GameBoard board = gameManager.getBoard();
+        if (board == null) {
+            return;
+        }
+
+        double targetPixelX = board.cellToPixelX(zombie.getTargetColumn());
+        double targetPixelY = board.cellToPixelY(zombie.getTargetRow());
+
+        zombie.moveTowardsTarget(targetPixelX, targetPixelY, FRAME_DELTA_TIME);
+    }
 
     void moveZombieTowardsLifeTree(Zombie zombie) {
         if (zombie == null || !zombie.isAlive() || gameManager.isGamePaused()) {
@@ -151,6 +188,66 @@ final class ZombieMovementController {
         int nextRow = currentRow;
         int nextColumn = currentColumn;
 
+        if (Math.abs(rowDiff) > Math.abs(colDiff)) {
+            if (rowDiff > 0) {
+                nextRow = currentRow + 1;
+            } else if (rowDiff < 0) {
+                nextRow = currentRow - 1;
+            }
+
+            if (!isValidZombieMove(nextRow, nextColumn)) {
+                nextRow = currentRow;
+                if (colDiff > 0) {
+                    nextColumn = currentColumn + 1;
+                } else if (colDiff < 0) {
+                    nextColumn = currentColumn - 1;
+                }
+            }
+        } else {
+            if (colDiff > 0) {
+                nextColumn = currentColumn + 1;
+            } else if (colDiff < 0) {
+                nextColumn = currentColumn - 1;
+            }
+
+            if (!isValidZombieMove(nextRow, nextColumn)) {
+                nextColumn = currentColumn;
+                if (rowDiff > 0) {
+                    nextRow = currentRow + 1;
+                } else if (rowDiff < 0) {
+                    nextRow = currentRow - 1;
+                }
+            }
+        }
+
+        if (!isValidZombieMove(nextRow, nextColumn)) {
+            nextRow = currentRow + (rowDiff > 0 ? 1 : rowDiff < 0 ? -1 : 0);
+            nextColumn = currentColumn + (colDiff > 0 ? 1 : colDiff < 0 ? -1 : 0);
+        }
+
+        if (!isValidZombieMove(nextRow, nextColumn)) {
+            nextRow = currentRow;
+            nextColumn = currentColumn;
+        }
+
+        return new int[]{nextRow, nextColumn};
+    }
+    
+    /**
+     * Calculate next cell towards a specific target (used for targeting defenses)
+     */
+    private int[] calculateNextCellTowards(Zombie zombie, int currentRow, int currentColumn, int targetRow, int targetColumn) {
+        int rowDiff = targetRow - currentRow;
+        int colDiff = targetColumn - currentColumn;
+
+        if (rowDiff == 0 && colDiff == 0) {
+            return new int[]{currentRow, currentColumn};
+        }
+
+        int nextRow = currentRow;
+        int nextColumn = currentColumn;
+
+        // Prioritize movement based on larger difference
         if (Math.abs(rowDiff) > Math.abs(colDiff)) {
             if (rowDiff > 0) {
                 nextRow = currentRow + 1;

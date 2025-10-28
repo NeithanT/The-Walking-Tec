@@ -33,6 +33,10 @@ public class GameManager {
     private static final String LIFE_TREE_NAME = "LIFE TREE";
     private static final int ZOMBIES_PER_SPAWN_BATCH = 5;
     private static final int SPAWN_DELAY_MS = 2000; // 2 segundos entre grupos
+    
+    // Locks para sincronización sin synchronized
+    private final Lock combatLock = new ReentrantLock();
+    private final Lock summaryLock = new ReentrantLock();
 
     private final GameBoard board;
     private final SidePanel sidePanel;
@@ -169,6 +173,19 @@ public class GameManager {
         }
         isPaused = true;
         stopZombieThreads();
+        stopDefenseThreads();
+    }
+    
+    /**
+     * Stop all defense threads
+     */
+    private void stopDefenseThreads() {
+        System.out.println("⏹ Stopping all defense threads...");
+        for (Defense defense : waveDefense) {
+            if (defense != null) {
+                defense.stopThread();
+            }
+        }
     }
 
     public void setSelectedDefense(Defense defenseName) {
@@ -320,6 +337,12 @@ public class GameManager {
         } else {
             waveDefense.add(placedDefinition);
             // No deseleccionar la defensa para permitir colocación múltiple
+            
+            // Start defense thread if game is active
+            if (roundActive && !isPaused) {
+                placedDefinition.setGameManager(this);
+                placedDefinition.startThread();
+            }
         }
 
         if (sidePanel != null) {
@@ -342,6 +365,81 @@ public class GameManager {
 
     public void moveZombieTowardsLifeTree(Zombie zombie) {
         movementController.moveZombieTowardsLifeTree(zombie);
+    }
+    
+    /**
+     * Move zombie towards the CLOSEST target (defense or Life Tree)
+     * This implements: "Los zombies buscan el objetivo más cercano y se desplazan hacia él"
+     */
+    public void moveZombieTowardsClosestTarget(Zombie zombie) {
+        if (zombie == null || !zombie.isAlive()) {
+            return;
+        }
+        
+        // Find closest defense
+        Defense closestDefense = findClosestDefense(zombie);
+        
+        // If there's a defense in range or on the path, move towards it
+        if (closestDefense != null) {
+            movementController.moveZombieTowardsTarget(zombie, 
+                closestDefense.getCurrentRow(), 
+                closestDefense.getCurrentColumn());
+        } else {
+            // No defenses, move towards Life Tree
+            movementController.moveZombieTowardsLifeTree(zombie);
+        }
+    }
+    
+    /**
+     * Find the closest defense to a zombie
+     */
+    private Defense findClosestDefense(Zombie zombie) {
+        Defense closest = null;
+        int minDistance = Integer.MAX_VALUE;
+        
+        for (Defense defense : waveDefense) {
+            if (defense != null && defense.getHealthPoints() > 0) {
+                int distance = CombatRules.calculateDistance(zombie, defense);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closest = defense;
+                }
+            }
+        }
+        
+        return closest;
+    }
+    
+    /**
+     * Find the closest zombie in range for a defense
+     * Implements: "Las defensas fijan el objetivo que se ponga en su alcance"
+     */
+    public Zombie findClosestZombieInRange(Defense defense) {
+        if (defense == null) return null;
+        
+        Zombie closest = null;
+        int minDistance = Integer.MAX_VALUE;
+        int defenseRange = defense.getAttackRange();
+        
+        for (Zombie zombie : waveZombies) {
+            if (zombie != null && zombie.isAlive() && zombie.getHealthPoints() > 0) {
+                int distance = CombatRules.calculateDistance(defense, zombie);
+                if (distance <= defenseRange && distance < minDistance) {
+                    minDistance = distance;
+                    closest = zombie;
+                }
+            }
+        }
+        
+        return closest;
+    }
+    
+    /**
+     * Calculate distance between two entities (helper method)
+     */
+    public int calculateDistanceBetween(Entity entity1, Entity entity2) {
+        if (entity1 == null || entity2 == null) return Integer.MAX_VALUE;
+        return CombatRules.calculateDistance(entity1, entity2);
     }
 
     void zombieReachedLifeTree(Zombie zombie) {
@@ -471,9 +569,11 @@ public class GameManager {
     }
 
     public void stopZombieThreads() {
+        System.out.println("⏹ Stopping all zombie threads...");
         for (Zombie zombie : waveZombies) {
             if (zombie != null) {
                 zombie.setAlive(false);
+                zombie.stopThread();
             }
         }
     }
@@ -555,14 +655,17 @@ public class GameManager {
     }
     
     private void showBattleSummary(boolean hasWon) {
-        // Prevent showing summary multiple times with synchronized block
-        synchronized(this) {
+        // Prevent showing summary multiple times with Lock instead of synchronized
+        summaryLock.lock();
+        try {
             if (summaryShown) {
                 log("⚠ Summary already shown, skipping duplicate call");
                 return;
             }
             summaryShown = true;
             log("✓ Setting summaryShown = true, proceeding to show summary");
+        } finally {
+            summaryLock.unlock();
         }
         
         if (parentFrame == null || combatLog == null) {
@@ -1074,7 +1177,23 @@ public class GameManager {
             }
         }
         
+        // Start threads for all placed defenses
+        startDefenseThreads();
+        
         waveManager.startRound();
+    }
+    
+    /**
+     * Start threads for all defenses
+     */
+    private void startDefenseThreads() {
+        System.out.println("▶ Starting defense threads...");
+        for (Defense defense : waveDefense) {
+            if (defense != null && defense.getHealthPoints() > 0) {
+                defense.setGameManager(this);
+                defense.startThread();
+            }
+        }
     }
 
     public void resetGame() {
@@ -1448,6 +1567,48 @@ public class GameManager {
         // Check for victory/loss after combat processing
         verifyVictory();
         verifyLoss();
+    }
+    
+    // ==================== THREADED COMBAT METHODS ====================
+    
+    /**
+     * Process defense attack from its own thread (using ReentrantLock instead of synchronized)
+     */
+    public void processDefenseAttackThreaded(Defense defense) {
+        combatLock.lock();
+        try {
+            if (defense == null || defense.getHealthPoints() <= 0) {
+                return;
+            }
+            
+            if (defense.isHealer()) {
+                processHealing(defense);
+            } else {
+                processDefenseAttack(defense);
+            }
+        } finally {
+            combatLock.unlock();
+        }
+    }
+    
+    /**
+     * Process zombie attack from its own thread (using ReentrantLock instead of synchronized)
+     */
+    public void processZombieAttackThreaded(Zombie zombie) {
+        combatLock.lock();
+        try {
+            if (zombie == null || !zombie.isAlive() || zombie.getHealthPoints() <= 0) {
+                return;
+            }
+            
+            if (zombie.isHealer()) {
+                processHealing(zombie);
+            } else {
+                processZombieAttack(zombie);
+            }
+        } finally {
+            combatLock.unlock();
+        }
     }
     
     /**
