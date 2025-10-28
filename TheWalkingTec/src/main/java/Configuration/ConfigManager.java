@@ -1,6 +1,5 @@
 package Configuration;
 
-import static Configuration.FileManager.writeObject;
 import Defense.Defense;
 import Defense.DefenseAttacker;
 import Defense.DefenseContact;
@@ -16,7 +15,6 @@ import Zombie.ZombieExplosive;
 import Zombie.ZombieFlying;
 import Zombie.ZombieHealer;
 import java.util.ArrayList;
-import java.util.List;
 
 public class ConfigManager {
     
@@ -50,18 +48,18 @@ public class ConfigManager {
     public void addDefense(Defense newDefense) {
         defenses.add(newDefense);
         
-        writeObject(defenses, pathDefenses);
+        FileManager.writeObject(defenses, pathDefenses);
     }
     
     public void addGame(int level) {
         gameLevels.add(level);
-        writeObject(gameLevels, pathGames);
+        FileManager.writeObject(gameLevels, pathGames);
     }
     
     public void addZombie(Zombie newZombie) {
         zombies.add(newZombie);
         
-        writeObject(zombies, pathZombies);
+        FileManager.writeObject(zombies, pathZombies);
     }
     
     public void loadDefenses() {
@@ -112,30 +110,30 @@ public class ConfigManager {
     
     public void removeZombie(Zombie zombie) {
         zombies.remove(zombie);
-        writeObject(zombies, pathZombies);
+        FileManager.writeObject(zombies, pathZombies);
     }
     
     public void removeDefense(Defense defense) {
         defenses.remove(defense);
-        writeObject(defenses, pathDefenses);
+        FileManager.writeObject(defenses, pathDefenses);
     }
     
     public boolean isValidZombie() {return false;}
     public boolean isValidDefense() {return false;}
     
-    public void saveZombies(List<Zombie> updatedZombies) {
+    public void saveZombies(ArrayList<Zombie> updatedZombies) {
         zombies = new ArrayList<>(updatedZombies);
-        writeObject(zombies, pathZombies);
+        FileManager.writeObject(zombies, pathZombies);
     }
     
-    public void saveDefenses(List<Defense> updatedDefenses) {
+    public void saveDefenses(ArrayList<Defense> updatedDefenses) {
         defenses = new ArrayList<>(updatedDefenses);
-        writeObject(defenses, pathDefenses);
+        FileManager.writeObject(defenses, pathDefenses);
     }
 
-    public void saveAdmins(List<Admin> updatedAdmins) {
+    public void saveAdmins(ArrayList<Admin> updatedAdmins) {
         admins = new ArrayList<>(updatedAdmins);
-        writeObject(admins, pathAdmins);
+        FileManager.writeObject(admins, pathAdmins);
         ensureDefaultAdmin();
     }
 
@@ -149,7 +147,7 @@ public class ConfigManager {
             }
         }
         admins.add(newAdmin);
-        writeObject(admins, pathAdmins);
+        FileManager.writeObject(admins, pathAdmins);
         return true;
     }
 
@@ -169,7 +167,7 @@ public class ConfigManager {
             Admin admin = admins.get(i);
             if (admin.getUsername().equalsIgnoreCase(originalUsername)) {
                 admins.set(i, updatedAdmin);
-                writeObject(admins, pathAdmins);
+                FileManager.writeObject(admins, pathAdmins);
                 return true;
             }
         }
@@ -178,7 +176,7 @@ public class ConfigManager {
 
     public void removeAdmin(Admin admin) {
         admins.remove(admin);
-        writeObject(admins, pathAdmins);
+        FileManager.writeObject(admins, pathAdmins);
         ensureDefaultAdmin();
     }
 
@@ -200,7 +198,7 @@ public class ConfigManager {
         }
         if (admins.isEmpty()) {
             admins.add(new Admin("admin", "admin"));
-            writeObject(admins, pathAdmins);
+            FileManager.writeObject(admins, pathAdmins);
         }
     }
     
@@ -257,7 +255,7 @@ public class ConfigManager {
         zombies.add(z9);
         zombies.add(z10);
         
-        writeObject(zombies, pathZombies);
+        FileManager.writeObject(zombies, pathZombies);
         System.out.println("Default zombies loaded: " + zombies.size());
     }
     
@@ -312,7 +310,7 @@ public class ConfigManager {
         d11.setImagePath("src/main/resources/assets/Lebron_James.jpg");
         defenses.add(d11);
         
-        writeObject(defenses, pathDefenses);
+        FileManager.writeObject(defenses, pathDefenses);
         System.out.println("Default defenses loaded: " + defenses.size());
     }
     
@@ -322,7 +320,7 @@ public class ConfigManager {
         } else {
             gameLevels.set(0, round);
         }
-        writeObject(gameLevels, pathGames);
+        FileManager.writeObject(gameLevels, pathGames);
     }
 
     public int getCurrentRound() {

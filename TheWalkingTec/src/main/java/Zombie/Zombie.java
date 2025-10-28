@@ -2,13 +2,11 @@ package Zombie;
 
 import Entity.Entity;
 import GameLogic.GameManager;
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class Zombie extends Entity {
     
-    protected List<ZombieType> types;
+    protected ArrayList<ZombieType> types;
     
     // Pixel position tracking (smooth movement)
     protected double pixelX;
@@ -23,7 +21,8 @@ public class Zombie extends Entity {
     protected GameManager gameManager;
     
     public Zombie() {
-        types = new ArrayList<>(Arrays.asList(ZombieType.CONTACT));
+        types = new ArrayList<>();
+        types.add(ZombieType.CONTACT);
         initializeMovement(1.5);
     }
     
@@ -38,11 +37,12 @@ public class Zombie extends Entity {
     
     public Zombie(ZombieType type, String name, int healthPoints, int showUpLevel, int cost, double movementSpeed) {
         this(name, healthPoints, showUpLevel, cost, movementSpeed);
-        this.types = new ArrayList<>(Arrays.asList(type));
+        this.types = new ArrayList<>();
+        this.types.add(type);
         initializeMovement(movementSpeed);
     }
     
-    public Zombie(List<ZombieType> types, String name, int healthPoints, int showUpLevel, int cost, double movementSpeed) {
+    public Zombie(ArrayList<ZombieType> types, String name, int healthPoints, int showUpLevel, int cost, double movementSpeed) {
         this(name, healthPoints, showUpLevel, cost, movementSpeed);
         this.types = new ArrayList<>(types);
         initializeMovement(movementSpeed);
@@ -58,11 +58,11 @@ public class Zombie extends Entity {
         this.targetColumn = -1;
     }
     
-    public List<ZombieType> getTypes() { 
+    public ArrayList<ZombieType> getTypes() { 
         return types; 
     }
     
-    public void setTypes(List<ZombieType> types) { 
+    public void setTypes(ArrayList<ZombieType> types) { 
         this.types = types; 
     }
     

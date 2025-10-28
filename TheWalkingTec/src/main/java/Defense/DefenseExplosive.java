@@ -1,19 +1,18 @@
 package Defense;
 
 import Entity.EntityExplosive;
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 
 public class DefenseExplosive extends DefenseAttacker implements EntityExplosive {
     
     public DefenseExplosive(String name, int healthPoints, int showUpLevel, int cost, int range) {
         super(name, healthPoints, showUpLevel, cost, 10000, 0); // high damage, range auto-calculated
-        this.types = new ArrayList<>(Arrays.asList(DefenseType.EXPLOSIVE));
+        this.types = new ArrayList<>();
+        this.types.add(DefenseType.EXPLOSIVE);
     }
     
-    public DefenseExplosive(List<DefenseType> types, String name, int healthPoints, int showUpLevel, int cost, int range) {
+    public DefenseExplosive(ArrayList<DefenseType> types, String name, int healthPoints, int showUpLevel, int cost, int range) {
         super(name, healthPoints, showUpLevel, cost, 10000, 0); // high damage, range auto-calculated
         // Ensure EXPLOSIVE is always included
         this.types = new ArrayList<>(types);

@@ -1,16 +1,15 @@
 package Defense;
 
 import Entity.Entity;
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class Defense extends Entity {
 
-    protected List<DefenseType> types;
+    protected ArrayList<DefenseType> types;
     
     public Defense() {
-       this.types = new ArrayList<>(Arrays.asList(DefenseType.BLOCKS));
+       this.types = new ArrayList<>();
+       this.types.add(DefenseType.BLOCKS);
     }
     
     public Defense(String name, int healthPoints, int showUpLevel, int cost) {
@@ -23,19 +22,20 @@ public class Defense extends Entity {
     
     public Defense(DefenseType type, String name, int healthPoints, int showUpLevel, int cost) {
         this(name, healthPoints, showUpLevel, cost);
-        this.types = new ArrayList<>(Arrays.asList(type));
+        this.types = new ArrayList<>();
+        this.types.add(type);
     }
     
-    public Defense(List<DefenseType> types, String name, int healthPoints, int showUpLevel, int cost) {
+    public Defense(ArrayList<DefenseType> types, String name, int healthPoints, int showUpLevel, int cost) {
         this(name, healthPoints, showUpLevel, cost);
         this.types = new ArrayList<>(types);
     }
     
-    public List<DefenseType> getTypes() {
+    public ArrayList<DefenseType> getTypes() {
         return types;
     }
     
-    public void setTypes(List<DefenseType> types) {
+    public void setTypes(ArrayList<DefenseType> types) {
         this.types = types;
     }
     

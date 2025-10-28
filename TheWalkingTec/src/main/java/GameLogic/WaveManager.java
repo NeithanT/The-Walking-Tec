@@ -13,7 +13,6 @@ import Zombie.ZombieHealer;
 import Zombie.ZombieMediumRange;
 import Zombie.ZombieType;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 final class WaveManager {
@@ -104,7 +103,7 @@ final class WaveManager {
             return;
         }
 
-        List<Zombie> pool = gameManager.getConfigManager().getZombies();
+        ArrayList<Zombie> pool = gameManager.getConfigManager().getZombies();
         if (gameManager.getSidePanel() != null) {
             gameManager.getSidePanel().appendLog("DEBUG: Zombie pool size: " + (pool != null ? pool.size() : "null"));
         }
@@ -240,7 +239,7 @@ final class WaveManager {
         } else if (source instanceof ZombieAttacker attacker) {
             clone = new ZombieAttacker(attacker.getEntityName(), attacker.getHealthPoints(), attacker.getShowUpLevel(), attacker.getCost(), attacker.getDamage(), 0, attacker.getMovementSpeed());
         } else {
-            List<ZombieType> types = source.getTypes();
+            ArrayList<ZombieType> types = source.getTypes();
             clone = new Zombie(types, source.getEntityName(), source.getHealthPoints(), source.getShowUpLevel(), source.getCost(), source.getMovementSpeed());
         }
 

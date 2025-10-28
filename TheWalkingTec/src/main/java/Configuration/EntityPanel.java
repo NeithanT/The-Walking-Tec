@@ -25,7 +25,6 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Image;
@@ -33,7 +32,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -103,7 +101,9 @@ public class EntityPanel extends JPanel {
         this();
         currentZombie = zombie;
         if (currentZombie.getTypes() == null || currentZombie.getTypes().isEmpty()) {
-            currentZombie.setTypes(new java.util.ArrayList<>(java.util.Arrays.asList(ZombieType.CONTACT)));
+            ArrayList<ZombieType> defaultTypes = new ArrayList<>();
+            defaultTypes.add(ZombieType.CONTACT);
+            currentZombie.setTypes(defaultTypes);
         }
         addZombieSpecificFields();
         populateZombieFields();
@@ -114,7 +114,9 @@ public class EntityPanel extends JPanel {
         this();
         currentDefense = defense;
         if (currentDefense.getTypes() == null || currentDefense.getTypes().isEmpty()) {
-            currentDefense.setTypes(new java.util.ArrayList<>(java.util.Arrays.asList(DefenseType.BLOCKS)));
+            ArrayList<DefenseType> defaultTypes = new ArrayList<>();
+            defaultTypes.add(DefenseType.BLOCKS);
+            currentDefense.setTypes(defaultTypes);
         }
         addDefenseSpecificFields();
         populateDefenseFields();
@@ -211,7 +213,7 @@ public class EntityPanel extends JPanel {
             if (currentZombie != null) {
                 typeLabel += formatTypes(currentZombie.getTypes());
             } else if (currentDefense != null) {
-                typeLabel += formatTypes(currentDefense.getTypes());
+                typeLabel += formatDefenseTypes(currentDefense.getTypes());
             }
             Color normalColor = new Color(0, 123, 255);
             Color hoverColor = new Color(0, 102, 204);
@@ -220,7 +222,21 @@ public class EntityPanel extends JPanel {
         }
     }
     
-    private String formatTypes(java.util.List<?> types) {
+    private String formatTypes(ArrayList<ZombieType> types) {
+        if (types == null || types.isEmpty()) {
+            return "NONE";
+        }
+        String result = "";
+        for (int i = 0; i < types.size(); i++) {
+            result += types.get(i).toString();
+            if (i < types.size() - 1) {
+                result += ", ";
+            }
+        }
+        return result;
+    }
+    
+    private String formatDefenseTypes(ArrayList<DefenseType> types) {
         if (types == null || types.isEmpty()) {
             return "NONE";
         }
@@ -242,12 +258,12 @@ public class EntityPanel extends JPanel {
         }
     }
     
-    private void showZombieTypeSelector(java.util.List<ZombieType> currentTypes, java.util.function.Consumer<java.util.List<ZombieType>> onConfirm) {
+    private void showZombieTypeSelector(ArrayList<ZombieType> currentTypes, java.util.function.Consumer<ArrayList<ZombieType>> onConfirm) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBackground(Color.WHITE);
         
-        java.util.ArrayList<ZombieTypeCheckBoxPair> checkBoxPairs = new java.util.ArrayList<>();
+        ArrayList<ZombieTypeCheckBoxPair> checkBoxPairs = new ArrayList<>();
         
         // Create checkbox for each type
         for (ZombieType type : ZombieType.values()) {
@@ -276,7 +292,7 @@ public class EntityPanel extends JPanel {
         // Add confirm button
         JButton confirmButton = new JButton("Confirmar");
         confirmButton.addActionListener(e -> {
-            java.util.List<ZombieType> selectedTypes = new java.util.ArrayList<>();
+            ArrayList<ZombieType> selectedTypes = new ArrayList<>();
             for (ZombieTypeCheckBoxPair pair : checkBoxPairs) {
                 if (pair.checkBox.isSelected()) {
                     selectedTypes.add(pair.type);
@@ -304,12 +320,12 @@ public class EntityPanel extends JPanel {
         dialog.setVisible(true);
     }
     
-    private void showDefenseTypeSelector(java.util.List<DefenseType> currentTypes, java.util.function.Consumer<java.util.List<DefenseType>> onConfirm) {
+    private void showDefenseTypeSelector(ArrayList<DefenseType> currentTypes, java.util.function.Consumer<ArrayList<DefenseType>> onConfirm) {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.setBackground(Color.WHITE);
         
-        java.util.ArrayList<DefenseTypeCheckBoxPair> checkBoxPairs = new java.util.ArrayList<>();
+        ArrayList<DefenseTypeCheckBoxPair> checkBoxPairs = new ArrayList<>();
         
         // Create checkbox for each type
         for (DefenseType type : DefenseType.values()) {
@@ -338,7 +354,7 @@ public class EntityPanel extends JPanel {
         // Add confirm button
         JButton confirmButton = new JButton("Confirmar");
         confirmButton.addActionListener(e -> {
-            java.util.List<DefenseType> selectedTypes = new java.util.ArrayList<>();
+            ArrayList<DefenseType> selectedTypes = new ArrayList<>();
             for (DefenseTypeCheckBoxPair pair : checkBoxPairs) {
                 if (pair.checkBox.isSelected()) {
                     selectedTypes.add(pair.type);
@@ -366,9 +382,9 @@ public class EntityPanel extends JPanel {
         dialog.setVisible(true);
     }
     
-    private void updateZombieCheckBoxStates(java.util.ArrayList<ZombieTypeCheckBoxPair> checkBoxPairs) {
+    private void updateZombieCheckBoxStates(ArrayList<ZombieTypeCheckBoxPair> checkBoxPairs) {
         // Get currently selected types
-        java.util.List<ZombieType> selectedTypes = new java.util.ArrayList<>();
+        ArrayList<ZombieType> selectedTypes = new ArrayList<>();
         for (ZombieTypeCheckBoxPair pair : checkBoxPairs) {
             if (pair.checkBox.isSelected()) {
                 selectedTypes.add(pair.type);
@@ -376,9 +392,9 @@ public class EntityPanel extends JPanel {
         }
         
         // Get all incompatible types for the selected types
-        java.util.List<ZombieType> incompatibleTypes = new java.util.ArrayList<>();
+        ArrayList<ZombieType> incompatibleTypes = new ArrayList<>();
         for (ZombieType selectedType : selectedTypes) {
-            java.util.List<ZombieType> incompatible = ZombieTypeValidator.getIncompatibleTypes(selectedType);
+            ArrayList<ZombieType> incompatible = ZombieTypeValidator.getIncompatibleTypes(selectedType);
             for (ZombieType type : incompatible) {
                 if (!incompatibleTypes.contains(type)) {
                     incompatibleTypes.add(type);
@@ -414,9 +430,9 @@ public class EntityPanel extends JPanel {
         }
     }
     
-    private void updateDefenseCheckBoxStates(java.util.ArrayList<DefenseTypeCheckBoxPair> checkBoxPairs) {
+    private void updateDefenseCheckBoxStates(ArrayList<DefenseTypeCheckBoxPair> checkBoxPairs) {
         // Get currently selected types
-        java.util.List<DefenseType> selectedTypes = new java.util.ArrayList<>();
+        ArrayList<DefenseType> selectedTypes = new ArrayList<>();
         for (DefenseTypeCheckBoxPair pair : checkBoxPairs) {
             if (pair.checkBox.isSelected()) {
                 selectedTypes.add(pair.type);
@@ -424,9 +440,9 @@ public class EntityPanel extends JPanel {
         }
         
         // Get all incompatible types for the selected types
-        java.util.List<DefenseType> incompatibleTypes = new java.util.ArrayList<>();
+        ArrayList<DefenseType> incompatibleTypes = new ArrayList<>();
         for (DefenseType selectedType : selectedTypes) {
-            java.util.List<DefenseType> incompatible = DefenseTypeValidator.getIncompatibleTypes(selectedType);
+            ArrayList<DefenseType> incompatible = DefenseTypeValidator.getIncompatibleTypes(selectedType);
             for (DefenseType type : incompatible) {
                 if (!incompatibleTypes.contains(type)) {
                     incompatibleTypes.add(type);
@@ -462,7 +478,7 @@ public class EntityPanel extends JPanel {
         }
     }
     
-    private String validateZombieTypeCombination(java.util.List<ZombieType> types) {
+    private String validateZombieTypeCombination(ArrayList<ZombieType> types) {
         if (types == null || types.isEmpty()) {
             return "Debe seleccionar al menos un tipo";
         }
@@ -471,7 +487,7 @@ public class EntityPanel extends JPanel {
         return result.isValid() ? null : result.getMessage();
     }
     
-    private String validateDefenseTypeCombination(java.util.List<DefenseType> types) {
+    private String validateDefenseTypeCombination(ArrayList<DefenseType> types) {
         if (types == null || types.isEmpty()) {
             return "Debe seleccionar al menos un tipo";
         }
@@ -480,7 +496,7 @@ public class EntityPanel extends JPanel {
         return result.isValid() ? null : result.getMessage();
     }
     
-    private void changeZombieTypes(java.util.List<ZombieType> newTypes) {
+    private void changeZombieTypes(ArrayList<ZombieType> newTypes) {
         if (currentZombie == null) {
             return;
         }
@@ -491,13 +507,13 @@ public class EntityPanel extends JPanel {
         updateLayoutWithRows();
     }
     
-    private void changeDefenseTypes(java.util.List<DefenseType> newTypes) {
+    private void changeDefenseTypes(ArrayList<DefenseType> newTypes) {
         if (currentDefense == null) {
             return;
         }
         
         currentDefense.setTypes(newTypes);
-        typeSelectButton.setText("Tipos: " + formatTypes(newTypes));
+        typeSelectButton.setText("Tipos: " + formatDefenseTypes(newTypes));
         updateTypeSpecificFields();
         updateLayoutWithRows();
     }
@@ -862,9 +878,9 @@ public class EntityPanel extends JPanel {
     }
 
     public Zombie buildZombieFromFields() throws NumberFormatException {
-        java.util.List<ZombieType> types = currentZombie != null && currentZombie.getTypes() != null ? currentZombie.getTypes() : new java.util.ArrayList<>(java.util.Arrays.asList(ZombieType.CONTACT));
+        ArrayList<ZombieType> types = currentZombie != null && currentZombie.getTypes() != null ? currentZombie.getTypes() : new ArrayList<>();
         if (types.isEmpty()) {
-            types = new java.util.ArrayList<>(java.util.Arrays.asList(ZombieType.CONTACT));
+            types.add(ZombieType.CONTACT);
         }
 
         String name = getRowValue("Nombre");
@@ -905,9 +921,9 @@ public class EntityPanel extends JPanel {
     }
 
     public Defense buildDefenseFromFields() throws NumberFormatException {
-        java.util.List<DefenseType> types = currentDefense != null && currentDefense.getTypes() != null ? currentDefense.getTypes() : new java.util.ArrayList<>(java.util.Arrays.asList(DefenseType.BLOCKS));
+        ArrayList<DefenseType> types = currentDefense != null && currentDefense.getTypes() != null ? currentDefense.getTypes() : new ArrayList<>();
         if (types.isEmpty()) {
-            types = new java.util.ArrayList<>(java.util.Arrays.asList(DefenseType.BLOCKS));
+            types.add(DefenseType.BLOCKS);
         }
 
         String name = getRowValue("Nombre");
@@ -951,9 +967,10 @@ public class EntityPanel extends JPanel {
         return defense;
     }
 
-    private Zombie instantiateZombie(java.util.List<ZombieType> types) {
+    private Zombie instantiateZombie(ArrayList<ZombieType> types) {
         if (types == null || types.isEmpty()) {
-            types = new java.util.ArrayList<>(java.util.Arrays.asList(ZombieType.CONTACT));
+            types = new ArrayList<>();
+            types.add(ZombieType.CONTACT);
         }
         
         // Determine which constructor to use based on types
@@ -973,9 +990,10 @@ public class EntityPanel extends JPanel {
         }
     }
 
-    private Defense instantiateDefense(java.util.List<DefenseType> types) {
+    private Defense instantiateDefense(ArrayList<DefenseType> types) {
         if (types == null || types.isEmpty()) {
-            types = new java.util.ArrayList<>(java.util.Arrays.asList(DefenseType.BLOCKS));
+            types = new ArrayList<>();
+            types.add(DefenseType.BLOCKS);
         }
         
         // Determine which constructor to use based on types

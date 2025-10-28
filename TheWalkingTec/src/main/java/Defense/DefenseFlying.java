@@ -1,17 +1,16 @@
 package Defense;
 
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class DefenseFlying extends DefenseAttacker {
 
     public DefenseFlying(String name, int healthPoints, int showUpLevel, int cost, int attack, int range) {
         super(name, healthPoints, showUpLevel, cost, attack, range);
-        this.types = new ArrayList<>(Arrays.asList(DefenseType.FLYING));
+        this.types = new ArrayList<>();
+        this.types.add(DefenseType.FLYING);
     }
     
-    public DefenseFlying(List<DefenseType> types, String name, int healthPoints, int showUpLevel, int cost, int attack, int range) {
+    public DefenseFlying(ArrayList<DefenseType> types, String name, int healthPoints, int showUpLevel, int cost, int attack, int range) {
         super(name, healthPoints, showUpLevel, cost, attack, range);
         this.types = new ArrayList<>(types);
         if (!this.types.contains(DefenseType.FLYING)) {

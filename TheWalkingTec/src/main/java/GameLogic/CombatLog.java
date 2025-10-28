@@ -4,7 +4,6 @@ import Entity.Entity;
 import Defense.Defense;
 import Zombie.Zombie;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * CombatLog - Tracks all combat events and entity statistics during a battle
@@ -12,10 +11,10 @@ import java.util.List;
 public class CombatLog {
     
     // Entity statistics tracking - using ArrayList instead of HashMap
-    private List<EntityCombatStats> entityStats;
+    private ArrayList<EntityCombatStats> entityStats;
     
     // Combat events log
-    private List<CombatEvent> combatEvents;
+    private ArrayList<CombatEvent> combatEvents;
     
     // Battle metadata
     private int level;
@@ -161,7 +160,7 @@ public class CombatLog {
     /**
      * Log an explosion event
      */
-    public void logExplosion(Entity explosive, List<Entity> targets, int damagePerTarget) {
+    public void logExplosion(Entity explosive, ArrayList<Entity> targets, int damagePerTarget) {
         EntityCombatStats explosiveStats = getOrCreateStats(explosive);
         
         // Update explosive stats
@@ -269,7 +268,7 @@ public class CombatLog {
     /**
      * Get all entity stats (returns ArrayList as a values collection via wrapper)
      */
-    public List<EntityCombatStats> getAllStats() {
+    public ArrayList<EntityCombatStats> getAllStats() {
         return entityStats;
     }
     
@@ -283,7 +282,7 @@ public class CombatLog {
     /**
      * Get all combat events
      */
-    public List<CombatEvent> getCombatEvents() {
+    public ArrayList<CombatEvent> getCombatEvents() {
         return combatEvents;
     }
     
@@ -338,9 +337,9 @@ public class CombatLog {
         public long deathTime;
         
         // Interaction tracking
-        public List<String> targetsAttacked = new ArrayList<>();
-        public List<String> attackedBy = new ArrayList<>();
-        public List<String> entitiesHealed = new ArrayList<>();
+        public ArrayList<String> targetsAttacked = new ArrayList<>();
+        public ArrayList<String> attackedBy = new ArrayList<>();
+        public ArrayList<String> entitiesHealed = new ArrayList<>();
         
         /**
          * Calculate hits per second

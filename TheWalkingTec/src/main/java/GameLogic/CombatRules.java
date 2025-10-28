@@ -6,7 +6,6 @@ import Defense.DefenseType;
 import Zombie.Zombie;
 import Zombie.ZombieType;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * CombatRules - Centralizes all combat logic and rules
@@ -166,11 +165,11 @@ public class CombatRules {
     /**
      * Gets all valid targets for an attacker from a list of candidates
      * @param attacker The attacking entity
-     * @param candidates List of potential targets
-     * @return List of valid targets
+     * @param candidates ArrayList of potential targets
+     * @return ArrayList of valid targets
      */
-    public static List<Entity> getValidTargets(Entity attacker, List<Entity> candidates) {
-        List<Entity> validTargets = new ArrayList<>();
+    public static ArrayList<Entity> getValidTargets(Entity attacker, ArrayList<Entity> candidates) {
+        ArrayList<Entity> validTargets = new ArrayList<>();
         
         for (Entity candidate : candidates) {
             if (canAttack(attacker, candidate)) {
@@ -184,11 +183,11 @@ public class CombatRules {
     /**
      * Gets all valid heal targets for a healer from a list of candidates
      * @param healer The healing entity
-     * @param candidates List of potential heal targets
-     * @return List of valid heal targets
+     * @param candidates ArrayList of potential heal targets
+     * @return ArrayList of valid heal targets
      */
-    public static List<Entity> getValidHealTargets(Entity healer, List<Entity> candidates) {
-        List<Entity> validTargets = new ArrayList<>();
+    public static ArrayList<Entity> getValidHealTargets(Entity healer, ArrayList<Entity> candidates) {
+        ArrayList<Entity> validTargets = new ArrayList<>();
         
         for (Entity candidate : candidates) {
             if (canHeal(healer, candidate)) {

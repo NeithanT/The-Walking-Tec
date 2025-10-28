@@ -5,9 +5,7 @@ import Defense.DefenseTypeValidator;
 import Zombie.ZombieType;
 import Zombie.ZombieTypeValidator;
 
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Tests the type compatibility validation system
@@ -89,7 +87,10 @@ public class TypeValidationTest {
     }
     
     private static void testDefense(String description, DefenseType... types) {
-        List<DefenseType> typeList = new ArrayList<>(Arrays.asList(types));
+        ArrayList<DefenseType> typeList = new ArrayList<>();
+        for (DefenseType t : types) {
+            typeList.add(t);
+        }
         DefenseTypeValidator.ValidationResult result = DefenseTypeValidator.validate(typeList);
         
         String status = result.isValid() ? "✅ VÁLIDO" : "❌ INVÁLIDO";
@@ -101,7 +102,10 @@ public class TypeValidationTest {
     }
     
     private static void testZombie(String description, ZombieType... types) {
-        List<ZombieType> typeList = new ArrayList<>(Arrays.asList(types));
+        ArrayList<ZombieType> typeList = new ArrayList<>();
+        for (ZombieType t : types) {
+            typeList.add(t);
+        }
         ZombieTypeValidator.ValidationResult result = ZombieTypeValidator.validate(typeList);
         
         String status = result.isValid() ? "✅ VÁLIDO" : "❌ INVÁLIDO";
