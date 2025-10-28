@@ -29,20 +29,17 @@ public class FileManager {
     public static String readFile (String path) throws FileNotFoundException, IOException
     {
        
-        String everything;
+        String everything = "";
 
         try(BufferedReader br = new BufferedReader(new FileReader(path))) 
         {
-            StringBuilder sb = new StringBuilder();
             String line = br.readLine();
 
             while (line != null) {
-                
-                sb.append(line);
-                sb.append(System.lineSeparator());
+                everything += line;
+                everything += System.lineSeparator();
                 line = br.readLine();
             }
-        everything = sb.toString();
         }   
 
         return everything;

@@ -2,7 +2,6 @@ package Defense;
 
 import Entity.EntityAttacker;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class DefenseAttacker extends Defense implements EntityAttacker {
     
@@ -16,7 +15,8 @@ public class DefenseAttacker extends Defense implements EntityAttacker {
     
     public DefenseAttacker(DefenseType type, String name, int healthPoints, int showUpLevel, int cost, int damage, int range) {
         this(name, healthPoints, showUpLevel, cost, damage, range);
-        this.types = new ArrayList<>(Arrays.asList(type));
+        this.types = new ArrayList<>();
+        this.types.add(type);
     }
     
     public DefenseAttacker(ArrayList<DefenseType> types, String name, int healthPoints, int showUpLevel, int cost, int damage, int range) {

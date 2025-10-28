@@ -446,14 +446,14 @@ public class SidePanel extends JPanel {
         
         // Show defense types
         if (def.getTypes() != null && !def.getTypes().isEmpty()) {
-            StringBuilder typesStr = new StringBuilder("Type: ");
+            String typesStr = "Type: ";
             int count = 0;
             for (DefenseType type : def.getTypes()) {
-                if (count > 0) typesStr.append(", ");
-                typesStr.append(type.toString());
+                if (count > 0) typesStr += ", ";
+                typesStr += type.toString();
                 count++;
             }
-            JLabel lblTypes = new JLabel(typesStr.toString());
+            JLabel lblTypes = new JLabel(typesStr);
             lblTypes.setForeground(new Color(150, 150, 150));
             lblTypes.setFont(lblTypes.getFont().deriveFont(Font.PLAIN, 10f));
             lblTypes.setAlignmentX(java.awt.Component.LEFT_ALIGNMENT);

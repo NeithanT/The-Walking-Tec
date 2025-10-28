@@ -1,50 +1,69 @@
 package Zombie;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Validates zombie type combinations to prevent incompatible types
  */
 public class ZombieTypeValidator {
     
-    // Define incompatible type pairs using parallel ArrayLists
-    private static final ArrayList<ZombieType> INCOMPATIBLE_KEYS = new ArrayList<>();
-    private static final ArrayList<ArrayList<ZombieType>> INCOMPATIBLE_VALUES = new ArrayList<>();
+    // Helper class to replace Map functionality
+    private static class TypeIncompatibilityPair {
+        ZombieType type;
+        ArrayList<ZombieType> incompatibleTypes;
+        
+        TypeIncompatibilityPair(ZombieType type, ArrayList<ZombieType> incompatibleTypes) {
+            this.type = type;
+            this.incompatibleTypes = incompatibleTypes;
+        }
+    }
+    
+    // Define incompatible type pairs using ArrayList instead of HashMap
+    private static final ArrayList<TypeIncompatibilityPair> INCOMPATIBLE_TYPES = new ArrayList<>();
     
     static {
         // CONTACT is incompatible with EXPLOSIVE, HEALER, MEDIUMRANGE
-        INCOMPATIBLE_KEYS.add(ZombieType.CONTACT);
-        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
-            ZombieType.MEDIUMRANGE,
-            ZombieType.EXPLOSIVE,
-            ZombieType.HEALER
-        )));
+        ArrayList<ZombieType> contactIncompatible = new ArrayList<>();
+        contactIncompatible.add(ZombieType.MEDIUMRANGE);
+        contactIncompatible.add(ZombieType.EXPLOSIVE);
+        contactIncompatible.add(ZombieType.HEALER);
+        INCOMPATIBLE_TYPES.add(new TypeIncompatibilityPair(
+            ZombieType.CONTACT,
+            contactIncompatible
+        ));
         
         // MEDIUMRANGE is incompatible with CONTACT
-        INCOMPATIBLE_KEYS.add(ZombieType.MEDIUMRANGE);
-        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
-            ZombieType.CONTACT
-        )));
+        ArrayList<ZombieType> mediumRangeIncompatible = new ArrayList<>();
+        mediumRangeIncompatible.add(ZombieType.CONTACT);
+        INCOMPATIBLE_TYPES.add(new TypeIncompatibilityPair(
+            ZombieType.MEDIUMRANGE,
+            mediumRangeIncompatible
+        ));
         
         // EXPLOSIVE is only compatible with FLYING (incompatible with all others)
-        INCOMPATIBLE_KEYS.add(ZombieType.EXPLOSIVE);
-        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
-            ZombieType.CONTACT,
-            ZombieType.MEDIUMRANGE,
-            ZombieType.HEALER
-        )));
+        ArrayList<ZombieType> explosiveIncompatible = new ArrayList<>();
+        explosiveIncompatible.add(ZombieType.CONTACT);
+        explosiveIncompatible.add(ZombieType.MEDIUMRANGE);
+        explosiveIncompatible.add(ZombieType.HEALER);
+        INCOMPATIBLE_TYPES.add(new TypeIncompatibilityPair(
+            ZombieType.EXPLOSIVE,
+            explosiveIncompatible
+        ));
         
         // HEALER is incompatible with EXPLOSIVE and CONTACT
-        INCOMPATIBLE_KEYS.add(ZombieType.HEALER);
-        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
-            ZombieType.EXPLOSIVE,
-            ZombieType.CONTACT
-        )));
+        ArrayList<ZombieType> healerIncompatible = new ArrayList<>();
+        healerIncompatible.add(ZombieType.EXPLOSIVE);
+        healerIncompatible.add(ZombieType.CONTACT);
+        INCOMPATIBLE_TYPES.add(new TypeIncompatibilityPair(
+            ZombieType.HEALER,
+            healerIncompatible
+        ));
         
         // FLYING has no restrictions (can combine with any)
-        INCOMPATIBLE_KEYS.add(ZombieType.FLYING);
-        INCOMPATIBLE_VALUES.add(new ArrayList<>());
+        INCOMPATIBLE_TYPES.add(new TypeIncompatibilityPair(
+            ZombieType.FLYING,
+            new ArrayList<>()
+        ));
     }
     
     /**
@@ -59,7 +78,7 @@ public class ZombieTypeValidator {
         
         // Check each type against all other types in the list
         for (ZombieType type1 : types) {
-            ArrayList<ZombieType> incompatible = getIncompatibleTypes(type1);
+            ArrayList<ZombieType> incompatible = getIncompatibleTypesFromList(type1);
             if (incompatible != null) {
                 for (ZombieType type2 : types) {
                     if (type1 != type2 && incompatible.contains(type2)) {
@@ -77,9 +96,17 @@ public class ZombieTypeValidator {
      * Gets the list of types incompatible with the given type
      */
     public static ArrayList<ZombieType> getIncompatibleTypes(ZombieType type) {
-        int index = INCOMPATIBLE_KEYS.indexOf(type);
-        if (index >= 0) {
-            return INCOMPATIBLE_VALUES.get(index);
+        return getIncompatibleTypesFromList(type);
+    }
+    
+    /**
+     * Helper method to find incompatible types from the list
+     */
+    private static ArrayList<ZombieType> getIncompatibleTypesFromList(ZombieType type) {
+        for (TypeIncompatibilityPair pair : INCOMPATIBLE_TYPES) {
+            if (pair.type == type) {
+                return pair.incompatibleTypes;
+            }
         }
         return new ArrayList<>();
     }

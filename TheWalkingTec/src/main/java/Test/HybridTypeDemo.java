@@ -3,7 +3,6 @@ package Test;
 import Defense.*;
 import Zombie.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Demonstration of the Hybrid Type System
@@ -20,10 +19,9 @@ public class HybridTypeDemo {
         printZombieInfo(regularFlying);
         
         // 2. Hybrid zombie: EXPLOSIVE + FLYING using ArrayList
-        ArrayList<ZombieType> kamikazeTypes = new ArrayList<>(Arrays.asList(
-            ZombieType.EXPLOSIVE, 
-            ZombieType.FLYING
-        ));
+        ArrayList<ZombieType> kamikazeTypes = new ArrayList<>();
+        kamikazeTypes.add(ZombieType.EXPLOSIVE);
+        kamikazeTypes.add(ZombieType.FLYING);
         Zombie kamikaze = new ZombieExplosive(kamikazeTypes, "Sky Bomber", 15, 2, 2, 5, 2.5);
         printZombieInfo(kamikaze);
         
@@ -32,18 +30,16 @@ public class HybridTypeDemo {
         printDefenseInfo(regularFlyingDefense);
         
         // 4. Hybrid defense: FLYING + HEALER using ArrayList
-        ArrayList<DefenseType> medicTypes = new ArrayList<>(Arrays.asList(
-            DefenseType.FLYING, 
-            DefenseType.HEALER
-        ));
+        ArrayList<DefenseType> medicTypes = new ArrayList<>();
+        medicTypes.add(DefenseType.FLYING);
+        medicTypes.add(DefenseType.HEALER);
         Defense medicDrone = new DefenseHealer(medicTypes, "Medic Drone", 40, 2, 3, 8);
         printDefenseInfo(medicDrone);
         
         // 5. Creating custom hybrid using ArrayList - FLYING + MULTIPLEATTACK
-        ArrayList<DefenseType> customTypes = new ArrayList<>(Arrays.asList(
-            DefenseType.FLYING, 
-            DefenseType.MULTIPLEATTACK
-        ));
+        ArrayList<DefenseType> customTypes = new ArrayList<>();
+        customTypes.add(DefenseType.FLYING);
+        customTypes.add(DefenseType.MULTIPLEATTACK);
         DefenseMultipleAttack customHybrid = new DefenseMultipleAttack(
             customTypes, 
             "Custom Flying Multi-Attacker", 

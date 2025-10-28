@@ -3,7 +3,6 @@ package Zombie;
 import Entity.Entity;
 import GameLogic.GameManager;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class Zombie extends Entity implements Runnable {
     
@@ -28,7 +27,8 @@ public class Zombie extends Entity implements Runnable {
     private static final long ATTACK_DELAY = 1000; // 1 second between attacks
     
     public Zombie() {
-        types = new ArrayList<>(Arrays.asList(ZombieType.CONTACT));
+        types = new ArrayList<>();
+        types.add(ZombieType.CONTACT);
         initializeMovement(1.5);
     }
     
@@ -43,7 +43,8 @@ public class Zombie extends Entity implements Runnable {
     
     public Zombie(ZombieType type, String name, int healthPoints, int showUpLevel, int cost, double movementSpeed) {
         this(name, healthPoints, showUpLevel, cost, movementSpeed);
-        this.types = new ArrayList<>(Arrays.asList(type));
+        this.types = new ArrayList<>();
+        this.types.add(type);
         initializeMovement(movementSpeed);
     }
     

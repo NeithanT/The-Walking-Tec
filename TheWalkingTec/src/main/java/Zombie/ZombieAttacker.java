@@ -2,7 +2,6 @@ package Zombie;
 
 import Entity.EntityAttacker;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class ZombieAttacker extends Zombie implements EntityAttacker {
 
@@ -16,7 +15,8 @@ public class ZombieAttacker extends Zombie implements EntityAttacker {
     
     public ZombieAttacker(ZombieType type, String name, int healthPoints, int showUpLevel, int cost, int damage, int range, double movementSpeed) {
         this(name, healthPoints, showUpLevel, cost, damage, range, movementSpeed);
-        this.types = new ArrayList<>(Arrays.asList(type));
+        this.types = new ArrayList<>();
+        this.types.add(type);
     }
     
     public ZombieAttacker(ArrayList<ZombieType> types, String name, int healthPoints, int showUpLevel, int cost, int damage, int range, double movementSpeed) {

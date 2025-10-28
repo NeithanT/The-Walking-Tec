@@ -1,25 +1,15 @@
 package Defense;
 
 import Entity.Entity;
-import GameLogic.GameManager;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class Defense extends Entity implements Runnable {
 
     protected ArrayList<DefenseType> types;
     
-    // Thread control
-    private Thread defenseThread;
-    private volatile boolean running = false;
-    private GameManager gameManager;
-    private static final long ATTACK_DELAY = 1000; // 1 second between attacks
-    
-    // Target locking - "Las defensas fijan el objetivo que se ponga en su alcance"
-    private volatile Entity lockedTarget = null;
-    
     public Defense() {
-       this.types = new ArrayList<>(Arrays.asList(DefenseType.BLOCKS));
+       this.types = new ArrayList<>();
+       this.types.add(DefenseType.BLOCKS);
     }
     
     public Defense(String name, int healthPoints, int showUpLevel, int cost) {
@@ -32,7 +22,8 @@ public class Defense extends Entity implements Runnable {
     
     public Defense(DefenseType type, String name, int healthPoints, int showUpLevel, int cost) {
         this(name, healthPoints, showUpLevel, cost);
-        this.types = new ArrayList<>(Arrays.asList(type));
+        this.types = new ArrayList<>();
+        this.types.add(type);
     }
     
     public Defense(ArrayList<DefenseType> types, String name, int healthPoints, int showUpLevel, int cost) {

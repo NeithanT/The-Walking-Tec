@@ -2,7 +2,6 @@ package Defense;
 
 import Entity.EntityHealer;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 
 public class DefenseHealer extends Defense implements EntityHealer {
@@ -12,14 +11,17 @@ public class DefenseHealer extends Defense implements EntityHealer {
     public DefenseHealer(String name, int healthPoints, int showUpLevel, int cost, int healPower) {
         super(name, healthPoints, showUpLevel, cost);
         this.healPower = healPower;
-        this.types = new ArrayList<>(Arrays.asList(DefenseType.HEALER));
+        this.types = new ArrayList<>();
+        this.types.add(DefenseType.HEALER);
     }
     
     public DefenseHealer(ArrayList<DefenseType> types, String name, int healthPoints, int showUpLevel, int cost, int healPower) {
         super(name, healthPoints, showUpLevel, cost);
         this.healPower = healPower;
         this.types = new ArrayList<>(types);
-        this.types.add(DefenseType.HEALER);
+        if (!this.types.contains(DefenseType.HEALER)) {
+            this.types.add(DefenseType.HEALER);
+        }
     }
 
     @Override

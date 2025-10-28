@@ -10,9 +10,8 @@ import java.util.ArrayList;
  */
 public class CombatLog {
     
-    // Entity statistics tracking - usando 2 ArrayLists paralelos en lugar de Map
-    private ArrayList<String> entityKeys;
-    private ArrayList<EntityCombatStats> entityStatsValues;
+    // Entity statistics tracking - using ArrayList instead of HashMap
+    private ArrayList<EntityCombatStats> entityStats;
     
     // Combat events log
     private ArrayList<CombatEvent> combatEvents;
@@ -25,11 +24,22 @@ public class CombatLog {
     
     public CombatLog(int level) {
         this.level = level;
-        this.entityKeys = new ArrayList<>();
-        this.entityStatsValues = new ArrayList<>();
+        this.entityStats = new ArrayList<>();
         this.combatEvents = new ArrayList<>();
         this.battleStartTime = System.currentTimeMillis();
         this.battleEnded = false;
+    }
+    
+    /**
+     * Find stats for an entity by key
+     */
+    private EntityCombatStats findStatsByKey(String key) {
+        for (EntityCombatStats stats : entityStats) {
+            if (stats.entityKey.equals(key)) {
+                return stats;
+            }
+        }
+        return null;
     }
     
     /**
@@ -37,11 +47,9 @@ public class CombatLog {
      */
     private EntityCombatStats getOrCreateStats(Entity entity) {
         String key = getEntityKey(entity);
+        EntityCombatStats existingStats = findStatsByKey(key);
         
-        // Buscar en las listas paralelas
-        int index = entityKeys.indexOf(key);
-        if (index == -1) {
-            // No existe, crear nuevo
+        if (existingStats == null) {
             EntityCombatStats stats = new EntityCombatStats();
             stats.entityName = entity.getEntityName();
             stats.displayName = entity.getDisplayName(); // Name with ID
@@ -54,13 +62,10 @@ public class CombatLog {
             stats.row = entity.getCurrentRow();
             stats.column = entity.getCurrentColumn();
             
-            // Agregar a las listas paralelas
-            entityKeys.add(key);
-            entityStatsValues.add(stats);
+            entityStats.add(stats);
             return stats;
         }
-        // Ya existe, retornar
-        return entityStatsValues.get(index);
+        return existingStats;
     }
     
     /**
@@ -223,15 +228,12 @@ public class CombatLog {
         combatEvents.add(event);
     }
     
-    /**
-     * Mark battle as ended
-     */
     public void endBattle() {
         this.battleEnded = true;
         this.battleEndTime = System.currentTimeMillis();
         
         // Update final health for all living entities
-        for (EntityCombatStats stats : entityStatsValues) {
+        for (EntityCombatStats stats : entityStats) {
             if (!stats.died) {
                 stats.finalHealth = stats.currentHealth;
             }
@@ -242,7 +244,7 @@ public class CombatLog {
      * Mark all zombies or defenses as dead (for victory/defeat scenarios)
      */
     public void markRemainingEntitiesDead(boolean markZombies) {
-        for (EntityCombatStats stats : entityStatsValues) {
+        for (EntityCombatStats stats : entityStats) {
             // If marking zombies dead (victory) or marking defenses dead (defeat)
             if ((markZombies && !stats.isDefense) || (!markZombies && stats.isDefense)) {
                 if (!stats.died && stats.currentHealth > 0) {
@@ -264,18 +266,17 @@ public class CombatLog {
     }
     
     /**
-     * Get all entity stats - Retorna ArrayList en lugar de Map
+     * Get all entity stats (returns ArrayList as a values collection via wrapper)
      */
     public ArrayList<EntityCombatStats> getAllStats() {
-        return entityStatsValues;
+        return entityStats;
     }
     
     /**
-     * Get stats by key - Helper method para buscar por clave
+     * Find entity stats by entity key
      */
-    public EntityCombatStats getStatsByKey(String key) {
-        int index = entityKeys.indexOf(key);
-        return index >= 0 ? entityStatsValues.get(index) : null;
+    public EntityCombatStats getStatsByKey(String entityKey) {
+        return findStatsByKey(entityKey);
     }
     
     /**

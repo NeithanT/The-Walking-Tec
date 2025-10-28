@@ -2,7 +2,6 @@ package Zombie;
 
 import Entity.EntityHealer;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class ZombieHealer extends Zombie implements EntityHealer {
 
@@ -11,14 +10,17 @@ public class ZombieHealer extends Zombie implements EntityHealer {
     public ZombieHealer(String name, int healthPoints, int showUpLevel, int cost, int healingPow, double movementSpeed) {
         super(name, healthPoints, showUpLevel, cost, movementSpeed);
         this.healPower = healingPow;
-        this.types = new ArrayList<>(Arrays.asList(ZombieType.HEALER));
+        this.types = new ArrayList<>();
+        this.types.add(ZombieType.HEALER);
     }
     
     public ZombieHealer(ArrayList<ZombieType> types, String name, int healthPoints, int showUpLevel, int cost, int healingPow, double movementSpeed) {
         super(name, healthPoints, showUpLevel, cost, movementSpeed);
         this.healPower = healingPow;
         this.types = new ArrayList<>(types);
-        this.types.add(ZombieType.HEALER);
+        if (!this.types.contains(ZombieType.HEALER)) {
+            this.types.add(ZombieType.HEALER);
+        }
     }
     
     @Override

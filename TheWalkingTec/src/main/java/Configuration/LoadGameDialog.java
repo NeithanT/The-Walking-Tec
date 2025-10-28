@@ -18,19 +18,16 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 
-/**
- * Dialog to display and select from available saved games
- */
 public class LoadGameDialog extends JDialog {
     
     private ConfigManager configManager;
-    private Integer selectedLevel;
+    private int selectedLevel;
     private JPanel gamesPanel;
     
     public LoadGameDialog(JFrame parent) {
         super(parent, "Load Game", true);
         this.configManager = new ConfigManager();
-        this.selectedLevel = null;
+        this.selectedLevel = -1;
         
         initComponents();
         loadGames();
@@ -69,7 +66,7 @@ public class LoadGameDialog extends JDialog {
         
         JButton cancelButton = createStyledButton("Cancel", new Color(244, 67, 54));
         cancelButton.addActionListener(e -> {
-            selectedLevel = null;
+            selectedLevel = -1;
             dispose();
         });
         
@@ -184,9 +181,9 @@ public class LoadGameDialog extends JDialog {
     
     /**
      * Shows the dialog and returns the selected level
-     * @return the selected level, or null if cancelled
+     * @return the selected level, or -1 if cancelled
      */
-    public Integer showAndGetSelectedLevel() {
+    public int showAndGetSelectedLevel() {
         setVisible(true);
         return selectedLevel;
     }

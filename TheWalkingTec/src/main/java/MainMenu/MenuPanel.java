@@ -22,12 +22,15 @@ import javax.swing.JPanel;
 
 public class MenuPanel extends JPanel {
     
-    private JButton btnNuevaPartida;
-    private JButton btnCargarPartida;
+    private JButton btnNewGame;
+    private JButton btnLoadGame;
     private JButton btnConfig;
-    private JButton btnSalir;
-    private JPanel  pnlBotones;
-    JFrame menuFrame;
+    private JButton btnExit;
+    private JPanel  pnlButtons;
+    private LoadGameDialog loadDialog;
+    private AdminLoginDialog adminDialog;
+    private int selectedLevel;
+    private JFrame menuFrame;
     
     public MenuPanel(JFrame parentFrame) {
         
@@ -35,29 +38,29 @@ public class MenuPanel extends JPanel {
         this.setLayout(new GridBagLayout());       
         this.setOpaque(false);
 
-        btnNuevaPartida = new JButton("Nueva Partida");        
-        btnCargarPartida = new JButton("Cargar Partida");
+        btnNewGame = new JButton("Nueva Partida");        
+        btnLoadGame = new JButton("Cargar Partida");
         btnConfig = new JButton("Configuración");
-        btnSalir = new JButton("Salir");
+        btnExit = new JButton("Salir");
         
-        makeButtonTransparent(btnNuevaPartida);
-        makeButtonTransparent(btnCargarPartida);
+        makeButtonTransparent(btnNewGame);
+        makeButtonTransparent(btnLoadGame);
         makeButtonTransparent(btnConfig);
-        makeButtonTransparent(btnSalir);
+        makeButtonTransparent(btnExit);
         
-        btnNuevaPartida.setForeground(Color.WHITE);
-        btnCargarPartida.setForeground(Color.WHITE);
+        btnNewGame.setForeground(Color.WHITE);
+        btnLoadGame.setForeground(Color.WHITE);
         btnConfig.setForeground(Color.WHITE);
-        btnSalir.setForeground(Color.WHITE);
+        btnExit.setForeground(Color.WHITE);
          
-        selection(btnNuevaPartida);
-        selection(btnCargarPartida);
+        selection(btnNewGame);
+        selection(btnLoadGame);
         selection(btnConfig);
-        selection(btnSalir);
+        selection(btnExit);
         
-        pnlBotones = new JPanel ();
-        pnlBotones.setLayout(new BoxLayout(pnlBotones, BoxLayout.Y_AXIS));
-        pnlBotones.setOpaque(false);
+        pnlButtons = new JPanel ();
+        pnlButtons.setLayout(new BoxLayout(pnlButtons, BoxLayout.Y_AXIS));
+        pnlButtons.setOpaque(false);
  
         this.addComponentListener(new ComponentAdapter() {
             @Override
@@ -69,7 +72,7 @@ public class MenuPanel extends JPanel {
             }
         }); 
         
-        btnSalir.addMouseListener(new java.awt.event.MouseAdapter() {
+        btnExit.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent evt) {
                 System.exit(0);
@@ -79,8 +82,8 @@ public class MenuPanel extends JPanel {
         btnConfig.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent evt) {
-                AdminLoginDialog dialog = new AdminLoginDialog(menuFrame);
-                boolean authenticated = dialog.showAndAuthenticate();
+                adminDialog = new AdminLoginDialog(menuFrame);
+                boolean authenticated = adminDialog.showAndAuthenticate();
                 if (authenticated) {
                     new ConfigWindow(menuFrame);
                     menuFrame.setVisible(false);
@@ -88,7 +91,20 @@ public class MenuPanel extends JPanel {
             }
         });
         
-        btnNuevaPartida.addMouseListener(new MouseAdapter() {
+        btnLoadGame.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent evt) {
+                loadDialog = new LoadGameDialog(menuFrame);
+                selectedLevel = loadDialog.showAndGetSelectedLevel();
+                
+                if (selectedLevel != -1) {
+                    new TableMain(menuFrame, selectedLevel);
+                    menuFrame.setVisible(false);
+                }
+            }
+        });
+        
+        btnNewGame.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent evt) {
         
@@ -97,22 +113,9 @@ public class MenuPanel extends JPanel {
             }
         });
         
-        btnCargarPartida.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent evt) {
-                LoadGameDialog dialog = new LoadGameDialog(menuFrame);
-                Integer selectedLevel = dialog.showAndGetSelectedLevel();
-                
-                if (selectedLevel != null) {
-                    // User selected a game to load
-                    new TableMain(menuFrame, selectedLevel);
-                    menuFrame.setVisible(false);
-                }
-                // If null, user cancelled - do nothing
-            }
-        });
     }  
-    private void updateButtonSizes(){
+    
+    private void updateButtonSizes() {
         
         int width = Math.max(200, (int)(getWidth() * 0.20));
         int height = Math.max(50, (int)(getHeight() * 0.06));
@@ -120,38 +123,40 @@ public class MenuPanel extends JPanel {
         Dimension maxButtonSize = new Dimension(width + 50, height + 10);
         Dimension normalButtonSize = new Dimension(width, height);
   
-        btnNuevaPartida.setMaximumSize(maxButtonSize);
-        btnNuevaPartida.setPreferredSize(normalButtonSize);
+        btnNewGame.setMaximumSize(maxButtonSize);
+        btnNewGame.setPreferredSize(normalButtonSize);
         
-        btnCargarPartida.setMaximumSize(maxButtonSize);
-        btnCargarPartida.setPreferredSize(normalButtonSize);
+        btnLoadGame.setMaximumSize(maxButtonSize);
+        btnLoadGame.setPreferredSize(normalButtonSize);
         
         btnConfig.setMaximumSize(maxButtonSize);
         btnConfig.setPreferredSize(normalButtonSize);
         
-        btnSalir.setMaximumSize(maxButtonSize);
-        btnSalir.setPreferredSize(normalButtonSize);      
+        btnExit.setMaximumSize(maxButtonSize);
+        btnExit.setPreferredSize(normalButtonSize);      
     }
-    private void updateButtonPanel(){
+    
+    private void updateButtonPanel() {
  
-        pnlBotones.removeAll();
+        pnlButtons.removeAll();
         int spacing = Math.max(20, (int)(getHeight() * 0.043));
         
-        pnlBotones.add(createBoxedButton(btnNuevaPartida));
-        pnlBotones.add(Box.createVerticalStrut(spacing));
+        pnlButtons.add(createBoxedButton(btnNewGame));
+        pnlButtons.add(Box.createVerticalStrut(spacing));
         
-        pnlBotones.add(createBoxedButton(btnCargarPartida));
-        pnlBotones.add(Box.createVerticalStrut(spacing));
+        pnlButtons.add(createBoxedButton(btnLoadGame));
+        pnlButtons.add(Box.createVerticalStrut(spacing));
         
-        pnlBotones.add(createBoxedButton(btnConfig));
-        pnlBotones.add(Box.createVerticalStrut(spacing));
+        pnlButtons.add(createBoxedButton(btnConfig));
+        pnlButtons.add(Box.createVerticalStrut(spacing));
         
-        pnlBotones.add(createBoxedButton(btnSalir));
+        pnlButtons.add(createBoxedButton(btnExit));
         
-        pnlBotones.revalidate();
-        pnlBotones.repaint();
+        pnlButtons.revalidate();
+        pnlButtons.repaint();
     }
-    private void updatePosition(){
+    
+    private void updatePosition() {
         
         GridBagConstraints gbc = new GridBagConstraints();
         
@@ -164,33 +169,37 @@ public class MenuPanel extends JPanel {
         gbc.fill = GridBagConstraints.BOTH;
         gbc.anchor = GridBagConstraints.SOUTHEAST;
         gbc.insets = new Insets(verticalOffset, horizontalOffset, 0, 0);
-        this.remove(pnlBotones);
-        this.add(pnlBotones, gbc);
+        this.remove(pnlButtons);
+        this.add(pnlButtons, gbc);
         this.revalidate();
         this.repaint();
     }
+    
     private void updateFontSizes() {
        
         int fontSize = Math.min(32,Math.max(12, getHeight() / 30));
         Font buttonFont = new Font("Arial", Font.PLAIN, fontSize);
         
-        btnNuevaPartida.setFont(buttonFont);
-        btnCargarPartida.setFont(buttonFont);
+        btnNewGame.setFont(buttonFont);
+        btnLoadGame.setFont(buttonFont);
         btnConfig.setFont(buttonFont);
-        btnSalir.setFont(buttonFont);        
-    }  
+        btnExit.setFont(buttonFont);        
+    }
+    
     private Box createBoxedButton (JButton button) {
        
         Box box = Box.createHorizontalBox();  
         box.add(button);
         return box;     
-    }    
+    }
+    
     private void makeButtonTransparent(JButton button) {
         button.setOpaque(false);
         button.setContentAreaFilled(false);
         button.setBorderPainted(false);
         button.setFocusPainted(false);
-    }    
+    }
+    
     private void selection(JButton button) {
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override

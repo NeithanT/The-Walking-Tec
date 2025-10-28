@@ -1,76 +1,99 @@
 package Defense;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Validates defense type combinations to prevent incompatible types
  */
 public class DefenseTypeValidator {
     
-    // Define incompatible type pairs using parallel ArrayLists
-    private static final ArrayList<DefenseType> INCOMPATIBLE_KEYS = new ArrayList<>();
-    private static final ArrayList<ArrayList<DefenseType>> INCOMPATIBLE_VALUES = new ArrayList<>();
+    // Helper class to replace Map functionality
+    private static class TypeIncompatibilityPair {
+        DefenseType type;
+        ArrayList<DefenseType> incompatibleTypes;
+        
+        TypeIncompatibilityPair(DefenseType type, ArrayList<DefenseType> incompatibleTypes) {
+            this.type = type;
+            this.incompatibleTypes = incompatibleTypes;
+        }
+    }
+    
+    // Define incompatible type pairs using ArrayList instead of HashMap
+    private static final ArrayList<TypeIncompatibilityPair> INCOMPATIBLE_TYPES = new ArrayList<>();
     
     static {
         // BLOCKS is incompatible with everything
-        INCOMPATIBLE_KEYS.add(DefenseType.BLOCKS);
-        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
-            DefenseType.CONTACT,
-            DefenseType.MEDIUMRANGE,
-            DefenseType.FLYING,
-            DefenseType.EXPLOSIVE,
-            DefenseType.MULTIPLEATTACK,
-            DefenseType.HEALER
-        )));
+        ArrayList<DefenseType> blocksIncompatible = new ArrayList<>();
+        blocksIncompatible.add(DefenseType.CONTACT);
+        blocksIncompatible.add(DefenseType.MEDIUMRANGE);
+        blocksIncompatible.add(DefenseType.FLYING);
+        blocksIncompatible.add(DefenseType.EXPLOSIVE);
+        blocksIncompatible.add(DefenseType.MULTIPLEATTACK);
+        blocksIncompatible.add(DefenseType.HEALER);
+        INCOMPATIBLE_TYPES.add(new TypeIncompatibilityPair(
+            DefenseType.BLOCKS,
+            blocksIncompatible
+        ));
         
         // CONTACT is incompatible with EXPLOSIVE, HEALER, BLOCKS, MEDIUMRANGE
-        INCOMPATIBLE_KEYS.add(DefenseType.CONTACT);
-        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
-            DefenseType.BLOCKS,
-            DefenseType.EXPLOSIVE,
-            DefenseType.HEALER,
-            DefenseType.MEDIUMRANGE
-        )));
+        ArrayList<DefenseType> contactIncompatible = new ArrayList<>();
+        contactIncompatible.add(DefenseType.BLOCKS);
+        contactIncompatible.add(DefenseType.EXPLOSIVE);
+        contactIncompatible.add(DefenseType.HEALER);
+        contactIncompatible.add(DefenseType.MEDIUMRANGE);
+        INCOMPATIBLE_TYPES.add(new TypeIncompatibilityPair(
+            DefenseType.CONTACT,
+            contactIncompatible
+        ));
         
         // MEDIUMRANGE is incompatible with CONTACT and BLOCKS
-        INCOMPATIBLE_KEYS.add(DefenseType.MEDIUMRANGE);
-        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
-            DefenseType.BLOCKS,
-            DefenseType.CONTACT
-        )));
+        ArrayList<DefenseType> mediumRangeIncompatible = new ArrayList<>();
+        mediumRangeIncompatible.add(DefenseType.BLOCKS);
+        mediumRangeIncompatible.add(DefenseType.CONTACT);
+        INCOMPATIBLE_TYPES.add(new TypeIncompatibilityPair(
+            DefenseType.MEDIUMRANGE,
+            mediumRangeIncompatible
+        ));
         
         // EXPLOSIVE is only compatible with FLYING (incompatible with all others)
-        INCOMPATIBLE_KEYS.add(DefenseType.EXPLOSIVE);
-        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
-            DefenseType.BLOCKS,
-            DefenseType.CONTACT,
-            DefenseType.MEDIUMRANGE,
-            DefenseType.HEALER,
-            DefenseType.MULTIPLEATTACK
-        )));
+        ArrayList<DefenseType> explosiveIncompatible = new ArrayList<>();
+        explosiveIncompatible.add(DefenseType.BLOCKS);
+        explosiveIncompatible.add(DefenseType.CONTACT);
+        explosiveIncompatible.add(DefenseType.MEDIUMRANGE);
+        explosiveIncompatible.add(DefenseType.HEALER);
+        explosiveIncompatible.add(DefenseType.MULTIPLEATTACK);
+        INCOMPATIBLE_TYPES.add(new TypeIncompatibilityPair(
+            DefenseType.EXPLOSIVE,
+            explosiveIncompatible
+        ));
         
         // HEALER is incompatible with EXPLOSIVE, CONTACT, BLOCKS
-        INCOMPATIBLE_KEYS.add(DefenseType.HEALER);
-        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
-            DefenseType.BLOCKS,
-            DefenseType.EXPLOSIVE,
-            DefenseType.CONTACT
-        )));
+        ArrayList<DefenseType> healerIncompatible = new ArrayList<>();
+        healerIncompatible.add(DefenseType.BLOCKS);
+        healerIncompatible.add(DefenseType.EXPLOSIVE);
+        healerIncompatible.add(DefenseType.CONTACT);
+        INCOMPATIBLE_TYPES.add(new TypeIncompatibilityPair(
+            DefenseType.HEALER,
+            healerIncompatible
+        ));
         
         // MULTIPLEATTACK is incompatible with HEALER, EXPLOSIVE, BLOCKS
-        INCOMPATIBLE_KEYS.add(DefenseType.MULTIPLEATTACK);
-        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
-            DefenseType.BLOCKS,
-            DefenseType.HEALER,
-            DefenseType.EXPLOSIVE
-        )));
+        ArrayList<DefenseType> multipleAttackIncompatible = new ArrayList<>();
+        multipleAttackIncompatible.add(DefenseType.BLOCKS);
+        multipleAttackIncompatible.add(DefenseType.HEALER);
+        multipleAttackIncompatible.add(DefenseType.EXPLOSIVE);
+        INCOMPATIBLE_TYPES.add(new TypeIncompatibilityPair(
+            DefenseType.MULTIPLEATTACK,
+            multipleAttackIncompatible
+        ));
         
         // FLYING is incompatible with BLOCKS only
-        INCOMPATIBLE_KEYS.add(DefenseType.FLYING);
-        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
-            DefenseType.BLOCKS
-        )));
+        ArrayList<DefenseType> flyingIncompatible = new ArrayList<>();
+        flyingIncompatible.add(DefenseType.BLOCKS);
+        INCOMPATIBLE_TYPES.add(new TypeIncompatibilityPair(
+            DefenseType.FLYING,
+            flyingIncompatible
+        ));
     }
     
     /**
@@ -85,7 +108,7 @@ public class DefenseTypeValidator {
         
         // Check each type against all other types in the list
         for (DefenseType type1 : types) {
-            ArrayList<DefenseType> incompatible = getIncompatibleTypes(type1);
+            ArrayList<DefenseType> incompatible = getIncompatibleTypesFromList(type1);
             if (incompatible != null) {
                 for (DefenseType type2 : types) {
                     if (type1 != type2 && incompatible.contains(type2)) {
@@ -103,9 +126,17 @@ public class DefenseTypeValidator {
      * Gets the list of types incompatible with the given type
      */
     public static ArrayList<DefenseType> getIncompatibleTypes(DefenseType type) {
-        int index = INCOMPATIBLE_KEYS.indexOf(type);
-        if (index >= 0) {
-            return INCOMPATIBLE_VALUES.get(index);
+        return getIncompatibleTypesFromList(type);
+    }
+    
+    /**
+     * Helper method to find incompatible types from the list
+     */
+    private static ArrayList<DefenseType> getIncompatibleTypesFromList(DefenseType type) {
+        for (TypeIncompatibilityPair pair : INCOMPATIBLE_TYPES) {
+            if (pair.type == type) {
+                return pair.incompatibleTypes;
+            }
         }
         return new ArrayList<>();
     }
