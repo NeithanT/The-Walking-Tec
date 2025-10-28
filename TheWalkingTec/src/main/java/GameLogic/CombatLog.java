@@ -4,17 +4,15 @@ import Entity.Entity;
 import Defense.Defense;
 import Zombie.Zombie;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * CombatLog - Tracks all combat events and entity statistics during a battle
  */
 public class CombatLog {
     
-    // Entity statistics tracking
-    private Map<String, EntityCombatStats> entityStats;
+    // Entity statistics tracking - using ArrayList instead of HashMap
+    private List<EntityCombatStats> entityStats;
     
     // Combat events log
     private List<CombatEvent> combatEvents;
@@ -27,10 +25,22 @@ public class CombatLog {
     
     public CombatLog(int level) {
         this.level = level;
-        this.entityStats = new HashMap<>();
+        this.entityStats = new ArrayList<>();
         this.combatEvents = new ArrayList<>();
         this.battleStartTime = System.currentTimeMillis();
         this.battleEnded = false;
+    }
+    
+    /**
+     * Find stats for an entity by key
+     */
+    private EntityCombatStats findStatsByKey(String key) {
+        for (EntityCombatStats stats : entityStats) {
+            if (stats.entityKey.equals(key)) {
+                return stats;
+            }
+        }
+        return null;
     }
     
     /**
@@ -38,7 +48,9 @@ public class CombatLog {
      */
     private EntityCombatStats getOrCreateStats(Entity entity) {
         String key = getEntityKey(entity);
-        if (!entityStats.containsKey(key)) {
+        EntityCombatStats existingStats = findStatsByKey(key);
+        
+        if (existingStats == null) {
             EntityCombatStats stats = new EntityCombatStats();
             stats.entityName = entity.getEntityName();
             stats.displayName = entity.getDisplayName(); // Name with ID
@@ -51,9 +63,10 @@ public class CombatLog {
             stats.row = entity.getCurrentRow();
             stats.column = entity.getCurrentColumn();
             
-            entityStats.put(key, stats);
+            entityStats.add(stats);
+            return stats;
         }
-        return entityStats.get(key);
+        return existingStats;
     }
     
     /**
@@ -216,15 +229,12 @@ public class CombatLog {
         combatEvents.add(event);
     }
     
-    /**
-     * Mark battle as ended
-     */
     public void endBattle() {
         this.battleEnded = true;
         this.battleEndTime = System.currentTimeMillis();
         
         // Update final health for all living entities
-        for (EntityCombatStats stats : entityStats.values()) {
+        for (EntityCombatStats stats : entityStats) {
             if (!stats.died) {
                 stats.finalHealth = stats.currentHealth;
             }
@@ -235,7 +245,7 @@ public class CombatLog {
      * Mark all zombies or defenses as dead (for victory/defeat scenarios)
      */
     public void markRemainingEntitiesDead(boolean markZombies) {
-        for (EntityCombatStats stats : entityStats.values()) {
+        for (EntityCombatStats stats : entityStats) {
             // If marking zombies dead (victory) or marking defenses dead (defeat)
             if ((markZombies && !stats.isDefense) || (!markZombies && stats.isDefense)) {
                 if (!stats.died && stats.currentHealth > 0) {
@@ -257,10 +267,17 @@ public class CombatLog {
     }
     
     /**
-     * Get all entity stats
+     * Get all entity stats (returns ArrayList as a values collection via wrapper)
      */
-    public Map<String, EntityCombatStats> getAllStats() {
+    public List<EntityCombatStats> getAllStats() {
         return entityStats;
+    }
+    
+    /**
+     * Find entity stats by entity key
+     */
+    public EntityCombatStats getStatsByKey(String entityKey) {
+        return findStatsByKey(entityKey);
     }
     
     /**

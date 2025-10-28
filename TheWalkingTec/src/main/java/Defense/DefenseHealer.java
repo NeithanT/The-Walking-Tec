@@ -1,8 +1,8 @@
 package Defense;
 
 import Entity.EntityHealer;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 
@@ -13,14 +13,16 @@ public class DefenseHealer extends Defense implements EntityHealer {
     public DefenseHealer(String name, int healthPoints, int showUpLevel, int cost, int healPower) {
         super(name, healthPoints, showUpLevel, cost);
         this.healPower = healPower;
-        this.types = new HashSet<>(Arrays.asList(DefenseType.HEALER));
+        this.types = new ArrayList<>(Arrays.asList(DefenseType.HEALER));
     }
     
-    public DefenseHealer(Set<DefenseType> types, String name, int healthPoints, int showUpLevel, int cost, int healPower) {
+    public DefenseHealer(List<DefenseType> types, String name, int healthPoints, int showUpLevel, int cost, int healPower) {
         super(name, healthPoints, showUpLevel, cost);
         this.healPower = healPower;
-        this.types = new HashSet<>(types);
-        this.types.add(DefenseType.HEALER);
+        this.types = new ArrayList<>(types);
+        if (!this.types.contains(DefenseType.HEALER)) {
+            this.types.add(DefenseType.HEALER);
+        }
     }
 
     @Override

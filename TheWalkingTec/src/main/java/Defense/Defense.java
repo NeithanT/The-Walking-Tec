@@ -1,16 +1,16 @@
 package Defense;
 
 import Entity.Entity;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Defense extends Entity {
 
-    protected Set<DefenseType> types;
+    protected List<DefenseType> types;
     
     public Defense() {
-       this.types = new HashSet<>(Arrays.asList(DefenseType.BLOCKS));
+       this.types = new ArrayList<>(Arrays.asList(DefenseType.BLOCKS));
     }
     
     public Defense(String name, int healthPoints, int showUpLevel, int cost) {
@@ -18,24 +18,24 @@ public class Defense extends Entity {
         this.healthPoints = healthPoints;
         this.showUpLevel = showUpLevel;
         this.cost = cost;
-        this.types = new HashSet<>();
+        this.types = new ArrayList<>();
     }
     
     public Defense(DefenseType type, String name, int healthPoints, int showUpLevel, int cost) {
         this(name, healthPoints, showUpLevel, cost);
-        this.types = new HashSet<>(Arrays.asList(type));
+        this.types = new ArrayList<>(Arrays.asList(type));
     }
     
-    public Defense(Set<DefenseType> types, String name, int healthPoints, int showUpLevel, int cost) {
+    public Defense(List<DefenseType> types, String name, int healthPoints, int showUpLevel, int cost) {
         this(name, healthPoints, showUpLevel, cost);
-        this.types = new HashSet<>(types);
+        this.types = new ArrayList<>(types);
     }
     
-    public Set<DefenseType> getTypes() {
+    public List<DefenseType> getTypes() {
         return types;
     }
     
-    public void setTypes(Set<DefenseType> types) {
+    public void setTypes(List<DefenseType> types) {
         this.types = types;
     }
     

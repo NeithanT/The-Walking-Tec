@@ -17,9 +17,6 @@ import Defense.DefenseMediumRange;
 import Defense.DefenseMultipleAttack;
 import Defense.DefenseType;
 import java.util.ArrayList;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Arrays;
 
 
 public class loadDefaultConfig {
@@ -52,8 +49,10 @@ public class loadDefaultConfig {
         Zombie z10 = new ZombieFlying("Dragona del End", 70, 7, 8, 12, 3, 1.5);
         z10.setImagePath("src/main/resources/assets/DragonaDelEnd.png");
         
-        // HYBRID ZOMBIE: EXPLOSIVE + FLYING (Kamikaze usando Set)
-        Set<ZombieType> kamikazeTypes = new HashSet<>(Arrays.asList(ZombieType.EXPLOSIVE, ZombieType.FLYING));
+        // HYBRID ZOMBIE: EXPLOSIVE + FLYING (Kamikaze using ArrayList)
+        ArrayList<ZombieType> kamikazeTypes = new ArrayList<>();
+        kamikazeTypes.add(ZombieType.EXPLOSIVE);
+        kamikazeTypes.add(ZombieType.FLYING);
         Zombie z11 = new ZombieExplosive(kamikazeTypes, "Sky Bomber", 15, 2, 2, 5, 2.5);
         z11.setImagePath("src/main/resources/assets/SkyBomber.png");
         
@@ -148,8 +147,10 @@ public class loadDefaultConfig {
         d11.setImagePath("src/main/resources/assets/Lebron_James.jpg");
         defenses.add(d11);
         
-        // HYBRID DEFENSE: FLYING + HEALER (Medic Drone usando Set)
-        Set<DefenseType> medicTypes = new HashSet<>(Arrays.asList(DefenseType.FLYING, DefenseType.HEALER));
+        // HYBRID DEFENSE: FLYING + HEALER (Medic Drone using ArrayList)
+        ArrayList<DefenseType> medicTypes = new ArrayList<>();
+        medicTypes.add(DefenseType.FLYING);
+        medicTypes.add(DefenseType.HEALER);
         Defense d12 = new DefenseHealer(medicTypes, "Medic Drone", 40, 2, 3, 8);
         d12.setImagePath("src/main/resources/assets/MedicDrone.png");
         defenses.add(d12);

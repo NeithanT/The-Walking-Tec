@@ -15,7 +15,6 @@ import Zombie.ZombieType;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 
 final class WaveManager {
 
@@ -241,7 +240,7 @@ final class WaveManager {
         } else if (source instanceof ZombieAttacker attacker) {
             clone = new ZombieAttacker(attacker.getEntityName(), attacker.getHealthPoints(), attacker.getShowUpLevel(), attacker.getCost(), attacker.getDamage(), 0, attacker.getMovementSpeed());
         } else {
-            Set<ZombieType> types = source.getTypes();
+            List<ZombieType> types = source.getTypes();
             clone = new Zombie(types, source.getEntityName(), source.getHealthPoints(), source.getShowUpLevel(), source.getCost(), source.getMovementSpeed());
         }
 

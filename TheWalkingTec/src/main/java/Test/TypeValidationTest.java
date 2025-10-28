@@ -5,8 +5,8 @@ import Defense.DefenseTypeValidator;
 import Zombie.ZombieType;
 import Zombie.ZombieTypeValidator;
 
-import java.util.Set;
-import java.util.HashSet;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -89,8 +89,8 @@ public class TypeValidationTest {
     }
     
     private static void testDefense(String description, DefenseType... types) {
-        Set<DefenseType> typeSet = new HashSet<>(Arrays.asList(types));
-        DefenseTypeValidator.ValidationResult result = DefenseTypeValidator.validate(typeSet);
+        List<DefenseType> typeList = new ArrayList<>(Arrays.asList(types));
+        DefenseTypeValidator.ValidationResult result = DefenseTypeValidator.validate(typeList);
         
         String status = result.isValid() ? "✅ VÁLIDO" : "❌ INVÁLIDO";
         System.out.printf("%-45s %s\n", description + ":", status);
@@ -101,8 +101,8 @@ public class TypeValidationTest {
     }
     
     private static void testZombie(String description, ZombieType... types) {
-        Set<ZombieType> typeSet = new HashSet<>(Arrays.asList(types));
-        ZombieTypeValidator.ValidationResult result = ZombieTypeValidator.validate(typeSet);
+        List<ZombieType> typeList = new ArrayList<>(Arrays.asList(types));
+        ZombieTypeValidator.ValidationResult result = ZombieTypeValidator.validate(typeList);
         
         String status = result.isValid() ? "✅ VÁLIDO" : "❌ INVÁLIDO";
         System.out.printf("%-45s %s\n", description + ":", status);

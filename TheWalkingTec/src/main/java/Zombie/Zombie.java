@@ -2,13 +2,13 @@ package Zombie;
 
 import Entity.Entity;
 import GameLogic.GameManager;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Zombie extends Entity {
     
-    protected Set<ZombieType> types;
+    protected List<ZombieType> types;
     
     // Pixel position tracking (smooth movement)
     protected double pixelX;
@@ -23,7 +23,7 @@ public class Zombie extends Entity {
     protected GameManager gameManager;
     
     public Zombie() {
-        types = new HashSet<>(Arrays.asList(ZombieType.CONTACT));
+        types = new ArrayList<>(Arrays.asList(ZombieType.CONTACT));
         initializeMovement(1.5);
     }
     
@@ -32,19 +32,19 @@ public class Zombie extends Entity {
         this.healthPoints = healthPoints;
         this.showUpLevel = showUpLevel;
         this.cost = cost;
-        if (types == null) { types = new HashSet<>(); }
+        if (types == null) { types = new ArrayList<>(); }
         initializeMovement(movementSpeed);
     }
     
     public Zombie(ZombieType type, String name, int healthPoints, int showUpLevel, int cost, double movementSpeed) {
         this(name, healthPoints, showUpLevel, cost, movementSpeed);
-        this.types = new HashSet<>(Arrays.asList(type));
+        this.types = new ArrayList<>(Arrays.asList(type));
         initializeMovement(movementSpeed);
     }
     
-    public Zombie(Set<ZombieType> types, String name, int healthPoints, int showUpLevel, int cost, double movementSpeed) {
+    public Zombie(List<ZombieType> types, String name, int healthPoints, int showUpLevel, int cost, double movementSpeed) {
         this(name, healthPoints, showUpLevel, cost, movementSpeed);
-        this.types = new HashSet<>(types);
+        this.types = new ArrayList<>(types);
         initializeMovement(movementSpeed);
     }
     
@@ -58,11 +58,11 @@ public class Zombie extends Entity {
         this.targetColumn = -1;
     }
     
-    public Set<ZombieType> getTypes() { 
+    public List<ZombieType> getTypes() { 
         return types; 
     }
     
-    public void setTypes(Set<ZombieType> types) { 
+    public void setTypes(List<ZombieType> types) { 
         this.types = types; 
     }
     

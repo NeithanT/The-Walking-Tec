@@ -2,9 +2,8 @@ package Test;
 
 import Defense.*;
 import Zombie.*;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Demonstration of the Hybrid Type System
@@ -20,11 +19,10 @@ public class HybridTypeDemo {
         ZombieFlying regularFlying = new ZombieFlying("Regular Flying", 30, 1, 1, 5, 3, 2.0);
         printZombieInfo(regularFlying);
         
-        // 2. Hybrid zombie: EXPLOSIVE + FLYING using Set
-        Set<ZombieType> kamikazeTypes = new HashSet<>(Arrays.asList(
-            ZombieType.EXPLOSIVE, 
-            ZombieType.FLYING
-        ));
+        // 2. Hybrid zombie: EXPLOSIVE + FLYING using ArrayList
+        List<ZombieType> kamikazeTypes = new ArrayList<>();
+        kamikazeTypes.add(ZombieType.EXPLOSIVE);
+        kamikazeTypes.add(ZombieType.FLYING);
         Zombie kamikaze = new ZombieExplosive(kamikazeTypes, "Sky Bomber", 15, 2, 2, 5, 2.5);
         printZombieInfo(kamikaze);
         
@@ -32,19 +30,17 @@ public class HybridTypeDemo {
         DefenseFlying regularFlyingDefense = new DefenseFlying("Goku", 50, 1, 1, 10, 5);
         printDefenseInfo(regularFlyingDefense);
         
-        // 4. Hybrid defense: FLYING + HEALER using Set
-        Set<DefenseType> medicTypes = new HashSet<>(Arrays.asList(
-            DefenseType.FLYING, 
-            DefenseType.HEALER
-        ));
+        // 4. Hybrid defense: FLYING + HEALER using ArrayList
+        List<DefenseType> medicTypes = new ArrayList<>();
+        medicTypes.add(DefenseType.FLYING);
+        medicTypes.add(DefenseType.HEALER);
         Defense medicDrone = new DefenseHealer(medicTypes, "Medic Drone", 40, 2, 3, 8);
         printDefenseInfo(medicDrone);
         
-        // 5. Creating custom hybrid using Set - FLYING + MULTIPLEATTACK
-        Set<DefenseType> customTypes = new HashSet<>(Arrays.asList(
-            DefenseType.FLYING, 
-            DefenseType.MULTIPLEATTACK
-        ));
+        // 5. Creating custom hybrid using ArrayList - FLYING + MULTIPLEATTACK
+        List<DefenseType> customTypes = new ArrayList<>();
+        customTypes.add(DefenseType.FLYING);
+        customTypes.add(DefenseType.MULTIPLEATTACK);
         DefenseMultipleAttack customHybrid = new DefenseMultipleAttack(
             customTypes, 
             "Custom Flying Multi-Attacker", 

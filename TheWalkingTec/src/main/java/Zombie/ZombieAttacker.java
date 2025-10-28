@@ -1,8 +1,8 @@
 package Zombie;
 
 import Entity.EntityAttacker;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class ZombieAttacker extends Zombie implements EntityAttacker {
@@ -17,12 +17,12 @@ public class ZombieAttacker extends Zombie implements EntityAttacker {
     
     public ZombieAttacker(ZombieType type, String name, int healthPoints, int showUpLevel, int cost, int damage, int range, double movementSpeed) {
         this(name, healthPoints, showUpLevel, cost, damage, range, movementSpeed);
-        this.types = new HashSet<>(Arrays.asList(type));
+        this.types = new ArrayList<>(Arrays.asList(type));
     }
     
-    public ZombieAttacker(Set<ZombieType> types, String name, int healthPoints, int showUpLevel, int cost, int damage, int range, double movementSpeed) {
+    public ZombieAttacker(List<ZombieType> types, String name, int healthPoints, int showUpLevel, int cost, int damage, int range, double movementSpeed) {
         this(name, healthPoints, showUpLevel, cost, damage, range, movementSpeed);
-        this.types = new HashSet<>(types);
+        this.types = new ArrayList<>(types);
     }
     
     public int getDamage() {

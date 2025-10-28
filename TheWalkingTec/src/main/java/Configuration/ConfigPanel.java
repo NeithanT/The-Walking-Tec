@@ -36,8 +36,6 @@ import Vanity.RoundedPanel;
 import Zombie.Zombie;
 import Zombie.ZombieAttacker;
 import Zombie.ZombieType;
-import java.util.HashSet;
-import java.util.Set;
 
 public class ConfigPanel extends JPanel {
     

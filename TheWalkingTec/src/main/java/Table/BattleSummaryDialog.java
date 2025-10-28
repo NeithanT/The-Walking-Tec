@@ -5,7 +5,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * BattleSummaryDialog - Shows complete battle statistics at the end of a round
@@ -97,7 +96,7 @@ public class BattleSummaryDialog extends JDialog {
         
         // Filter entities
         List<CombatLog.EntityCombatStats> entities = new ArrayList<>();
-        for (CombatLog.EntityCombatStats stats : log.getAllStats().values()) {
+        for (CombatLog.EntityCombatStats stats : log.getAllStats()) {
             if (stats.isDefense == showDefenses) {
                 entities.add(stats);
             }
@@ -194,70 +193,35 @@ public class BattleSummaryDialog extends JDialog {
         textArea.setForeground(Color.WHITE);
         textArea.setMargin(new Insets(10, 10, 10, 10));
         
-        StringBuilder sb = new StringBuilder();
-        sb.append("=== REGISTRO DE COMBATE - NIVEL ").append(log.getLevel()).append(" ===\n\n");
+        String text = "=== REGISTRO DE COMBATE - NIVEL " + log.getLevel() + " ===\n\n";
         
         for (CombatLog.CombatEvent event : log.getCombatEvents()) {
             String time = String.format("[%02d:%02d] ", event.timestamp / 60000, (event.timestamp / 1000) % 60);
             
             switch (event.type) {
                 case ATTACK:
-                    sb.append(time)
-                      .append(event.attackerName)
-                      .append(" atacó a ")
-                      .append(event.targetName)
-                      .append(" causando ")
-                      .append(event.damage)
-                      .append(" de daño (")
-                      .append(event.targetHealthBefore)
-                      .append(" → ")
-                      .append(event.targetHealthAfter)
-                      .append(" HP)\n");
+                    text += time + event.attackerName + " atacó a " + event.targetName + " causando " + event.damage + " de daño (" + event.targetHealthBefore + " → " + event.targetHealthAfter + " HP)\n";
                     break;
                     
                 case HEAL:
-                    sb.append(time)
-                      .append(event.attackerName)
-                      .append(" curó a ")
-                      .append(event.targetName)
-                      .append(" por ")
-                      .append(event.damage)
-                      .append(" HP (")
-                      .append(event.targetHealthBefore)
-                      .append(" → ")
-                      .append(event.targetHealthAfter)
-                      .append(" HP)\n");
+                    text += time + event.attackerName + " curó a " + event.targetName + " por " + event.damage + " HP (" + event.targetHealthBefore + " → " + event.targetHealthAfter + " HP)\n";
                     break;
                     
                 case EXPLOSION:
-                    sb.append(time)
-                      .append("💥 ")
-                      .append(event.attackerName)
-                      .append(" EXPLOTÓ dañando a ")
-                      .append(event.targetName)
-                      .append(" por ")
-                      .append(event.damage)
-                      .append(" HP (")
-                      .append(event.targetHealthBefore)
-                      .append(" → ")
-                      .append(event.targetHealthAfter)
-                      .append(" HP)\n");
+                    text += time + "💥 " + event.attackerName + " EXPLOTÓ dañando a " + event.targetName + " por " + event.damage + " HP (" + event.targetHealthBefore + " → " + event.targetHealthAfter + " HP)\n";
                     break;
                     
                 case DEATH:
-                    sb.append(time)
-                      .append("☠ ")
-                      .append(event.targetName)
-                      .append(" ha MUERTO");
+                    text += time + "☠ " + event.targetName + " ha MUERTO";
                     if (event.attackerName != null) {
-                        sb.append(" (asesinado por ").append(event.attackerName).append(")");
+                        text += " (asesinado por " + event.attackerName + ")";
                     }
-                    sb.append("\n");
+                    text += "\n";
                     break;
             }
         }
         
-        textArea.setText(sb.toString());
+        textArea.setText(text);
         textArea.setCaretPosition(0);
         
         JScrollPane scrollPane = new JScrollPane(textArea);

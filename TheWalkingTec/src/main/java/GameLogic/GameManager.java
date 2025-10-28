@@ -25,7 +25,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 import javax.imageio.ImageIO;
 import javax.swing.Timer;
 
@@ -1197,7 +1196,7 @@ public class GameManager {
         
         try {
             // Use the types-based constructor for proper hybrid type support
-            Set<DefenseType> types = original.getTypes();
+            List<DefenseType> types = original.getTypes();
             
             // Check specific defense types first
             if (original instanceof DefenseMultipleAttack) {
