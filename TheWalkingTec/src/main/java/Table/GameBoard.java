@@ -10,6 +10,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.imageio.ImageIO;
 import javax.swing.JPanel;
 public class GameBoard extends JPanel {
@@ -19,6 +20,10 @@ public class GameBoard extends JPanel {
 
     private ArrayList<PlacedDefense> defenses;
     private ArrayList<Object> zombies;
+    
+    // Locks para acceso thread-safe sin synchronized
+    private final ReentrantLock defensesLock = new ReentrantLock();
+    private final ReentrantLock zombiesLock = new ReentrantLock();
 
     private final int ROWS = 25;
     private final int COLUMNS = 25;
@@ -186,8 +191,11 @@ public class GameBoard extends JPanel {
         
         // Create a copy to avoid ConcurrentModificationException
         ArrayList<PlacedDefense> defensesCopy;
-        synchronized(defenses) {
+        defensesLock.lock();
+        try {
             defensesCopy = new ArrayList<>(defenses);
+        } finally {
+            defensesLock.unlock();
         }
         
         for (PlacedDefense defense : defensesCopy){
@@ -212,8 +220,11 @@ public class GameBoard extends JPanel {
         // Draw zombies at their pixel positions
         // Create a copy to avoid ConcurrentModificationException
         ArrayList<Object> zombiesCopy;
-        synchronized(zombies) {
+        zombiesLock.lock();
+        try {
             zombiesCopy = new ArrayList<>(zombies);
+        } finally {
+            zombiesLock.unlock();
         }
         
         for (Object obj : zombiesCopy) {
@@ -265,51 +276,72 @@ public class GameBoard extends JPanel {
     }
 
     public void addDefense(PlacedDefense defense){
-        synchronized(defenses) {
+        defensesLock.lock();
+        try {
             defenses.add(defense);
+        } finally {
+            defensesLock.unlock();
         }
         repaint();
     }
 
     public void addZombie(Object zombie){
-        synchronized(zombies) {
+        zombiesLock.lock();
+        try {
             zombies.add(zombie);
+        } finally {
+            zombiesLock.unlock();
         }
         repaint();
 
     }
 
     public void deleteDefense(PlacedDefense defense){
-        synchronized(defenses) {
+        defensesLock.lock();
+        try {
             defenses.remove(defense);
+        } finally {
+            defensesLock.unlock();
         }
         repaint();
     }
     
     public void removePlacedDefense(int row, int col) {
-        synchronized(defenses) {
+        defensesLock.lock();
+        try {
             defenses.removeIf(pd -> pd.row == row && pd.column == col);
+        } finally {
+            defensesLock.unlock();
         }
         repaint();
     }
 
     public void deleteZombie(Object zombie){
-        synchronized(zombies) {
+        zombiesLock.lock();
+        try {
             zombies.remove(zombie);
+        } finally {
+            zombiesLock.unlock();
         }
         repaint();
     }
 
     public void clearZombies(){
-        synchronized(zombies) {
+        zombiesLock.lock();
+        try {
             zombies.clear();
+        } finally {
+            zombiesLock.unlock();
         }
         repaint();
     }
     
     public void clearDefenses(){
-        synchronized(defenses) {
+        defensesLock.lock();
+        try {
             defenses.clear();
+        } finally {
+            defensesLock.unlock();
         }
         repaint();
     }
@@ -358,12 +390,15 @@ public class GameBoard extends JPanel {
     }
 
     public PlacedDefense getDefenseAt(int row, int column) {
-        synchronized(defenses) {
+        defensesLock.lock();
+        try {
             for (PlacedDefense defense : defenses) {
                 if (defense.row == row && defense.column == column) {
                     return defense;
                 }
             }
+        } finally {
+            defensesLock.unlock();
         }
         return null;
     }

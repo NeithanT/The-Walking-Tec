@@ -1,16 +1,25 @@
 package Defense;
 
 import Entity.Entity;
-import java.util.Set;
-import java.util.HashSet;
+import GameLogic.GameManager;
+import java.util.ArrayList;
 import java.util.Arrays;
 
-public class Defense extends Entity {
+public class Defense extends Entity implements Runnable {
 
-    protected Set<DefenseType> types;
+    protected ArrayList<DefenseType> types;
+    
+    // Thread control
+    private Thread defenseThread;
+    private volatile boolean running = false;
+    private GameManager gameManager;
+    private static final long ATTACK_DELAY = 1000; // 1 second between attacks
+    
+    // Target locking - "Las defensas fijan el objetivo que se ponga en su alcance"
+    private volatile Entity lockedTarget = null;
     
     public Defense() {
-       this.types = new HashSet<>(Arrays.asList(DefenseType.BLOCKS));
+       this.types = new ArrayList<>(Arrays.asList(DefenseType.BLOCKS));
     }
     
     public Defense(String name, int healthPoints, int showUpLevel, int cost) {
@@ -18,24 +27,24 @@ public class Defense extends Entity {
         this.healthPoints = healthPoints;
         this.showUpLevel = showUpLevel;
         this.cost = cost;
-        this.types = new HashSet<>();
+        this.types = new ArrayList<>();
     }
     
     public Defense(DefenseType type, String name, int healthPoints, int showUpLevel, int cost) {
         this(name, healthPoints, showUpLevel, cost);
-        this.types = new HashSet<>(Arrays.asList(type));
+        this.types = new ArrayList<>(Arrays.asList(type));
     }
     
-    public Defense(Set<DefenseType> types, String name, int healthPoints, int showUpLevel, int cost) {
+    public Defense(ArrayList<DefenseType> types, String name, int healthPoints, int showUpLevel, int cost) {
         this(name, healthPoints, showUpLevel, cost);
-        this.types = new HashSet<>(types);
+        this.types = new ArrayList<>(types);
     }
     
-    public Set<DefenseType> getTypes() {
+    public ArrayList<DefenseType> getTypes() {
         return types;
     }
     
-    public void setTypes(Set<DefenseType> types) {
+    public void setTypes(ArrayList<DefenseType> types) {
         this.types = types;
     }
     
@@ -149,5 +158,116 @@ public class Defense extends Entity {
     @Override
     public boolean hasMultipleAttacks() {
         return types.contains(DefenseType.MULTIPLEATTACK);
+    }
+    
+    // ==================== THREAD METHODS ====================
+    
+    /**
+     * Set the game manager for this defense
+     */
+    public void setGameManager(GameManager gm) {
+        this.gameManager = gm;
+    }
+    
+    /**
+     * Main thread loop for defense behavior
+     * Implements: "Las defensas fijan el objetivo que se ponga en su alcance"
+     */
+    @Override
+    public void run() {
+        while (running && healthPoints > 0) {
+            try {
+                if (gameManager == null || gameManager.isGamePaused()) {
+                    Thread.sleep(100);
+                    continue;
+                }
+                
+                // BLOCKS type defenses don't attack
+                if (!hasType(DefenseType.BLOCKS)) {
+                    // Check if locked target is still valid
+                    if (lockedTarget != null) {
+                        if (lockedTarget.getHealthPoints() <= 0 || !isTargetInRange(lockedTarget)) {
+                            // Target died or left range, release lock
+                            lockedTarget = null;
+                        }
+                    }
+                    
+                    // If no locked target, find one
+                    if (lockedTarget == null) {
+                        lockedTarget = gameManager.findClosestZombieInRange(this);
+                    }
+                    
+                    // Attack the locked target (or search for targets if no lock)
+                    performAttack();
+                }
+                
+                // Wait before next attack
+                Thread.sleep(ATTACK_DELAY);
+                
+            } catch (InterruptedException e) {
+                running = false;
+                Thread.currentThread().interrupt();
+            } catch (Exception e) {
+                System.err.println("Error in defense thread " + getDisplayName() + ": " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+    }
+    
+    /**
+     * Check if target is still in attack range
+     */
+    private boolean isTargetInRange(Entity target) {
+        if (target == null || gameManager == null) return false;
+        int distance = gameManager.calculateDistanceBetween(this, target);
+        return distance <= this.getAttackRange();
+    }
+    
+    /**
+     * Get the currently locked target
+     */
+    public Entity getLockedTarget() {
+        return lockedTarget;
+    }
+    
+    /**
+     * Perform attack logic (to be called by the thread)
+     */
+    private void performAttack() {
+        if (gameManager == null) return;
+        
+        // Delegate to GameManager to handle the actual attack
+        // This keeps combat logic centralized and synchronized
+        gameManager.processDefenseAttackThreaded(this);
+    }
+    
+    /**
+     * Start the defense thread
+     */
+    public void startThread() {
+        if (defenseThread == null || !defenseThread.isAlive()) {
+            running = true;
+            defenseThread = new Thread(this, "Defense-" + getDisplayName());
+            defenseThread.setDaemon(true); // Allow JVM to exit even if thread is running
+            defenseThread.start();
+            System.out.println("▶ Started thread for " + getDisplayName());
+        }
+    }
+    
+    /**
+     * Stop the defense thread
+     */
+    public void stopThread() {
+        running = false;
+        if (defenseThread != null) {
+            defenseThread.interrupt();
+        }
+    }
+    
+    /**
+     * Check if thread is running
+     */
+    public boolean isThreadRunning() {
+        return running && defenseThread != null && defenseThread.isAlive();
     }
 }

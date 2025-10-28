@@ -23,9 +23,9 @@ import java.awt.Image;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
-import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.imageio.ImageIO;
 import javax.swing.Timer;
 
@@ -35,6 +35,10 @@ public class GameManager {
     private static final String LIFE_TREE_NAME = "LIFE TREE";
     private static final int ZOMBIES_PER_SPAWN_BATCH = 5;
     private static final int SPAWN_DELAY_MS = 2000; // 2 segundos entre grupos
+    
+    // Locks para sincronización sin synchronized
+    private final Lock combatLock = new ReentrantLock();
+    private final Lock summaryLock = new ReentrantLock();
 
     private final GameBoard board;
     private final SidePanel sidePanel;
@@ -171,6 +175,19 @@ public class GameManager {
         }
         isPaused = true;
         stopZombieThreads();
+        stopDefenseThreads();
+    }
+    
+    /**
+     * Stop all defense threads
+     */
+    private void stopDefenseThreads() {
+        System.out.println("⏹ Stopping all defense threads...");
+        for (Defense defense : waveDefense) {
+            if (defense != null) {
+                defense.stopThread();
+            }
+        }
     }
 
     public void setSelectedDefense(Defense defenseName) {
@@ -322,6 +339,12 @@ public class GameManager {
         } else {
             waveDefense.add(placedDefinition);
             // No deseleccionar la defensa para permitir colocación múltiple
+            
+            // Start defense thread if game is active
+            if (roundActive && !isPaused) {
+                placedDefinition.setGameManager(this);
+                placedDefinition.startThread();
+            }
         }
 
         if (sidePanel != null) {
@@ -344,6 +367,81 @@ public class GameManager {
 
     public void moveZombieTowardsLifeTree(Zombie zombie) {
         movementController.moveZombieTowardsLifeTree(zombie);
+    }
+    
+    /**
+     * Move zombie towards the CLOSEST target (defense or Life Tree)
+     * This implements: "Los zombies buscan el objetivo más cercano y se desplazan hacia él"
+     */
+    public void moveZombieTowardsClosestTarget(Zombie zombie) {
+        if (zombie == null || !zombie.isAlive()) {
+            return;
+        }
+        
+        // Find closest defense
+        Defense closestDefense = findClosestDefense(zombie);
+        
+        // If there's a defense in range or on the path, move towards it
+        if (closestDefense != null) {
+            movementController.moveZombieTowardsTarget(zombie, 
+                closestDefense.getCurrentRow(), 
+                closestDefense.getCurrentColumn());
+        } else {
+            // No defenses, move towards Life Tree
+            movementController.moveZombieTowardsLifeTree(zombie);
+        }
+    }
+    
+    /**
+     * Find the closest defense to a zombie
+     */
+    private Defense findClosestDefense(Zombie zombie) {
+        Defense closest = null;
+        int minDistance = Integer.MAX_VALUE;
+        
+        for (Defense defense : waveDefense) {
+            if (defense != null && defense.getHealthPoints() > 0) {
+                int distance = CombatRules.calculateDistance(zombie, defense);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closest = defense;
+                }
+            }
+        }
+        
+        return closest;
+    }
+    
+    /**
+     * Find the closest zombie in range for a defense
+     * Implements: "Las defensas fijan el objetivo que se ponga en su alcance"
+     */
+    public Zombie findClosestZombieInRange(Defense defense) {
+        if (defense == null) return null;
+        
+        Zombie closest = null;
+        int minDistance = Integer.MAX_VALUE;
+        int defenseRange = defense.getAttackRange();
+        
+        for (Zombie zombie : waveZombies) {
+            if (zombie != null && zombie.isAlive() && zombie.getHealthPoints() > 0) {
+                int distance = CombatRules.calculateDistance(defense, zombie);
+                if (distance <= defenseRange && distance < minDistance) {
+                    minDistance = distance;
+                    closest = zombie;
+                }
+            }
+        }
+        
+        return closest;
+    }
+    
+    /**
+     * Calculate distance between two entities (helper method)
+     */
+    public int calculateDistanceBetween(Entity entity1, Entity entity2) {
+        if (entity1 == null || entity2 == null) return Integer.MAX_VALUE;
+        return CombatRules.calculateDistance(entity1, entity2);
     }
 
     void zombieReachedLifeTree(Zombie zombie) {
@@ -473,9 +571,11 @@ public class GameManager {
     }
 
     public void stopZombieThreads() {
+        System.out.println("⏹ Stopping all zombie threads...");
         for (Zombie zombie : waveZombies) {
             if (zombie != null) {
                 zombie.setAlive(false);
+                zombie.stopThread();
             }
         }
     }
@@ -557,14 +657,17 @@ public class GameManager {
     }
     
     private void showBattleSummary(boolean hasWon) {
-        // Prevent showing summary multiple times with synchronized block
-        synchronized(this) {
+        // Prevent showing summary multiple times with Lock instead of synchronized
+        summaryLock.lock();
+        try {
             if (summaryShown) {
                 log("⚠ Summary already shown, skipping duplicate call");
                 return;
             }
             summaryShown = true;
             log("✓ Setting summaryShown = true, proceeding to show summary");
+        } finally {
+            summaryLock.unlock();
         }
         
         if (parentFrame == null || combatLog == null) {
@@ -1076,7 +1179,23 @@ public class GameManager {
             }
         }
         
+        // Start threads for all placed defenses
+        startDefenseThreads();
+        
         waveManager.startRound();
+    }
+    
+    /**
+     * Start threads for all defenses
+     */
+    private void startDefenseThreads() {
+        System.out.println("▶ Starting defense threads...");
+        for (Defense defense : waveDefense) {
+            if (defense != null && defense.getHealthPoints() > 0) {
+                defense.setGameManager(this);
+                defense.startThread();
+            }
+        }
     }
 
     public void resetGame() {
@@ -1197,7 +1316,7 @@ public class GameManager {
         
         try {
             // Use the types-based constructor for proper hybrid type support
-            Set<DefenseType> types = original.getTypes();
+            ArrayList<DefenseType> types = original.getTypes();
             
             // Check specific defense types first
             if (original instanceof DefenseMultipleAttack) {
@@ -1412,7 +1531,7 @@ public class GameManager {
         log("=== COMBAT TICK === Defenses: " + waveDefense.size() + " | Zombies: " + waveZombies.size());
         
         // Process defense attacks - usar una copia para evitar ConcurrentModificationException
-        List<Defense> defensesToProcess = new ArrayList<>(waveDefense);
+        ArrayList<Defense> defensesToProcess = new ArrayList<>(waveDefense);
         for (Defense defense : defensesToProcess) {
             if (defense == null || defense.getHealthPoints() <= 0) {
                 continue; // Skip dead/null defenses
@@ -1426,7 +1545,7 @@ public class GameManager {
         }
         
         // Process zombie attacks - usar una copia para evitar ConcurrentModificationException
-        List<Zombie> zombiesToProcess = new ArrayList<>(waveZombies);
+        ArrayList<Zombie> zombiesToProcess = new ArrayList<>(waveZombies);
         for (Zombie zombie : zombiesToProcess) {
             if (zombie == null || !zombie.isAlive() || zombie.getHealthPoints() <= 0) {
                 continue; // Skip dead/null zombies
@@ -1452,6 +1571,48 @@ public class GameManager {
         verifyLoss();
     }
     
+    // ==================== THREADED COMBAT METHODS ====================
+    
+    /**
+     * Process defense attack from its own thread (using ReentrantLock instead of synchronized)
+     */
+    public void processDefenseAttackThreaded(Defense defense) {
+        combatLock.lock();
+        try {
+            if (defense == null || defense.getHealthPoints() <= 0) {
+                return;
+            }
+            
+            if (defense.isHealer()) {
+                processHealing(defense);
+            } else {
+                processDefenseAttack(defense);
+            }
+        } finally {
+            combatLock.unlock();
+        }
+    }
+    
+    /**
+     * Process zombie attack from its own thread (using ReentrantLock instead of synchronized)
+     */
+    public void processZombieAttackThreaded(Zombie zombie) {
+        combatLock.lock();
+        try {
+            if (zombie == null || !zombie.isAlive() || zombie.getHealthPoints() <= 0) {
+                return;
+            }
+            
+            if (zombie.isHealer()) {
+                processHealing(zombie);
+            } else {
+                processZombieAttack(zombie);
+            }
+        } finally {
+            combatLock.unlock();
+        }
+    }
+    
     /**
      * Processes attack for a single defense
      */
@@ -1462,14 +1623,14 @@ public class GameManager {
         }
         
         // Get all valid zombie targets in range
-        List<Entity> zombieEntities = new ArrayList<>();
+        ArrayList<Entity> zombieEntities = new ArrayList<>();
         for (Zombie z : waveZombies) {
             if (z.isAlive() && z.getHealthPoints() > 0) {
                 zombieEntities.add(z);
             }
         }
         
-        List<Entity> validTargets = CombatRules.getValidTargets(defense, zombieEntities);
+        ArrayList<Entity> validTargets = CombatRules.getValidTargets(defense, zombieEntities);
         
         if (validTargets.isEmpty()) {
             return; // No targets in range
@@ -1496,7 +1657,7 @@ public class GameManager {
             
             // Attack up to 2 different targets, but attackCount times each
             int maxTargets = Math.min(2, validTargets.size());
-            List<Entity> closestTargets = findClosestEntities(defense, validTargets, maxTargets);
+            ArrayList<Entity> closestTargets = findClosestEntities(defense, validTargets, maxTargets);
             
             // Distribute attacks among the closest targets
             for (int i = 0; i < attackCount; i++) {
@@ -1517,7 +1678,7 @@ public class GameManager {
         } else {
             // Normal attack: attack up to 2 closest targets
             int maxTargets = Math.min(2, validTargets.size());
-            List<Entity> closestTargets = findClosestEntities(defense, validTargets, maxTargets);
+            ArrayList<Entity> closestTargets = findClosestEntities(defense, validTargets, maxTargets);
             
             for (Entity target : closestTargets) {
                 int distance = CombatRules.calculateDistance(defense, target);
@@ -1547,7 +1708,7 @@ public class GameManager {
      */
     private void processZombieAttack(Zombie zombie) {
         // Get all valid defense targets in range
-        List<Entity> defenseEntities = new ArrayList<>();
+        ArrayList<Entity> defenseEntities = new ArrayList<>();
         for (Defense d : waveDefense) {
             if (d.getHealthPoints() > 0) {
                 defenseEntities.add(d);
@@ -1559,7 +1720,7 @@ public class GameManager {
             defenseEntities.add(lifeTree);
         }
         
-        List<Entity> validTargets = CombatRules.getValidTargets(zombie, defenseEntities);
+        ArrayList<Entity> validTargets = CombatRules.getValidTargets(zombie, defenseEntities);
         
         if (validTargets.isEmpty()) {
             return; // No targets in range, zombie keeps moving
@@ -1580,7 +1741,7 @@ public class GameManager {
         
         // Zombies attack up to 2 closest targets
         int maxTargets = Math.min(2, validTargets.size());
-        List<Entity> closestTargets = findClosestEntities(zombie, validTargets, maxTargets);
+        ArrayList<Entity> closestTargets = findClosestEntities(zombie, validTargets, maxTargets);
         
         for (Entity target : closestTargets) {
             int distance = CombatRules.calculateDistance(zombie, target);
@@ -1609,7 +1770,7 @@ public class GameManager {
      */
     private void processHealing(Entity healer) {
         // Get all valid heal targets
-        List<Entity> candidates = new ArrayList<>();
+        ArrayList<Entity> candidates = new ArrayList<>();
         
         if (healer instanceof Defense) {
             // Defense healer can heal other defenses
@@ -1631,7 +1792,7 @@ public class GameManager {
             }
         }
         
-        List<Entity> validTargets = CombatRules.getValidHealTargets(healer, candidates);
+        ArrayList<Entity> validTargets = CombatRules.getValidHealTargets(healer, candidates);
         
         if (validTargets.isEmpty()) {
             return; // No one to heal
@@ -1654,11 +1815,11 @@ public class GameManager {
     /**
      * Explodes a defense, dealing instant kill to all zombies in 3x3 area
      */
-    private void explodeDefense(Defense defense, List<Entity> triggeredBy) {
+    private void explodeDefense(Defense defense, ArrayList<Entity> triggeredBy) {
         final int EXPLOSION_RADIUS = 1; // 3x3 area (radius 1 from center)
         
         // Encontrar TODOS los zombies en el área de explosión 3x3
-        List<Zombie> zombiesInExplosionArea = new ArrayList<>();
+        ArrayList<Zombie> zombiesInExplosionArea = new ArrayList<>();
         int defRow = defense.getCurrentRow();
         int defCol = defense.getCurrentColumn();
         
@@ -1677,7 +1838,7 @@ public class GameManager {
             " exploded at (" + defRow + "," + defCol + ")! Zombies in 3x3 area: " + zombiesInExplosionArea.size());
         
         // Convert to Entity list for logging
-        List<Entity> explosionTargets = new ArrayList<>(zombiesInExplosionArea);
+        ArrayList<Entity> explosionTargets = new ArrayList<>(zombiesInExplosionArea);
         
         // Matar a todos los zombies en el área PRIMERO
         for (Zombie zombie : zombiesInExplosionArea) {
@@ -1701,11 +1862,11 @@ public class GameManager {
     /**
      * Explodes a zombie, dealing instant kill to all defenses in 3x3 area
      */
-    private void explodeZombie(Zombie zombie, List<Entity> triggeredBy) {
+    private void explodeZombie(Zombie zombie, ArrayList<Entity> triggeredBy) {
         final int EXPLOSION_RADIUS = 1; // 3x3 area (radius 1 from center)
         
         // Encontrar TODAS las defensas en el área de explosión 3x3
-        List<Defense> defensesInExplosionArea = new ArrayList<>();
+        ArrayList<Defense> defensesInExplosionArea = new ArrayList<>();
         int zombieRow = zombie.getCurrentRow();
         int zombieCol = zombie.getCurrentColumn();
         
@@ -1742,7 +1903,7 @@ public class GameManager {
         log("=== EXPLOSION === Total defenses in 3x3 area: " + defensesInExplosionArea.size());
         
         // Convert to Entity list for logging
-        List<Entity> explosionTargets = new ArrayList<>(defensesInExplosionArea);
+        ArrayList<Entity> explosionTargets = new ArrayList<>(defensesInExplosionArea);
         
         // Destruir todas las defensas en el área PRIMERO
         for (Defense defense : defensesInExplosionArea) {
@@ -1857,7 +2018,7 @@ public class GameManager {
     /**
      * Finds the closest entity from a list
      */
-    private Entity findClosestEntity(Entity source, List<Entity> candidates) {
+    private Entity findClosestEntity(Entity source, ArrayList<Entity> candidates) {
         Entity closest = null;
         int minDistance = Integer.MAX_VALUE;
         
@@ -1875,13 +2036,13 @@ public class GameManager {
     /**
      * Finds the N closest entities to the source
      */
-    private List<Entity> findClosestEntities(Entity source, List<Entity> candidates, int maxCount) {
+    private ArrayList<Entity> findClosestEntities(Entity source, ArrayList<Entity> candidates, int maxCount) {
         if (candidates == null || candidates.isEmpty()) {
             return new ArrayList<>();
         }
         
         // Create list with distances
-        List<EntityDistance> distances = new ArrayList<>();
+        ArrayList<EntityDistance> distances = new ArrayList<>();
         for (Entity candidate : candidates) {
             int distance = CombatRules.calculateDistance(source, candidate);
             distances.add(new EntityDistance(candidate, distance));
@@ -1891,7 +2052,7 @@ public class GameManager {
         distances.sort((a, b) -> Integer.compare(a.distance, b.distance));
         
         // Return up to maxCount closest entities
-        List<Entity> result = new ArrayList<>();
+        ArrayList<Entity> result = new ArrayList<>();
         for (int i = 0; i < Math.min(maxCount, distances.size()); i++) {
             result.add(distances.get(i).entity);
         }
@@ -1915,7 +2076,7 @@ public class GameManager {
     /**
      * Finds the most damaged entity from a list (for healing priority)
      */
-    private Entity findMostDamagedEntity(List<Entity> candidates) {
+    private Entity findMostDamagedEntity(ArrayList<Entity> candidates) {
         Entity mostDamaged = null;
         int lowestHealth = Integer.MAX_VALUE;
         
@@ -1951,7 +2112,7 @@ public class GameManager {
     private void removeDeadEntities() {
         // Remove dead zombies - but ONLY those that have been spawned already
         // A zombie is "spawned" if its thread state is not NEW
-        List<Zombie> zombiesToRemove = new ArrayList<>();
+        ArrayList<Zombie> zombiesToRemove = new ArrayList<>();
         
         for (Zombie zombie : waveZombies) {
             if (zombie == null) {
@@ -1986,7 +2147,7 @@ public class GameManager {
         }
         
         // Remove dead defenses
-        List<Defense> defensesToRemove = new ArrayList<>();
+        ArrayList<Defense> defensesToRemove = new ArrayList<>();
         
         for (Defense defense : waveDefense) {
             if (defense == null || defense.getHealthPoints() <= 0) {

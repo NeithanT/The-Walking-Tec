@@ -209,12 +209,12 @@ public class EntityStatsDialog extends JDialog {
     }
     
     private String findEntityDisplayName(String entityKey) {
-        CombatLog.EntityCombatStats stats = combatLog.getAllStats().get(entityKey);
+        CombatLog.EntityCombatStats stats = combatLog.getStatsByKey(entityKey);
         return stats != null ? stats.displayName : "Desconocido";
     }
     
     private String findEntityName(String entityKey, CombatLog log) {
-        CombatLog.EntityCombatStats stats = log.getAllStats().get(entityKey);
+        CombatLog.EntityCombatStats stats = log.getStatsByKey(entityKey);
         return stats != null ? stats.entityName : "Desconocido";
     }
     

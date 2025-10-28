@@ -2,8 +2,7 @@ package Test;
 
 import Defense.*;
 import Zombie.*;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -20,8 +19,8 @@ public class HybridTypeDemo {
         ZombieFlying regularFlying = new ZombieFlying("Regular Flying", 30, 1, 1, 5, 3, 2.0);
         printZombieInfo(regularFlying);
         
-        // 2. Hybrid zombie: EXPLOSIVE + FLYING using Set
-        Set<ZombieType> kamikazeTypes = new HashSet<>(Arrays.asList(
+        // 2. Hybrid zombie: EXPLOSIVE + FLYING using ArrayList
+        ArrayList<ZombieType> kamikazeTypes = new ArrayList<>(Arrays.asList(
             ZombieType.EXPLOSIVE, 
             ZombieType.FLYING
         ));
@@ -32,16 +31,16 @@ public class HybridTypeDemo {
         DefenseFlying regularFlyingDefense = new DefenseFlying("Goku", 50, 1, 1, 10, 5);
         printDefenseInfo(regularFlyingDefense);
         
-        // 4. Hybrid defense: FLYING + HEALER using Set
-        Set<DefenseType> medicTypes = new HashSet<>(Arrays.asList(
+        // 4. Hybrid defense: FLYING + HEALER using ArrayList
+        ArrayList<DefenseType> medicTypes = new ArrayList<>(Arrays.asList(
             DefenseType.FLYING, 
             DefenseType.HEALER
         ));
         Defense medicDrone = new DefenseHealer(medicTypes, "Medic Drone", 40, 2, 3, 8);
         printDefenseInfo(medicDrone);
         
-        // 5. Creating custom hybrid using Set - FLYING + MULTIPLEATTACK
-        Set<DefenseType> customTypes = new HashSet<>(Arrays.asList(
+        // 5. Creating custom hybrid using ArrayList - FLYING + MULTIPLEATTACK
+        ArrayList<DefenseType> customTypes = new ArrayList<>(Arrays.asList(
             DefenseType.FLYING, 
             DefenseType.MULTIPLEATTACK
         ));

@@ -4,8 +4,6 @@ import GameLogic.CombatLog;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * BattleSummaryDialog - Shows complete battle statistics at the end of a round
@@ -96,8 +94,8 @@ public class BattleSummaryDialog extends JDialog {
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
         // Filter entities
-        List<CombatLog.EntityCombatStats> entities = new ArrayList<>();
-        for (CombatLog.EntityCombatStats stats : log.getAllStats().values()) {
+        ArrayList<CombatLog.EntityCombatStats> entities = new ArrayList<>();
+        for (CombatLog.EntityCombatStats stats : log.getAllStats()) {
             if (stats.isDefense == showDefenses) {
                 entities.add(stats);
             }

@@ -4,20 +4,18 @@ import Entity.Entity;
 import Defense.Defense;
 import Zombie.Zombie;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * CombatLog - Tracks all combat events and entity statistics during a battle
  */
 public class CombatLog {
     
-    // Entity statistics tracking
-    private Map<String, EntityCombatStats> entityStats;
+    // Entity statistics tracking - usando 2 ArrayLists paralelos en lugar de Map
+    private ArrayList<String> entityKeys;
+    private ArrayList<EntityCombatStats> entityStatsValues;
     
     // Combat events log
-    private List<CombatEvent> combatEvents;
+    private ArrayList<CombatEvent> combatEvents;
     
     // Battle metadata
     private int level;
@@ -27,7 +25,8 @@ public class CombatLog {
     
     public CombatLog(int level) {
         this.level = level;
-        this.entityStats = new HashMap<>();
+        this.entityKeys = new ArrayList<>();
+        this.entityStatsValues = new ArrayList<>();
         this.combatEvents = new ArrayList<>();
         this.battleStartTime = System.currentTimeMillis();
         this.battleEnded = false;
@@ -38,7 +37,11 @@ public class CombatLog {
      */
     private EntityCombatStats getOrCreateStats(Entity entity) {
         String key = getEntityKey(entity);
-        if (!entityStats.containsKey(key)) {
+        
+        // Buscar en las listas paralelas
+        int index = entityKeys.indexOf(key);
+        if (index == -1) {
+            // No existe, crear nuevo
             EntityCombatStats stats = new EntityCombatStats();
             stats.entityName = entity.getEntityName();
             stats.displayName = entity.getDisplayName(); // Name with ID
@@ -51,9 +54,13 @@ public class CombatLog {
             stats.row = entity.getCurrentRow();
             stats.column = entity.getCurrentColumn();
             
-            entityStats.put(key, stats);
+            // Agregar a las listas paralelas
+            entityKeys.add(key);
+            entityStatsValues.add(stats);
+            return stats;
         }
-        return entityStats.get(key);
+        // Ya existe, retornar
+        return entityStatsValues.get(index);
     }
     
     /**
@@ -148,7 +155,7 @@ public class CombatLog {
     /**
      * Log an explosion event
      */
-    public void logExplosion(Entity explosive, List<Entity> targets, int damagePerTarget) {
+    public void logExplosion(Entity explosive, ArrayList<Entity> targets, int damagePerTarget) {
         EntityCombatStats explosiveStats = getOrCreateStats(explosive);
         
         // Update explosive stats
@@ -224,7 +231,7 @@ public class CombatLog {
         this.battleEndTime = System.currentTimeMillis();
         
         // Update final health for all living entities
-        for (EntityCombatStats stats : entityStats.values()) {
+        for (EntityCombatStats stats : entityStatsValues) {
             if (!stats.died) {
                 stats.finalHealth = stats.currentHealth;
             }
@@ -235,7 +242,7 @@ public class CombatLog {
      * Mark all zombies or defenses as dead (for victory/defeat scenarios)
      */
     public void markRemainingEntitiesDead(boolean markZombies) {
-        for (EntityCombatStats stats : entityStats.values()) {
+        for (EntityCombatStats stats : entityStatsValues) {
             // If marking zombies dead (victory) or marking defenses dead (defeat)
             if ((markZombies && !stats.isDefense) || (!markZombies && stats.isDefense)) {
                 if (!stats.died && stats.currentHealth > 0) {
@@ -257,16 +264,24 @@ public class CombatLog {
     }
     
     /**
-     * Get all entity stats
+     * Get all entity stats - Retorna ArrayList en lugar de Map
      */
-    public Map<String, EntityCombatStats> getAllStats() {
-        return entityStats;
+    public ArrayList<EntityCombatStats> getAllStats() {
+        return entityStatsValues;
+    }
+    
+    /**
+     * Get stats by key - Helper method para buscar por clave
+     */
+    public EntityCombatStats getStatsByKey(String key) {
+        int index = entityKeys.indexOf(key);
+        return index >= 0 ? entityStatsValues.get(index) : null;
     }
     
     /**
      * Get all combat events
      */
-    public List<CombatEvent> getCombatEvents() {
+    public ArrayList<CombatEvent> getCombatEvents() {
         return combatEvents;
     }
     
@@ -321,9 +336,9 @@ public class CombatLog {
         public long deathTime;
         
         // Interaction tracking
-        public List<String> targetsAttacked = new ArrayList<>();
-        public List<String> attackedBy = new ArrayList<>();
-        public List<String> entitiesHealed = new ArrayList<>();
+        public ArrayList<String> targetsAttacked = new ArrayList<>();
+        public ArrayList<String> attackedBy = new ArrayList<>();
+        public ArrayList<String> entitiesHealed = new ArrayList<>();
         
         /**
          * Calculate hits per second

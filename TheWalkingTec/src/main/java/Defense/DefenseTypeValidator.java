@@ -1,22 +1,21 @@
 package Defense;
 
-import java.util.Set;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.HashMap;
 
 /**
  * Validates defense type combinations to prevent incompatible types
  */
 public class DefenseTypeValidator {
     
-    // Define incompatible type pairs
-    private static final Map<DefenseType, Set<DefenseType>> INCOMPATIBLE_TYPES = new HashMap<>();
+    // Define incompatible type pairs using parallel ArrayLists
+    private static final ArrayList<DefenseType> INCOMPATIBLE_KEYS = new ArrayList<>();
+    private static final ArrayList<ArrayList<DefenseType>> INCOMPATIBLE_VALUES = new ArrayList<>();
     
     static {
         // BLOCKS is incompatible with everything
-        INCOMPATIBLE_TYPES.put(DefenseType.BLOCKS, new HashSet<>(Arrays.asList(
+        INCOMPATIBLE_KEYS.add(DefenseType.BLOCKS);
+        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
             DefenseType.CONTACT,
             DefenseType.MEDIUMRANGE,
             DefenseType.FLYING,
@@ -26,7 +25,8 @@ public class DefenseTypeValidator {
         )));
         
         // CONTACT is incompatible with EXPLOSIVE, HEALER, BLOCKS, MEDIUMRANGE
-        INCOMPATIBLE_TYPES.put(DefenseType.CONTACT, new HashSet<>(Arrays.asList(
+        INCOMPATIBLE_KEYS.add(DefenseType.CONTACT);
+        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
             DefenseType.BLOCKS,
             DefenseType.EXPLOSIVE,
             DefenseType.HEALER,
@@ -34,13 +34,15 @@ public class DefenseTypeValidator {
         )));
         
         // MEDIUMRANGE is incompatible with CONTACT and BLOCKS
-        INCOMPATIBLE_TYPES.put(DefenseType.MEDIUMRANGE, new HashSet<>(Arrays.asList(
+        INCOMPATIBLE_KEYS.add(DefenseType.MEDIUMRANGE);
+        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
             DefenseType.BLOCKS,
             DefenseType.CONTACT
         )));
         
         // EXPLOSIVE is only compatible with FLYING (incompatible with all others)
-        INCOMPATIBLE_TYPES.put(DefenseType.EXPLOSIVE, new HashSet<>(Arrays.asList(
+        INCOMPATIBLE_KEYS.add(DefenseType.EXPLOSIVE);
+        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
             DefenseType.BLOCKS,
             DefenseType.CONTACT,
             DefenseType.MEDIUMRANGE,
@@ -49,38 +51,41 @@ public class DefenseTypeValidator {
         )));
         
         // HEALER is incompatible with EXPLOSIVE, CONTACT, BLOCKS
-        INCOMPATIBLE_TYPES.put(DefenseType.HEALER, new HashSet<>(Arrays.asList(
+        INCOMPATIBLE_KEYS.add(DefenseType.HEALER);
+        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
             DefenseType.BLOCKS,
             DefenseType.EXPLOSIVE,
             DefenseType.CONTACT
         )));
         
         // MULTIPLEATTACK is incompatible with HEALER, EXPLOSIVE, BLOCKS
-        INCOMPATIBLE_TYPES.put(DefenseType.MULTIPLEATTACK, new HashSet<>(Arrays.asList(
+        INCOMPATIBLE_KEYS.add(DefenseType.MULTIPLEATTACK);
+        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
             DefenseType.BLOCKS,
             DefenseType.HEALER,
             DefenseType.EXPLOSIVE
         )));
         
         // FLYING is incompatible with BLOCKS only
-        INCOMPATIBLE_TYPES.put(DefenseType.FLYING, new HashSet<>(Arrays.asList(
+        INCOMPATIBLE_KEYS.add(DefenseType.FLYING);
+        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
             DefenseType.BLOCKS
         )));
     }
     
     /**
-     * Validates if a set of types is compatible
-     * @param types Set of defense types to validate
+     * Validates if a list of types is compatible
+     * @param types ArrayList of defense types to validate
      * @return ValidationResult with status and error message
      */
-    public static ValidationResult validate(Set<DefenseType> types) {
+    public static ValidationResult validate(ArrayList<DefenseType> types) {
         if (types == null || types.isEmpty()) {
             return new ValidationResult(false, "Debe seleccionar al menos un tipo");
         }
         
-        // Check each type against all other types in the set
+        // Check each type against all other types in the list
         for (DefenseType type1 : types) {
-            Set<DefenseType> incompatible = INCOMPATIBLE_TYPES.get(type1);
+            ArrayList<DefenseType> incompatible = getIncompatibleTypes(type1);
             if (incompatible != null) {
                 for (DefenseType type2 : types) {
                     if (type1 != type2 && incompatible.contains(type2)) {
@@ -95,10 +100,14 @@ public class DefenseTypeValidator {
     }
     
     /**
-     * Gets the set of types incompatible with the given type
+     * Gets the list of types incompatible with the given type
      */
-    public static Set<DefenseType> getIncompatibleTypes(DefenseType type) {
-        return INCOMPATIBLE_TYPES.getOrDefault(type, new HashSet<>());
+    public static ArrayList<DefenseType> getIncompatibleTypes(DefenseType type) {
+        int index = INCOMPATIBLE_KEYS.indexOf(type);
+        if (index >= 0) {
+            return INCOMPATIBLE_VALUES.get(index);
+        }
+        return new ArrayList<>();
     }
     
     /**

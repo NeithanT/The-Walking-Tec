@@ -16,7 +16,6 @@ import Zombie.ZombieExplosive;
 import Zombie.ZombieFlying;
 import Zombie.ZombieHealer;
 import java.util.ArrayList;
-import java.util.List;
 
 public class ConfigManager {
     
@@ -123,17 +122,17 @@ public class ConfigManager {
     public boolean isValidZombie() {return false;}
     public boolean isValidDefense() {return false;}
     
-    public void saveZombies(List<Zombie> updatedZombies) {
+    public void saveZombies(ArrayList<Zombie> updatedZombies) {
         zombies = new ArrayList<>(updatedZombies);
         writeObject(zombies, pathZombies);
     }
     
-    public void saveDefenses(List<Defense> updatedDefenses) {
+    public void saveDefenses(ArrayList<Defense> updatedDefenses) {
         defenses = new ArrayList<>(updatedDefenses);
         writeObject(defenses, pathDefenses);
     }
 
-    public void saveAdmins(List<Admin> updatedAdmins) {
+    public void saveAdmins(ArrayList<Admin> updatedAdmins) {
         admins = new ArrayList<>(updatedAdmins);
         writeObject(admins, pathAdmins);
         ensureDefaultAdmin();

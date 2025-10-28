@@ -1,19 +1,18 @@
 package Zombie;
 
-import java.util.Set;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class ZombieFlying extends ZombieAttacker {
 
     public ZombieFlying(String name, int healthPoints, int showUpLevel, int cost, int damage, int range, double movementSpeed) {
         super(name, healthPoints, showUpLevel, cost, damage, range, movementSpeed);
-        this.types = new HashSet<>(Arrays.asList(ZombieType.FLYING));
+        this.types = new ArrayList<>(Arrays.asList(ZombieType.FLYING));
     }
     
-    public ZombieFlying(Set<ZombieType> types, String name, int healthPoints, int showUpLevel, int cost, int damage, int range, double movementSpeed) {
+    public ZombieFlying(ArrayList<ZombieType> types, String name, int healthPoints, int showUpLevel, int cost, int damage, int range, double movementSpeed) {
         super(name, healthPoints, showUpLevel, cost, damage, range, movementSpeed);
-        this.types = new HashSet<>(types);
+        this.types = new ArrayList<>(types);
         this.types.add(ZombieType.FLYING);
     }
     

@@ -1,62 +1,65 @@
 package Zombie;
 
-import java.util.Set;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.HashMap;
 
 /**
  * Validates zombie type combinations to prevent incompatible types
  */
 public class ZombieTypeValidator {
     
-    // Define incompatible type pairs
-    private static final Map<ZombieType, Set<ZombieType>> INCOMPATIBLE_TYPES = new HashMap<>();
+    // Define incompatible type pairs using parallel ArrayLists
+    private static final ArrayList<ZombieType> INCOMPATIBLE_KEYS = new ArrayList<>();
+    private static final ArrayList<ArrayList<ZombieType>> INCOMPATIBLE_VALUES = new ArrayList<>();
     
     static {
         // CONTACT is incompatible with EXPLOSIVE, HEALER, MEDIUMRANGE
-        INCOMPATIBLE_TYPES.put(ZombieType.CONTACT, new HashSet<>(Arrays.asList(
+        INCOMPATIBLE_KEYS.add(ZombieType.CONTACT);
+        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
             ZombieType.MEDIUMRANGE,
             ZombieType.EXPLOSIVE,
             ZombieType.HEALER
         )));
         
         // MEDIUMRANGE is incompatible with CONTACT
-        INCOMPATIBLE_TYPES.put(ZombieType.MEDIUMRANGE, new HashSet<>(Arrays.asList(
+        INCOMPATIBLE_KEYS.add(ZombieType.MEDIUMRANGE);
+        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
             ZombieType.CONTACT
         )));
         
         // EXPLOSIVE is only compatible with FLYING (incompatible with all others)
-        INCOMPATIBLE_TYPES.put(ZombieType.EXPLOSIVE, new HashSet<>(Arrays.asList(
+        INCOMPATIBLE_KEYS.add(ZombieType.EXPLOSIVE);
+        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
             ZombieType.CONTACT,
             ZombieType.MEDIUMRANGE,
             ZombieType.HEALER
         )));
         
         // HEALER is incompatible with EXPLOSIVE and CONTACT
-        INCOMPATIBLE_TYPES.put(ZombieType.HEALER, new HashSet<>(Arrays.asList(
+        INCOMPATIBLE_KEYS.add(ZombieType.HEALER);
+        INCOMPATIBLE_VALUES.add(new ArrayList<>(Arrays.asList(
             ZombieType.EXPLOSIVE,
             ZombieType.CONTACT
         )));
         
         // FLYING has no restrictions (can combine with any)
-        INCOMPATIBLE_TYPES.put(ZombieType.FLYING, new HashSet<>());
+        INCOMPATIBLE_KEYS.add(ZombieType.FLYING);
+        INCOMPATIBLE_VALUES.add(new ArrayList<>());
     }
     
     /**
-     * Validates if a set of types is compatible
-     * @param types Set of zombie types to validate
+     * Validates if a list of types is compatible
+     * @param types ArrayList of zombie types to validate
      * @return ValidationResult with status and error message
      */
-    public static ValidationResult validate(Set<ZombieType> types) {
+    public static ValidationResult validate(ArrayList<ZombieType> types) {
         if (types == null || types.isEmpty()) {
             return new ValidationResult(false, "Debe seleccionar al menos un tipo");
         }
         
-        // Check each type against all other types in the set
+        // Check each type against all other types in the list
         for (ZombieType type1 : types) {
-            Set<ZombieType> incompatible = INCOMPATIBLE_TYPES.get(type1);
+            ArrayList<ZombieType> incompatible = getIncompatibleTypes(type1);
             if (incompatible != null) {
                 for (ZombieType type2 : types) {
                     if (type1 != type2 && incompatible.contains(type2)) {
@@ -71,10 +74,14 @@ public class ZombieTypeValidator {
     }
     
     /**
-     * Gets the set of types incompatible with the given type
+     * Gets the list of types incompatible with the given type
      */
-    public static Set<ZombieType> getIncompatibleTypes(ZombieType type) {
-        return INCOMPATIBLE_TYPES.getOrDefault(type, new HashSet<>());
+    public static ArrayList<ZombieType> getIncompatibleTypes(ZombieType type) {
+        int index = INCOMPATIBLE_KEYS.indexOf(type);
+        if (index >= 0) {
+            return INCOMPATIBLE_VALUES.get(index);
+        }
+        return new ArrayList<>();
     }
     
     /**
