@@ -1,21 +1,20 @@
 
 package GameLogic;
 
+import Table.SidePanel;
 
 public class MatrixManager {
-    
+
     private boolean occupied[][];
-    private GameManager gameManager;
-    
-    
-    public MatrixManager(){
-   
+    private SidePanel sidePanel;
+
+    public MatrixManager() {
         occupied = new boolean[25][25];
         iniciateMatrix();
     }
-    
-    public void setGameManager(GameManager gameManager) {
-        this.gameManager = gameManager;
+
+    public void setSidePanel(SidePanel sidePanel) {
+        this.sidePanel = sidePanel;
     }
     
     public void iniciateMatrix(){
@@ -42,30 +41,30 @@ public class MatrixManager {
     public synchronized boolean placeDefense(int row,int column){ 
         
         if (!isValidPosition(row, column)){
-            if (gameManager != null) {
-                gameManager.getSidePanel().appendLog("Invalid Position, try again");
+            if (sidePanel != null) {
+                sidePanel.appendLog("Invalid Position, try again");
             }
             return false;
         }
         
         if (occupied[row][column]){
-            if (gameManager != null) {
-                gameManager.getSidePanel().appendLog("This cell is already ocuppied");
+            if (sidePanel != null) {
+                sidePanel.appendLog("This cell is already ocuppied");
             }
             return false;
         }
         
         if (!isValidDefensePosition(row, column)){
-            if (gameManager != null) {
-                gameManager.getSidePanel().appendLog("Cannot place defenses on this cell. Try another");
+            if (sidePanel != null) {
+                sidePanel.appendLog("Cannot place defenses on this cell. Try another");
             }
             return false;
         }
         
         else {
             occupied[row][column] = true;
-            if (gameManager != null) {
-                gameManager.getSidePanel().appendLog("Defense placed");
+            if (sidePanel != null) {
+                sidePanel.appendLog("Defense placed");
             }
             return true;
         }

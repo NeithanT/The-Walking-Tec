@@ -4,7 +4,10 @@ package Table;
 import Configuration.ConfigManager;
 import Defense.Defense;
 import GameLogic.GameManager;
+import GameLogic.GameState;
 import java.awt.BorderLayout;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -17,7 +20,6 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;
@@ -35,7 +37,7 @@ import Defense.DefenseHealer;
 import Defense.DefenseType;
 import Vanity.RoundedButton;
 
-public class SidePanel extends JPanel {
+public class SidePanel extends JPanel implements PropertyChangeListener {
     
     private RoundedButton btnStart;
     private RoundedButton btnPause;
@@ -133,10 +135,27 @@ public class SidePanel extends JPanel {
         });
     } 
     
-    public void setGameManager(GameManager manager){
-        
+    public void setGameManager(GameManager manager) {
         this.gameManager = manager;
+        if (manager != null && manager.getGameState() != null) {
+            manager.getGameState().addPropertyChangeListener(this);
+        }
         refreshStatusCounters();
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        String prop = evt.getPropertyName();
+        switch (prop) {
+            case GameState.PROPERTY_COINS,
+                 GameState.PROPERTY_DEFENSE_LIMIT,
+                 GameState.PROPERTY_DEFENSE_USED,
+                 GameState.PROPERTY_ZOMBIES_REMAINING -> refreshStatusCounters();
+            case GameState.PROPERTY_PAUSED -> {
+                boolean paused = (Boolean) evt.getNewValue();
+                btnStart.setEnabled(paused && gameManager != null && gameManager.isLifeTreePlaced());
+            }
+        }
     }
     
     public void returnToMenu() {

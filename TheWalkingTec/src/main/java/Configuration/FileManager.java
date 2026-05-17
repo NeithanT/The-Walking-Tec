@@ -75,8 +75,8 @@ public class FileManager {
             }
           }  
           catch(IOException ex){
-              
-          }
+               System.err.println("FileManager.writeObject failed: " + ex.getMessage());
+           }
         
     }
     
@@ -95,10 +95,10 @@ public class FileManager {
             }
           }
           catch(ClassNotFoundException ex){
-           
+              System.err.println("FileManager.readObject class not found: " + ex.getMessage());
           }
           catch(IOException ex){
-            
+              System.err.println("FileManager.readObject I/O error: " + ex.getMessage());
           }
         return null;
     }

@@ -42,7 +42,7 @@ public class TableMain extends JFrame {
         gameManager = new GameManager(gameBoard, sidepanel);
         gameManager.setParentFrame(this); // Establecer el frame padre para diálogos
         gameManager.setLevel(startingLevel); // Set the starting level
-        gameBoard.setGameManger(gameManager);
+        gameBoard.setGameManager(gameManager);
         sidepanel.setGameManager(gameManager);
        // sidepanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
 

@@ -371,7 +371,7 @@ public class GameBoard extends JPanel {
         return sellMode;
     }
         
-    public void setGameManger(GameManager manager){
+    public void setGameManager(GameManager manager){
         
         this.gameManager = manager;
     }    
