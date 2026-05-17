@@ -19,7 +19,7 @@ public class GameBoard extends JPanel {
     private static final String IMAGE_PATH = "/assets/tablero.png";
 
     private ArrayList<PlacedDefense> defenses;
-    private ArrayList<Object> zombies;
+    private ArrayList<Zombie> zombies;
     
     // Locks para acceso thread-safe sin synchronized
     private final ReentrantLock defensesLock = new ReentrantLock();
@@ -157,12 +157,9 @@ public class GameBoard extends JPanel {
         }
         
         // Then check zombies
-        for (Object obj : zombies) {
-            if (obj instanceof Zombie) {
-                Zombie zombie = (Zombie) obj;
-                if (zombie != null && zombie.getCurrentRow() == row && zombie.getCurrentColumn() == column) {
-                    return zombie;
-                }
+        for (Zombie zombie : zombies) {
+            if (zombie != null && zombie.getCurrentRow() == row && zombie.getCurrentColumn() == column) {
+                return zombie;
             }
         }
         
@@ -219,7 +216,7 @@ public class GameBoard extends JPanel {
        
         // Draw zombies at their pixel positions
         // Create a copy to avoid ConcurrentModificationException
-        ArrayList<Object> zombiesCopy;
+        ArrayList<Zombie> zombiesCopy;
         zombiesLock.lock();
         try {
             zombiesCopy = new ArrayList<>(zombies);
@@ -227,11 +224,8 @@ public class GameBoard extends JPanel {
             zombiesLock.unlock();
         }
         
-        for (Object obj : zombiesCopy) {
-            if (obj instanceof Zombie) {
-                Zombie zombie = (Zombie) obj;
-                drawZombie(g, zombie);
-            }
+        for (Zombie zombie : zombiesCopy) {
+            drawZombie(g, zombie);
         }
     }
 
@@ -285,7 +279,7 @@ public class GameBoard extends JPanel {
         repaint();
     }
 
-    public void addZombie(Object zombie){
+    public void addZombie(Zombie zombie){
         zombiesLock.lock();
         try {
             zombies.add(zombie);
@@ -316,7 +310,7 @@ public class GameBoard extends JPanel {
         repaint();
     }
 
-    public void deleteZombie(Object zombie){
+    public void deleteZombie(Zombie zombie){
         zombiesLock.lock();
         try {
             zombies.remove(zombie);
@@ -385,7 +379,7 @@ public class GameBoard extends JPanel {
     public ArrayList<PlacedDefense> getDefenses() {
         return defenses;
     }
-    public ArrayList<Object> getZombies() {
+    public ArrayList<Zombie> getZombies() {
         return zombies;
     }
 

@@ -24,6 +24,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import javax.imageio.ImageIO;
 import javax.swing.Timer;
 
@@ -57,20 +59,20 @@ public class GameManager {
     private Timer combatTimer;
     private int nextZombieIndexToSpawn;
     private int totalZombiesInWave; // Total zombies generated for this wave (doesn't change)
-    private boolean isPaused;
-    private int level;
-    private int baseHealth;
-    private Defense selectedDefense;
-    private int coinsThisLevel;
-    private int defenseCostLimit;
-    private int defenseCostUsed;
-    private int zombiesRemaining;
-    private boolean roundActive;
-    private boolean waveGenerated;
-    private boolean victoryProcessed; // Flag to prevent multiple victory dialogs
-    private boolean lossProcessed; // Flag to prevent multiple game over dialogs
-    private boolean summaryShown; // Flag to prevent showing summary multiple times
-    private Defense lifeTree;
+    private volatile boolean isPaused;
+    private volatile int level;
+    private volatile int baseHealth;
+    private volatile Defense selectedDefense;
+    private volatile int coinsThisLevel;
+    private volatile int defenseCostLimit;
+    private volatile int defenseCostUsed;
+    private volatile int zombiesRemaining;
+    private volatile boolean roundActive;
+    private volatile boolean waveGenerated;
+    private volatile boolean victoryProcessed; // Flag to prevent multiple victory dialogs
+    private volatile boolean lossProcessed; // Flag to prevent multiple game over dialogs
+    private volatile boolean summaryShown; // Flag to prevent showing summary multiple times
+    private volatile Defense lifeTree;
     private PlacedDefense lifeTreePlaced;
     private int lifeTreeRow;
     private int lifeTreeColumn;

@@ -31,7 +31,7 @@ public class MatrixManager {
         return row >= 0 && row < 25 && column >= 0 && column < 25; 
     }
     
-    public boolean isOccupied (int row, int column){
+    public synchronized boolean isOccupied (int row, int column){
         
         if (! isValidPosition(row, column)) {
             return true;   
@@ -39,7 +39,7 @@ public class MatrixManager {
         return occupied[row][column];
     }
     
-    public boolean placeDefense(int row,int column){ 
+    public synchronized boolean placeDefense(int row,int column){ 
         
         if (!isValidPosition(row, column)){
             if (gameManager != null) {
@@ -71,7 +71,7 @@ public class MatrixManager {
         }
         
     }
-    public void free (int row, int column){
+    public synchronized void free (int row, int column){
         if (isValidPosition(row, column)){
             occupied[row][column] = false;
         }

@@ -4,28 +4,31 @@ import Entity.Entity;
 import Defense.Defense;
 import Zombie.Zombie;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * CombatLog - Tracks all combat events and entity statistics during a battle
+ * Thread-safe implementation for concurrent access from multiple entity threads.
  */
 public class CombatLog {
     
-    // Entity statistics tracking - using ArrayList instead of HashMap
-    private ArrayList<EntityCombatStats> entityStats;
+    // Entity statistics tracking - using synchronized list for thread safety
+    private final List<EntityCombatStats> entityStats;
     
-    // Combat events log
-    private ArrayList<CombatEvent> combatEvents;
+    // Combat events log - using synchronized list for thread safety
+    private final List<CombatEvent> combatEvents;
     
     // Battle metadata
-    private int level;
-    private long battleStartTime;
-    private long battleEndTime;
-    private boolean battleEnded;
+    private final int level;
+    private final long battleStartTime;
+    private volatile long battleEndTime;
+    private volatile boolean battleEnded;
     
     public CombatLog(int level) {
         this.level = level;
-        this.entityStats = new ArrayList<>();
-        this.combatEvents = new ArrayList<>();
+        this.entityStats = Collections.synchronizedList(new ArrayList<>());
+        this.combatEvents = Collections.synchronizedList(new ArrayList<>());
         this.battleStartTime = System.currentTimeMillis();
         this.battleEnded = false;
     }
@@ -34,9 +37,11 @@ public class CombatLog {
      * Find stats for an entity by key
      */
     private EntityCombatStats findStatsByKey(String key) {
-        for (EntityCombatStats stats : entityStats) {
-            if (stats.entityKey.equals(key)) {
-                return stats;
+        synchronized (entityStats) {
+            for (EntityCombatStats stats : entityStats) {
+                if (stats.entityKey.equals(key)) {
+                    return stats;
+                }
             }
         }
         return null;
@@ -47,25 +52,30 @@ public class CombatLog {
      */
     private EntityCombatStats getOrCreateStats(Entity entity) {
         String key = getEntityKey(entity);
-        EntityCombatStats existingStats = findStatsByKey(key);
+        EntityCombatStats stats = findStatsByKey(key);
         
-        if (existingStats == null) {
-            EntityCombatStats stats = new EntityCombatStats();
-            stats.entityName = entity.getEntityName();
-            stats.displayName = entity.getDisplayName(); // Name with ID
-            stats.initialHealth = entity.getHealthPoints();
-            stats.currentHealth = entity.getHealthPoints();
-            stats.isDefense = entity instanceof Defense;
-            stats.entityKey = key;
-            
-            // Set position for defenses, final position for zombies (will be updated)
-            stats.row = entity.getCurrentRow();
-            stats.column = entity.getCurrentColumn();
-            
-            entityStats.add(stats);
-            return stats;
+        if (stats == null) {
+            synchronized (entityStats) {
+                // Double check after acquiring lock
+                stats = findStatsByKey(key);
+                if (stats == null) {
+                    stats = new EntityCombatStats();
+                    stats.entityName = entity.getEntityName();
+                    stats.displayName = entity.getDisplayName(); // Name with ID
+                    stats.initialHealth = entity.getHealthPoints();
+                    stats.currentHealth = entity.getHealthPoints();
+                    stats.isDefense = entity instanceof Defense;
+                    stats.entityKey = key;
+                    
+                    // Set position for defenses, final position for zombies (will be updated)
+                    stats.row = entity.getCurrentRow();
+                    stats.column = entity.getCurrentColumn();
+                    
+                    entityStats.add(stats);
+                }
+            }
         }
-        return existingStats;
+        return stats;
     }
     
     /**
@@ -266,10 +276,12 @@ public class CombatLog {
     }
     
     /**
-     * Get all entity stats (returns ArrayList as a values collection via wrapper)
+     * Get all entity stats (returns List as a values collection via wrapper)
      */
     public ArrayList<EntityCombatStats> getAllStats() {
-        return entityStats;
+        synchronized (entityStats) {
+            return new ArrayList<>(entityStats);
+        }
     }
     
     /**
@@ -283,7 +295,9 @@ public class CombatLog {
      * Get all combat events
      */
     public ArrayList<CombatEvent> getCombatEvents() {
-        return combatEvents;
+        synchronized (combatEvents) {
+            return new ArrayList<>(combatEvents);
+        }
     }
     
     /**
@@ -310,36 +324,36 @@ public class CombatLog {
         public boolean isDefense;
         
         // Health tracking
-        public int initialHealth;
-        public int currentHealth;
-        public int finalHealth;
+        public volatile int initialHealth;
+        public volatile int currentHealth;
+        public volatile int finalHealth;
         
         // Position tracking
-        public int row;
-        public int column;
-        public int finalRow;
-        public int finalColumn;
+        public volatile int row;
+        public volatile int column;
+        public volatile int finalRow;
+        public volatile int finalColumn;
         
         // Combat statistics
-        public int totalDamageDealt;
-        public int damageReceived;
-        public int totalHealingDone;
-        public int healingReceived;
-        public int attacksMade;
-        public int attacksReceived;
-        public int healsMade;
-        public int kills;
-        public int explosions;
+        public volatile int totalDamageDealt;
+        public volatile int damageReceived;
+        public volatile int totalHealingDone;
+        public volatile int healingReceived;
+        public volatile int attacksMade;
+        public volatile int attacksReceived;
+        public volatile int healsMade;
+        public volatile int kills;
+        public volatile int explosions;
         
         // Death information
-        public boolean died;
+        public volatile boolean died;
         public String killedBy;
-        public long deathTime;
+        public volatile long deathTime;
         
-        // Interaction tracking
-        public ArrayList<String> targetsAttacked = new ArrayList<>();
-        public ArrayList<String> attackedBy = new ArrayList<>();
-        public ArrayList<String> entitiesHealed = new ArrayList<>();
+        // Interaction tracking - using synchronized lists
+        public List<String> targetsAttacked = Collections.synchronizedList(new ArrayList<>());
+        public List<String> attackedBy = Collections.synchronizedList(new ArrayList<>());
+        public List<String> entitiesHealed = Collections.synchronizedList(new ArrayList<>());
         
         /**
          * Calculate hits per second

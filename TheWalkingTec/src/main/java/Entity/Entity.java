@@ -1,25 +1,26 @@
 package Entity;
 
 import java.io.Serializable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class Entity extends Thread implements Serializable {
     
-    private static int nextEntityId = 1; // Static counter for unique IDs
+    private static final AtomicInteger nextEntityId = new AtomicInteger(1); // Atomic counter for unique IDs
     
-    protected int entityId; // Unique ID for each entity instance
-    protected String entityName;
-    protected String actions;
-    protected String imagePath;
-    protected int healthPoints;
-    protected int cost;
-    protected int showUpLevel;
-    protected int currentRow;
-    protected int currentColumn;
+    protected final int entityId; // Unique ID for each entity instance
+    protected volatile String entityName;
+    protected volatile String actions;
+    protected volatile String imagePath;
+    protected volatile int healthPoints;
+    protected volatile int cost;
+    protected volatile int showUpLevel;
+    protected volatile int currentRow;
+    protected volatile int currentColumn;
     
     // Constructor to assign unique ID
     public Entity() {
         super();
-        this.entityId = nextEntityId++;
+        this.entityId = nextEntityId.getAndIncrement();
     }
     
     public int getEntityId() {
