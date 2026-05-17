@@ -9,16 +9,16 @@ public class Zombie extends Entity implements Runnable {
     protected ArrayList<ZombieType> types;
     
     // Pixel position tracking (smooth movement)
-    protected double pixelX;
-    protected double pixelY;
-    protected int targetRow;
-    protected int targetColumn;
+    protected volatile double pixelX;
+    protected volatile double pixelY;
+    protected volatile int targetRow;
+    protected volatile int targetColumn;
     
     // Movement control
-    protected boolean isMoving;
-    protected boolean isAlive;
-    protected double movementSpeed; // cells per second
-    protected GameManager gameManager;
+    protected volatile boolean isMoving;
+    protected volatile boolean isAlive;
+    protected volatile double movementSpeed; // cells per second
+    protected volatile GameManager gameManager;
     
     // Thread control
     private Thread zombieThread;

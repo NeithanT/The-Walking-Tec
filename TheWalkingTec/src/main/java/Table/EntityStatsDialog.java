@@ -7,6 +7,7 @@ import Zombie.Zombie;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * EntityStatsDialog - Shows detailed combat statistics for an entity when clicked
@@ -180,7 +181,7 @@ public class EntityStatsDialog extends JDialog {
     /**
      * Add a list of entities (shows their display names)
      */
-    private void addEntityList(JPanel panel, String label, ArrayList<String> entityKeys, Color valueColor) {
+    private void addEntityList(JPanel panel, String label, List<String> entityKeys, Color valueColor) {
         JPanel listPanel = new JPanel();
         listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
         listPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 25 * entityKeys.size() + 20));

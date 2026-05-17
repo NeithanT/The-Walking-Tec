@@ -1,11 +1,18 @@
 package Defense;
 
 import Entity.Entity;
+import GameLogic.GameManager;
 import java.util.ArrayList;
 
 public class Defense extends Entity implements Runnable {
 
     protected ArrayList<DefenseType> types;
+    protected volatile GameManager gameManager;
+    protected volatile Entity lockedTarget;
+    protected volatile boolean running = false;
+    protected Thread defenseThread;
+    
+    protected static final long ATTACK_DELAY = 1000; // 1 second between attacks
     
     public Defense() {
        this.types = new ArrayList<>();
