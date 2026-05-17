@@ -1,4 +1,3 @@
-
 package Table;
 
 import Defense.Defense;

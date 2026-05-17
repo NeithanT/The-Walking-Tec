@@ -20,32 +20,16 @@ import Zombie.ZombieExplosive;
 import Zombie.ZombieFlying;
 import Zombie.ZombieHealer;
 import Zombie.ZombieMediumRange;
-import javax.swing.*;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Image;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.File;
-import java.io.IOException;
 import javax.imageio.ImageIO;
-import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JPanel;
-import javax.swing.JPopupMenu;
-import javax.swing.DefaultListModel;
-import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.*;
 import javax.swing.event.DocumentListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class EntityPanel extends JPanel {
     

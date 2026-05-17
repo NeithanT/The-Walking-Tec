@@ -1,4 +1,3 @@
-
 package Entity;
 
 public interface EntityExplosive {
